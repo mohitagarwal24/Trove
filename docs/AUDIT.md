@@ -8,6 +8,14 @@ Cleanup: replaced `scripts/mcp.ts` (which needed local database credentials) wit
 
 Validation: 53 backend checks, 11 Chrome browser checks, strict types, production build, dependency audit (zero reported vulnerabilities), and configured-secret scan passed. Browser coverage includes real HTTP MCP and the stdio-to-HTTP bridge without database credentials, token revocation, exact requirement discovery, client configuration selection, sidebar persistence/resizing and axe checks. The independent Impeccable navigation/Connect finish review returned **disposition: ship** with no material fixes. The existing intentional Inter exception is retained; no new findings were suppressed. Google provider consent and actual Codex/Claude model sessions still require the user’s credentials/client setup; protocol tests do not claim those external acceptances.
 
+## Follow-up hosted acceptance
+
+Application commit `2ffad84` is live at [trove-mohit24.onrender.com](https://trove-mohit24.onrender.com), Render deploy `dep-dbb2fqvf3r2c7381bkf0`. Startup applied all four forward migrations without resetting the database or changing existing credentials. [Fresh-database CI passed](https://github.com/mohitagarwal24/Trove/actions/runs/39268518284), including 53 backend and 11 browser checks.
+
+All four navigation/search regression checks passed against the hosted application. A new private hosted account completed structured discovery, exact-price quoting, pending-duplicate rejection across separate quotes, cancellation before PayPal, eight-tool MCP discovery with read-only scope, and immediate token revocation. Validation accounts were closed. No payment was approved or captured and no real model request was made. Free-reuse, updated-batch charging and recovery remain covered by the controlled financial lifecycle tests; genuine buyer capture/refund acceptance remains a manual step.
+
+Google credentials are absent, so the Google option correctly stays hidden. The signed-token verification adapter and state/nonce/linking boundaries are implemented and tested, but actual Google consent requires `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Gmail sender configuration and prior external launch requirements below remain outstanding.
+
 New retained files: `src/lib/research.ts` owns the shared request schema; `src/server/discovery.ts` owns exact requirement evaluation; `src/server/google-auth.ts` owns OpenID Connect; `src/server/ownership.ts` derives reusable rights from captured purchases; `scripts/mcp-bridge.mjs` provides remote stdio access; `tests/google-auth.test.ts` verifies callback boundaries. Four forward migrations add metadata search, Google identity/state, reused-source quote bindings, and safe authentication-age handling for pre-existing sessions. No migration history was rewritten.
 
 ---

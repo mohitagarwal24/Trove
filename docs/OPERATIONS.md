@@ -4,7 +4,7 @@ Trove runs on one Render Free web service and Neon Free PostgreSQL. PostgreSQL s
 
 Current service: https://trove-mohit24.onrender.com, Render `srv-dbaq5t3bc2fs73cc3qk0`, Singapore. Source: https://github.com/mohitagarwal24/Trove. Neon project: `lucky-wildflower-32427743`. Auto-deploy is off; deploy an explicitly validated commit.
 
-Application release `977a2c0` is deployed and the [acceptance record](AUDIT.md) includes genuine Sandbox order creation and SDK eligibility. Buyer approval/capture, signed webhook delivery, refund and payout remain manual acceptance steps. Password recovery is implemented but awaits sender credentials.
+Application release `2ffad84` is deployed; the [acceptance record](AUDIT.md) includes hosted agent discovery, duplicate-purchase protection and navigation checks. The preceding release verified genuine Sandbox order creation and SDK eligibility. Buyer approval/capture, signed webhook delivery, refund and payout remain manual acceptance steps. Google sign-in awaits its OAuth client credentials; password recovery awaits sender credentials.
 
 ## Deployment
 
