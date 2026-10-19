@@ -2,6 +2,19 @@
 
 The deployment uses one Render **Free** web service and a separate Neon **Free** project. No paid worker, Render database, persistent disk, domain or AI subscription is required. Local Elasticsearch is optional; hosted search defaults to PostgreSQL.
 
+## Deployed instance — 19 October 2026
+
+- App: [trove-mohit24.onrender.com](https://trove-mohit24.onrender.com).
+- Source: [mohitagarwal24/Trove](https://github.com/mohitagarwal24/Trove).
+- Render service: `srv-dbaq5t3bc2fs73cc3qk0`, Free plan, Singapore.
+- Neon project: `lucky-wildflower-32427743`, Free organization, Singapore, fixed 0.25 CU with default autosuspend.
+- Web/queue mode: embedded. No standalone hosted worker or paid resources were created.
+- Both scheduled workflows are configured, including `TROVE_KEEP_AWAKE=true`. Their initial manual runs passed: [health ping](https://github.com/mohitagarwal24/Trove/actions/runs/39202043495), [protected maintenance](https://github.com/mohitagarwal24/Trove/actions/runs/39202047054).
+- Auto-deploy is off to avoid using build minutes for documentation-only pushes. Deploy app changes with `render deploys create srv-dbaq5t3bc2fs73cc3qk0 --confirm` after validation.
+- The first deployed app commit is `5001c6d`. Subsequent handoff documentation and browser-test synchronization changes do not change that deployed application code.
+
+Hosted browser checks exercised catalogue filtering, successful simulated delivery and refund/access revocation, connector failure without capture, seller version publication, mobile navigation and accessibility. MCP initialize/search/list passed; its revocation test was corrected to await the server-confirmed revoked badge and then passed with HTTP 401. The initial hosted suite had six passes and that test timing failure; the corrected focused test passed. No actual PayPal or Gemini API call is claimed.
+
 ## Deployment shape
 
 - Render build: `npm ci --include=dev && npm run build`.

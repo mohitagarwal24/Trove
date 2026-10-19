@@ -2,6 +2,8 @@
 
 A data marketplace where research agents discover, compare, and purchase precisely scoped information. Buyers approve exact bundle amounts; sellers control versioned offers and usage terms. The interface includes a catalogue, browser research workspace, purchase approvals, encrypted results, source-linked receipts, seller studio, and scoped MCP connections.
 
+[Open the hosted demo](https://trove-mohit24.onrender.com) · [Hosting and first-run credentials](docs/HOSTING.md). The hosted environment uses synthetic fixtures and labelled simulated payments until sandbox credentials are configured.
+
 **Current external verification:** no PayPal or Gemini credentials were supplied during implementation. The local simulation is functional and explicitly labelled. Actual sandbox buyer payments, signature-verified webhook delivery, model calls, and seller payouts are implemented but require credentialed end-to-end validation. This repository does not claim live marketplace approval.
 
 ## Local setup

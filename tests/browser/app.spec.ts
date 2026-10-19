@@ -158,10 +158,13 @@ test("MCP uses a scoped revocable token and never delegates approval", async ({
     "Current retail price intelligence",
   );
   await page.getByRole("button", { name: "I’ve saved my token" }).click();
-  await page
+  const tokenRow = page
+    .locator(".token-row")
+    .filter({ hasText: token.slice(0, 12) });
+  await tokenRow
     .getByRole("button", { name: "Revoke Codex research agent" })
-    .last()
     .click();
+  await expect(tokenRow.getByText("Revoked", { exact: true })).toBeVisible();
   const revoked = await page.request.post("/api/mcp", {
     headers,
     data: { jsonrpc: "2.0", id: 4, method: "tools/list", params: {} },
