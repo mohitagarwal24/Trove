@@ -8,7 +8,7 @@ import {
   Check,
   AlertCircle,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 export function Logo({ small = false }: { small?: boolean }) {
   return (
     <span className={`brand ${small ? "brand-small" : ""}`}>
@@ -84,11 +84,36 @@ export function Modal({
   children: ReactNode;
   wide?: boolean;
 }) {
+  const opener = useRef<HTMLElement | null>(null);
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className={`dialog ${wide ? "dialog-wide" : ""}`}>
+        <Dialog.Content
+          className={`dialog ${wide ? "dialog-wide" : ""}`}
+          onOpenAutoFocus={() => {
+            opener.current =
+              document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+          }}
+          onCloseAutoFocus={(event) => {
+            // Controlled dialogs have no Radix Trigger. Restore their actual opener,
+            // without stealing focus when sign-in hands off to purchase review.
+            event.preventDefault();
+            if (
+              document.activeElement?.closest(
+                '[role="dialog"][data-state="open"]',
+              )
+            )
+              return;
+            if (
+              opener.current?.isConnected &&
+              !opener.current.closest("[inert]")
+            )
+              opener.current.focus({ preventScroll: true });
+          }}
+        >
           <div className="dialog-heading">
             <div>
               <Dialog.Title>{title}</Dialog.Title>

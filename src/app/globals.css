@@ -22,6 +22,11 @@
   --highlight: #f5d683;
   --font-body: Inter, Arial, sans-serif;
   --font-heading: Manrope, Inter, Arial, sans-serif;
+  --motion-feedback: 140ms;
+  --motion-arrive: 220ms;
+  --motion-exit: 110ms;
+  --ease-arrive: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 * {
   box-sizing: border-box;
@@ -527,6 +532,7 @@ kbd {
   scrollbar-width: none;
 }
 .category-tabs button {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -870,7 +876,12 @@ kbd {
   background: #191c22b0;
   backdrop-filter: blur(5px);
   z-index: 60;
-  animation: fade-in 0.16s ease;
+}
+.dialog-overlay[data-state="open"] {
+  animation: fade-in var(--motion-feedback) ease-out;
+}
+.dialog-overlay[data-state="closed"] {
+  animation: fade-out var(--motion-exit) ease-in;
 }
 .dialog {
   position: fixed;
@@ -885,7 +896,9 @@ kbd {
   z-index: 61;
   padding: 26px;
   overflow: auto;
-  animation: dialog-in 0.2s ease;
+}
+.dialog[data-state="open"] {
+  animation: dialog-in var(--motion-arrive) var(--ease-arrive);
 }
 .dialog-wide {
   width: min(710px, calc(100vw - 32px));
@@ -2286,11 +2299,16 @@ paypal-button {
 @keyframes dialog-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -48%);
+    transform: translate(-50%, -50%) scale(0.985);
   }
   to {
     opacity: 1;
     transform: translate(-50%, -50%);
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
   }
 }
 @media (min-width: 1600px) {
@@ -2484,10 +2502,12 @@ paypal-button {
 @media (max-width: 760px) {
   .sidebar {
     transform: translateX(-100%);
-    transition: transform 0.2s;
+    transition: transform var(--motion-exit) var(--ease-exit);
   }
   .sidebar-open {
     transform: translateX(0);
+    transition-duration: var(--motion-arrive);
+    transition-timing-function: var(--ease-arrive);
   }
   .mobile-backdrop {
     display: block;
@@ -2995,16 +3015,6 @@ paypal-button {
     font-size: 7px;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *:before,
-  *:after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
-  }
-}
-
 /* Readability refinements: secondary text carries information, not decoration. */
 .research-answer {
   border: 1px solid #dcdee3;
@@ -3584,7 +3594,8 @@ h1 {
     background 0.18s,
     border-color 0.18s,
     color 0.18s,
-    box-shadow 0.18s;
+    box-shadow 0.18s,
+    transform var(--motion-exit) ease-out;
 }
 .button:active:not(:disabled) {
   transform: translateY(1px);
@@ -3647,13 +3658,23 @@ h1 {
   color: #626e86;
   padding-bottom: 14px;
   min-height: 34px;
+  transition: color var(--motion-feedback) ease-out;
 }
 .category-tabs button:hover {
   color: var(--accent);
 }
 .category-tabs button.selected {
   color: #2d4bc2;
-  border-color: var(--accent);
+  border-color: transparent;
+}
+.category-tabs button.selected::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 2px;
+  background: var(--accent);
+  transform-origin: left;
+  animation: category-mark var(--motion-arrive) var(--ease-arrive);
 }
 .category-tabs button > span {
   color: #626e86;
@@ -3720,6 +3741,19 @@ h1 {
   height: 30px;
   color: #5e6a83;
   border-radius: 7px;
+  transition:
+    background var(--motion-feedback) ease-out,
+    color var(--motion-feedback) ease-out,
+    border-color var(--motion-feedback) ease-out,
+    transform var(--motion-exit) ease-out;
+}
+.select-offer:active {
+  transform: scale(0.94);
+}
+.select-offer.is-selected svg path,
+.select-offer.is-selected svg polyline {
+  stroke-dasharray: 24;
+  animation: confirm-selection var(--motion-arrive) var(--ease-arrive);
 }
 .select-offer:hover {
   background: #e8edff;
@@ -3863,7 +3897,30 @@ h1 {
   border-color: #3e4f77;
   border-radius: 12px;
   box-shadow: 0 12px 32px #18233a30;
-  animation: comparison-arrive 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: comparison-arrive var(--motion-arrive) var(--ease-arrive);
+}
+.comparison-count {
+  display: inline-block;
+  animation: fade-in var(--motion-feedback) ease-out;
+}
+.account-menu {
+  transform-origin: bottom left;
+  animation: menu-arrive 160ms var(--ease-arrive);
+}
+.mobile-backdrop {
+  animation: fade-in var(--motion-feedback) ease-out;
+}
+.button-primary > .lucide-arrow-right,
+.offer-view > svg {
+  transition: transform var(--motion-feedback) var(--ease-arrive);
+}
+@media (hover: hover) and (pointer: fine) {
+  .button-primary:hover:not(:disabled) > .lucide-arrow-right {
+    transform: translateX(3px);
+  }
+  .offer-view:hover > svg {
+    transform: translate(2px, -2px);
+  }
 }
 .comparison-tray .muted {
   color: #c3cde4;
@@ -3894,12 +3951,38 @@ h1 {
 }
 @keyframes comparison-arrive {
   from {
+    opacity: 0;
     translate: 0 10px;
-    box-shadow: 0 4px 12px #18233a10;
   }
   to {
+    opacity: 1;
     translate: 0 0;
-    box-shadow: 0 12px 32px #18233a30;
+  }
+}
+@keyframes confirm-selection {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes category-mark {
+  from {
+    transform: scaleX(0.3);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes menu-arrive {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
   }
 }
 @media (max-height: 820px) and (min-width: 761px) {
@@ -4097,9 +4180,16 @@ h1 {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
     scroll-behavior: auto !important;
+  }
+  .select-offer:active,
+  .button:active:not(:disabled),
+  .button-primary:hover:not(:disabled) > .lucide-arrow-right,
+  .offer-view:hover > svg,
+  .prompt-suggestion:hover svg:last-child {
+    transform: none;
   }
 }
 /* Customer forms share the existing control vocabulary. */

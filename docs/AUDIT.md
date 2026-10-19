@@ -1,3 +1,15 @@
+# Motion refinement — 19 October 2026
+
+Added an authored selection confirmation: the existing checkmark draws in and the comparison dock settles into place in 220ms. Category, count, menu, dialog, arrow and mobile-drawer feedback stays brief. Prices remain stationary and exact; cards retain their geometry. No dependencies or shipping raster assets were added. Mobbin reference retrieval was unavailable because its MCP requires a paid plan; the implementation uses the incumbent design system and native CSS.
+
+Consolidated duplicate reduced-motion rules into one complete alternative: spatial/transition effects stop while selection, color, labels and live status update immediately. Corrected existing controlled-dialog focus restoration, including protection against stealing focus during the sign-in-to-quote handoff.
+
+Production build/types and all 13 browser checks passed across the final confirmation and targeted account-check rerun. Repeated local test signups reached the existing rate limit; only the exhausted localhost counter was cleared, with no production-policy change. Actual browser animation evidence confirmed 220ms exponential selection/dock arrivals, zero card bounding-box movement, restored opener focus, zero animations under reduced motion and no page errors. The two bounded capture rounds covered desktop, mobile, selected sources, source dialog and drawer.
+
+Independent motion review found no material visual or interaction issue; its sole requested correction was synchronizing persisted motion records with the implementation. The documentation correction was scored resolved with **disposition: ship**, covering that fix; no further capture pass was required. No new hook suppressions were added.
+
+---
+
 # Follow-up review — 19 October 2026
 
 Added a persistent desktop sidebar toggle with accessible icon navigation; mobile keeps the full focus-contained drawer. Google OpenID Connect signup/linking is implemented and waits for real Google OAuth credentials. Codex, Claude Code and a database-free Claude Desktop bridge share eight MCP tools. `discover_data` accepts the agent’s exact requirements; Trove owns metadata search, matching counts, eligibility, cheapest complete coverage and gaps. Browser natural-language research uses the same evaluator after one Gemini extraction call.

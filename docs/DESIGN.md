@@ -217,7 +217,9 @@ White panels and offer cards rest on borders and tonal separation. Hover changes
 
 **The Flat Inventory Rule.** Keep inventory cards flat on hover; use border and selection treatments to communicate interaction.
 
-The comparison dock arrives with a (240ms) upward settling motion using `cubic-bezier(0.16, 1, 0.3, 1)` and a (10px) initial offset. Controls transition mainly over (180ms); pressed buttons move down (1px). The mobile drawer slides over (200ms); dialogs fade and settle over (160–200ms). Full-page entrance animation is disabled. Reduced-motion preferences disable animations, transitions, and smooth scrolling; preserve that behavior for new components.
+Motion uses feedback (140ms), arrival (220ms), and exit (110ms) durations. Arrivals use `cubic-bezier(0.16, 1, 0.3, 1)`; drawer exits use `cubic-bezier(0.4, 0, 1, 1)`. The comparison dock arrives from a (10px) offset with opacity, keeping its shadow constant. The selected checkmark draws and the category underline expands from (0.3) to full width over the arrival duration. Selection-count changes fade over the feedback duration; financial values and layout-driving properties remain immediate.
+
+Existing control colors, borders, and shadows retain (180ms) transitions; pressed buttons move down (1px) over the exit duration. Primary-action and offer arrows move (3px) over the feedback duration, while research-suggestion arrows retain (180ms). The mobile drawer opens over the arrival duration and closes over the exit duration. Dialogs enter with opacity and scale (0.985 to 1) over the arrival duration; content closes immediately, while the overlay fades in over the feedback duration and out over the exit duration. Account menus settle from (4px) with opacity over (160ms). Full-page entrance animation is disabled. Reduced-motion preferences disable animations, transitions, smooth scrolling, and decorative press/hover transforms; selection marks, state colors, live status, and focus behavior remain available immediately.
 
 ## Shapes
 
@@ -257,7 +259,7 @@ Selecting sources reveals a fixed dark-ink dock with selection count, exact comb
 
 ### Dialogs and Operational States
 
-Dialogs are centered white surfaces with (16px) corners, (26px) padding, a maximum height of (88vh), and scrolling content. Standard width is `min(480px, calc(100vw - 32px))`; wide dialogs use (710px) instead of (480px). Keep labelled dialog semantics, focus trapping, focus restoration, Escape dismissal, and explicit close controls.
+Dialogs are centered white surfaces with (16px) corners, (26px) padding, a maximum height of (88vh), and scrolling content. Standard width is `min(480px, calc(100vw - 32px))`; wide dialogs use (710px) instead of (480px). Keep labelled dialog semantics, focus trapping, Escape dismissal, and explicit close controls. Restore focus to the actual opener when it remains connected and outside inert content; preserve focus in another open dialog during a handoff.
 
 Loading, empty search, connection failure, expired quote, unavailable integration, and uncertain-payment states retain concise explanations and recovery controls. Payment approval uses PayPal; Sandbox is identified when that environment is active. Payment and fulfilment remain distinct in purchase status; seller earnings and payout status appear in the provider workspace. Voids remain distinct from refunds. Results expose purchased rows, provenance, download, receipt, and a genuine AI summary only when integration and source permissions allow it. Missing integrations fail closed. Quote scope, filtered rows, expiry, and exact total precede approval; source licences and access details use an expandable section rather than repeated explanatory blocks. Previously purchased sources appear as separate no-charge rows with links to the purchased data. A zero-total plan explains that the data is already owned and shows no checkout action.
 

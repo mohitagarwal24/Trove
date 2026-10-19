@@ -33,6 +33,8 @@ App: https://trove-mohit24.onrender.com. Use a new private Trove account and fic
 
 Collapse the desktop sidebar using the button beside the breadcrumb. Reload and navigate: the icon rail should persist, with labelled navigation and a usable account menu. Resize to mobile: open the full drawer, close with Escape, then return to desktop and expand. At 100% laptop zoom, the expanded agent callout and account should fit.
 
+Select a source and observe its checkmark and the comparison dock; adding another should update the count without changing card positions or animating prices. Change categories, open a source, and close with Escape: keyboard focus should return to the opener. Enable the operating system’s reduced-motion preference and repeat; state feedback remains immediate with no movement.
+
 Once Google credentials exist, choose Continue with Google in sign-in, complete consent, and expect a new private account. An existing email/password account must sign in normally and connect Google explicitly in Account. Test Google login again, cancelled consent, stale callbacks, and Google-only account closure after confirming identity. Automated tests validate the callback boundaries; they do not replace actual Google consent.
 
 ## Agent and recovery checks

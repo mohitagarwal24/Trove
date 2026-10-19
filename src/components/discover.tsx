@@ -349,9 +349,11 @@ export function Discover() {
             <span className="tray-icon">
               <Layers3 size={18} />
             </span>
-            <strong>
-              {selected.length} {selected.length === 1 ? "offer" : "offers"}{" "}
-              selected
+            <strong role="status" aria-live="polite" aria-atomic="true">
+              <span key={selected.length} className="comparison-count">
+                {selected.length} {selected.length === 1 ? "offer" : "offers"}{" "}
+                selected
+              </span>
             </strong>
             <span className="muted">
               {money(

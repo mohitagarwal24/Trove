@@ -1,5 +1,44 @@
 import { test, expect } from "@playwright/test";
 
+for (const reducedMotion of ["no-preference", "reduce"] as const) {
+  test(`selection and dialog focus work with motion preference: ${reducedMotion}`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/");
+    await expect(page.locator(".offer-card")).toHaveCount(6);
+    const first = page.locator(".select-offer").first();
+    await first.focus();
+    await page.keyboard.press("Space");
+    await expect(first).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("status")).toHaveText("1 offer selected");
+    const tray = page.locator(".comparison-tray");
+    if (reducedMotion === "reduce") {
+      await expect(tray).toHaveCSS("animation-name", "none");
+      await expect(tray).toHaveCSS("translate", "none");
+    }
+    await page.locator(".select-offer").nth(1).click();
+    await expect(page.getByRole("status")).toHaveText("2 offers selected");
+    await page.getByRole("button", { name: "Clear", exact: true }).click();
+    await expect(tray).toHaveCount(0);
+    const source = page.locator(".offer-view").first();
+    await source.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    if (reducedMotion === "reduce")
+      await expect(page.getByRole("dialog")).toHaveCSS(
+        "animation-name",
+        "none",
+      );
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(source).toBeFocused();
+    await page.getByRole("tab", { name: /Drug recalls/ }).click();
+    await page.getByRole("tab", { name: /Device recalls/ }).click();
+    await page.getByRole("tab", { name: /All data/ }).click();
+    await expect(page.locator(".offer-card")).toHaveCount(6);
+  });
+}
+
 test("desktop sidebar collapses, persists and becomes a full mobile drawer", async ({
   page,
 }) => {
