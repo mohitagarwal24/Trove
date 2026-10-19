@@ -13,6 +13,7 @@ import {
   type PaymentResource,
 } from "./paypal";
 import { prepareConnector, type PreparedResult } from "./connectors";
+import { ownershipMatcher, assertReusable } from "./ownership";
 export const purchaseInclude = {
   quote: { include: quoteInclude },
   entitlement: true,
@@ -106,12 +107,20 @@ export async function createPurchase(
   }
   const quote = await getQuote(actor, quoteId);
   assert(
+    quote.totalCents > 0,
+    "NO_PAYMENT_REQUIRED",
+    "You already own this data. Open the original purchases listed in this plan; no payment is required.",
+    409,
+  );
+  assert(
     quote.expiresAt > new Date(),
     "QUOTE_EXPIRED",
     "This quote expired. Create and approve a new quote.",
     409,
   );
   const purchase = await db.$transaction(async (tx) => {
+    // Serialize acquisition within a workspace, including different quotes and different agent clients.
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${"acquire:" + actor.workspaceId}))::text`;
     await tx.$queryRaw`SELECT id FROM "Quote" WHERE id = ${quoteId} FOR UPDATE`;
     if (quote.taskId)
       await tx.$queryRaw`SELECT id FROM "TaskRun" WHERE id = ${quote.taskId} FOR UPDATE`;
@@ -124,6 +133,19 @@ export async function createPurchase(
         409,
       );
       return prior;
+    }
+    await assertReusable(actor.workspaceId, quote.reusedSources, tx);
+    const match = await ownershipMatcher(actor.workspaceId, tx, true);
+    for (const line of quote.lines) {
+      const owned = await match(line);
+      assert(
+        !owned,
+        owned?.pending ? "PURCHASE_PENDING" : "ALREADY_OWNED",
+        owned
+          ? `${owned.pending ? "A purchase for this data is already in progress" : "You already own this data"}. Open /purchases/${owned.purchaseId}. Review a new quote to exclude it from the price.`
+          : "Data is already purchased.",
+        409,
+      );
     }
     if (quote.taskId) {
       const task = await tx.taskRun.findUniqueOrThrow({
@@ -700,19 +722,77 @@ export async function getResult(actor: Actor, id: string) {
     "A completed purchase and active entitlement are required.",
     403,
   );
-  assert(
-    p.entitlement.expiresAt > new Date(),
-    "RESULT_EXPIRED",
-    "The purchased result access period has expired.",
-    410,
-  );
-  const executions = await db.providerExecution.findMany({
+  let executions = await db.providerExecution.findMany({
     where: { purchaseId: id, state: "validated" },
   });
+  let expiresAt = p.entitlement.expiresAt;
+  if (
+    expiresAt <= new Date() ||
+    executions.length !== p.quote.lines.length ||
+    executions.some((e) => !e.encrypted)
+  ) {
+    const prepared = await Promise.all(
+      p.quote.lines.map(async (line) => ({
+        line,
+        result: await prepareConnector(line),
+      })),
+    );
+    expiresAt = new Date(
+      Date.now() +
+        Math.min(
+          ...p.quote.lines.map((line) =>
+            Number((line.snapshot as { accessHours: number }).accessHours),
+          ),
+        ) *
+          3600000,
+    );
+    await db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Purchase" WHERE id=${id} FOR UPDATE`;
+      const current = await tx.purchase.findUniqueOrThrow({
+        where: { id },
+        include: { entitlement: true },
+      });
+      assert(
+        current.paymentState === "captured" &&
+          current.entitlement &&
+          !current.entitlement.revokedAt,
+        "RESULT_LOCKED",
+        "This purchase no longer grants access.",
+        403,
+      );
+      for (const { line, result } of prepared) {
+        const data = {
+          state: "validated",
+          encrypted: encrypt(result),
+          resultHash: hash(JSON.stringify(result)),
+          checks: result.checks,
+          expiresAt,
+        };
+        await tx.providerExecution.upsert({
+          where: {
+            purchaseId_quoteLineId: { purchaseId: id, quoteLineId: line.id },
+          },
+          update: data,
+          create: { ...data, purchaseId: id, quoteLineId: line.id },
+        });
+      }
+      await tx.resultEntitlement.update({
+        where: { purchaseId: id },
+        data: { expiresAt },
+      });
+      await tx.purchase.update({
+        where: { id },
+        data: { fulfilmentState: "available" },
+      });
+    });
+    executions = await db.providerExecution.findMany({
+      where: { purchaseId: id, state: "validated" },
+    });
+  }
   return {
     purchaseId: id,
     mode: p.mode,
-    expiresAt: p.entitlement.expiresAt,
+    expiresAt,
     sources: p.quote.lines.map((line) => {
       const result = executions.find((e) => e.quoteLineId === line.id);
       assert(

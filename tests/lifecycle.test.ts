@@ -1,4 +1,4 @@
-import { after, before, test } from "node:test";
+import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
@@ -31,14 +31,16 @@ import { eligibility, searchOffers } from "../src/server/catalog";
 import { editOffer } from "../src/server/sellers";
 import { generateText } from "../src/server/ai";
 import { planTask } from "../src/server/planner";
+import { discoverData } from "../src/server/discovery";
 import { requireCron } from "../src/server/cron-auth";
 import { persistVerifiedWebhook } from "../src/server/webhooks";
 import { syncSources, normalizeSource } from "../src/server/datasets";
 import { rateLimit } from "../src/server/rate-limit";
 const suffix = randomUUID(),
-  workspaceId = `test-${suffix}`,
   otherWorkspaceId = `test-other-${suffix}`,
   sellerId = `test-seller-${suffix}`;
+let workspaceId = `test-${suffix}`;
+const workspaceIds = [workspaceId];
 const actor: Actor = {
   id: `test-user-${suffix}`,
   name: "Integration buyer",
@@ -210,6 +212,14 @@ before(async () => {
     };
   };
 });
+beforeEach(async () => {
+  workspaceId = `test-${suffix}-${randomUUID()}`;
+  workspaceIds.push(workspaceId);
+  await db.workspace.create({
+    data: { id: workspaceId, name: "Isolated lifecycle test" },
+  });
+  actor.workspaceId = workspaceId;
+});
 after(async () => {
   Object.assign(paymentApi, originals);
   globalThis.fetch = originalFetch;
@@ -217,7 +227,7 @@ after(async () => {
     if (oldEnv[k] === undefined) delete process.env[k];
     else process.env[k] = oldEnv[k];
   const purchases = await db.purchase.findMany({
-      where: { workspaceId },
+      where: { workspaceId: { in: workspaceIds } },
       select: { id: true },
     }),
     ids = purchases.map((p) => p.id);
@@ -254,14 +264,18 @@ after(async () => {
     ] as any[])
       await model.deleteMany({ where: { purchaseId: { in: ids } } });
     await tx.purchase.deleteMany({ where: { id: { in: ids } } });
-    await tx.quoteLine.deleteMany({ where: { quote: { workspaceId } } });
-    await tx.quote.deleteMany({ where: { workspaceId } });
-    await tx.taskRun.deleteMany({ where: { workspaceId } });
+    await tx.quoteLine.deleteMany({
+      where: { quote: { workspaceId: { in: workspaceIds } } },
+    });
+    await tx.quote.deleteMany({ where: { workspaceId: { in: workspaceIds } } });
+    await tx.taskRun.deleteMany({
+      where: { workspaceId: { in: workspaceIds } },
+    });
     await tx.offerVersion.deleteMany({ where: { sellerId } });
     await tx.datasetSnapshot.deleteMany({ where: { sellerId } });
     await tx.seller.delete({ where: { id: sellerId } });
     await tx.workspace.deleteMany({
-      where: { id: { in: [workspaceId, otherWorkspaceId] } },
+      where: { id: { in: [...workspaceIds, otherWorkspaceId] } },
     });
   });
   await db.$disconnect();
@@ -300,7 +314,9 @@ async function aiOutput<T>(outputs: unknown[], call: () => Promise<T>) {
     });
   };
   try {
-    return await call();
+    const result = await call();
+    assert.equal(calls, outputs.length);
+    return result;
   } finally {
     globalThis.fetch = prior;
     delete process.env.GEMINI_API_KEY;
@@ -317,7 +333,7 @@ test("catalogue exposes metadata and two-row previews, never encrypted data or p
   assert(!body.includes("payoutEmail"));
   assert(result.offers.every((o) => (o.preview as unknown[]).length <= 2));
 });
-test("planner uses real model responses, enforces fields and creates no payment", async () => {
+test("planner interprets requirements once and delegates source decisions without creating payment", async () => {
   const before = await db.purchase.count({ where: { workspaceId } });
   const result = await aiOutput(
     [
@@ -328,10 +344,6 @@ test("planner uses real model responses, enforces fields and creates no payment"
         maxAgeDays: 3650,
         quantity: 6,
       },
-      {
-        selectedOfferIds: [offerId],
-        explanations: [{ offerId, reason: "Approval fields match." }],
-      },
     ],
     () =>
       planTask(actor, {
@@ -340,7 +352,8 @@ test("planner uses real model responses, enforces fields and creates no payment"
       }),
   );
   assert.equal(result.task.planner, "gemini");
-  assert.equal(result.quote?.lines[0].offerVersionId, offerId);
+  assert(result.quote?.lines[0].fields.includes("active_ingredients"));
+  assert(result.quote?.totalCents && result.quote.totalCents <= 1000);
   assert.equal(await db.purchase.count({ where: { workspaceId } }), before);
 });
 test("stale, paused and incomplete sources are ineligible", async () => {
@@ -566,15 +579,198 @@ test("source and result encryption reject tampering", () => {
   parts[1] = Buffer.alloc(16).toString("base64");
   assert.throws(() => decrypt(parts.join(".")));
 });
-test("expired result access is denied without a second charge", async () => {
+test("expired delivery cache rebuilds from the original batch without a second charge", async () => {
   const p = await purchase();
   await approve(p.id);
   await db.resultEntitlement.update({
     where: { purchaseId: p.id },
     data: { expiresAt: new Date(0) },
   });
-  await assert.rejects(() => getResult(actor, p.id), /expired/);
+  const calls = captureCalls;
+  await db.providerExecution.updateMany({
+    where: { purchaseId: p.id },
+    data: { encrypted: null },
+  });
+  assert((await getResult(actor, p.id)).sources[0].rows.length > 0);
+  assert.equal(captureCalls, calls);
   assert.equal((await getPurchase(actor, p.id)).paymentState, "captured");
+});
+test("a new quote reuses purchased scope across tasks and tokens, while expanded scope remains chargeable", async () => {
+  const input = {
+    offerIds: [offerId],
+    quantity: 2,
+    fieldsByOffer: { [offerId]: ["brand_name"] },
+  };
+  const first = await createQuote(actor, input);
+  const p = (await createPurchase(actor, first.id, randomUUID())).purchase;
+  await approve(p.id);
+  const agent = { ...actor, viaToken: true, scopes: ["read", "purchase"] };
+  const repeat = await createQuote(agent, input);
+  assert.equal(repeat.totalCents, 0);
+  assert.equal(repeat.lines.length, 0);
+  assert.equal((repeat.reusedSources as any[])[0].purchaseId, p.id);
+  await assert.rejects(
+    () => createPurchase(actor, repeat.id, randomUUID()),
+    /already own/,
+  );
+  const expanded = await createQuote(actor, {
+    ...input,
+    fieldsByOffer: { [offerId]: ["brand_name", "active_ingredients"] },
+  });
+  assert(expanded.totalCents > 0);
+  const moreRows = await createQuote(actor, { ...input, quantity: 3 });
+  assert(moreRows.totalCents > 0);
+  const discover = await discoverData(agent, {
+    query: "Approval research",
+    purpose: "internal_business_analysis",
+    budgetCents: 50,
+    needs: [
+      {
+        category: "Drug approvals",
+        fields: ["brand_name"],
+        quantity: 2,
+        maxAgeDays: 3650,
+        filters: [],
+      },
+    ],
+  });
+  assert.equal(discover.nextAction, "get_result");
+  assert.equal(discover.totalCents, 0);
+  assert(discover.reusableSources.some((s) => s.purchaseId === p.id));
+  const otherPurpose = await createQuote(actor, {
+    ...input,
+    purpose: "ai_inference",
+  });
+  assert(otherPurpose.totalCents > 0);
+});
+test("different quotes cannot start concurrent purchases for the same batch", async () => {
+  const a = await quote(),
+    b = await quote();
+  const result = await Promise.allSettled([
+    createPurchase(actor, a.id, randomUUID()),
+    createPurchase(actor, b.id, randomUUID()),
+  ]);
+  assert.equal(result.filter((r) => r.status === "fulfilled").length, 1);
+  const paid = result.find((r) => r.status === "fulfilled")!;
+  assert(paid.status === "fulfilled");
+  await approve(paid.value.purchase.id);
+  const unused = paid.value.purchase.quoteId === a.id ? b : a;
+  await assert.rejects(
+    () => createPurchase(actor, unused.id, randomUUID()),
+    /already own/,
+  );
+});
+test("price and row-order changes preserve ownership, while changed source content requires payment", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  const original = await db.offerVersion.findUniqueOrThrow({
+    where: { id: offerId },
+  });
+  const source = await db.datasetSnapshot.findUniqueOrThrow({
+    where: { id: datasetId },
+  });
+  async function variant(rows: typeof sourceRows, version: number) {
+    const changed = await db.datasetSnapshot.create({
+      data: {
+        sellerId,
+        sourceKey: `${suffix}-${version}`,
+        sourceUrl: source.sourceUrl,
+        licenseUrl: source.licenseUrl,
+        attribution: source.attribution,
+        retrievedAt: new Date(),
+        sourceUpdatedAt: source.sourceUpdatedAt,
+        contentHash: hash(
+          JSON.stringify({
+            rows,
+            updated: source.sourceUpdatedAt.toISOString(),
+          }),
+        ),
+        rowCount: rows.length,
+        encryptedData: encrypt(rows),
+      },
+    });
+    const { id: _id, createdAt: _at, ...rest } = original;
+    return db.offerVersion.create({
+      data: {
+        ...rest,
+        offerId: `${suffix}-ownership-${version}`,
+        version,
+        priceCents: original.priceCents + 100,
+        datasetId: changed.id,
+        schema: original.schema as Prisma.InputJsonValue,
+        preview: original.preview as Prisma.InputJsonValue,
+      },
+    });
+  }
+  const count = p.quote.lines[0].quantity;
+  const reorderedRows = [
+    ...sourceRows.slice(0, count).reverse(),
+    ...sourceRows.slice(count),
+  ].map((r) => Object.fromEntries(Object.entries(r).reverse()));
+  const reordered = await variant(reorderedRows, 1);
+  const same = await createQuote(actor, { offerIds: [reordered.id] });
+  assert.equal(same.totalCents, 0);
+  const changedRows = structuredClone(sourceRows);
+  changedRows[0].brand_name = `${changedRows[0].brand_name} updated`;
+  const updated = await variant(changedRows, 2);
+  const newBatch = await createQuote(actor, { offerIds: [updated.id] });
+  assert(newBatch.totalCents > 0);
+  await requestRefund(actor, p.id, "Revoke purchased data ownership");
+  await processRefund(p.id);
+  const refunded = await quote();
+  assert(refunded.totalCents > 0);
+});
+test("agent discovery enforces exact fields, matching quantities and a complete budget", async () => {
+  const request = {
+    query: "Drug approvals",
+    purpose: "ai_inference" as const,
+    budgetCents: 1000,
+    needs: [
+      {
+        category: "Drug approvals" as const,
+        fields: ["brand_name"],
+        quantity: 2,
+        maxAgeDays: 3650,
+        filters: [],
+      },
+    ],
+  };
+  const valid = await discoverData(actor, request);
+  assert(valid.selectedOfferIds.length);
+  assert(valid.candidates.every((c) => !("rows" in c)));
+  const unsupported = await discoverData(actor, {
+    ...request,
+    needs: [{ ...request.needs[0], fields: ["patient_id"] }],
+  });
+  assert.equal(unsupported.selectedOfferIds.length, 0);
+  const cheap = await discoverData(actor, { ...request, budgetCents: 50 });
+  assert(cheap.gaps.some((g) => g.code === "BUDGET_EXCEEDED"));
+  assert.equal(cheap.selectedOfferIds.length, 0);
+  const empty = await discoverData(actor, {
+    ...request,
+    needs: [
+      {
+        ...request.needs[0],
+        filters: [
+          { field: "brand_name", operator: "equals", value: "NO-SUCH-BRAND" },
+        ],
+      },
+    ],
+  });
+  assert.equal(empty.selectedOfferIds.length, 0);
+  await assert.rejects(() =>
+    discoverData(actor, {
+      ...request,
+      needs: [
+        {
+          ...request.needs[0],
+          filters: [
+            { field: "approval_date", operator: "after", value: "2026-02-30" },
+          ],
+        },
+      ],
+    }),
+  );
 });
 test("refund is idempotent, revokes access and balances the ledger", async () => {
   const p = await purchase();

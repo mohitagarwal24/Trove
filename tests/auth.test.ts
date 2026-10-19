@@ -75,7 +75,7 @@ test("registration creates a private workspace with a hashed session", async () 
   });
   assert.notEqual(stored.id, a.token);
   const user = await db.user.findUniqueOrThrow({ where: { id: a.actor.id } });
-  assert(!user.passwordHash.includes(password));
+  assert(user.passwordHash && !user.passwordHash.includes(password));
   await assert.rejects(() => login(a.email, "wrong-password"), /incorrect/);
 });
 test("legacy shared passwords cannot authenticate", async () => {

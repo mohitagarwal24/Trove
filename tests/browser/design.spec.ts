@@ -1,5 +1,39 @@
 import { test, expect } from "@playwright/test";
 
+test("desktop sidebar collapses, persists and becomes a full mobile drawer", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".offer-card")).toHaveCount(6);
+  const main = page.locator(".main-shell");
+  await expect(main).toHaveCSS("margin-left", "232px");
+  await page.getByRole("button", { name: "Collapse sidebar" }).click();
+  await expect(main).toHaveCSS("margin-left", "76px");
+  await expect(
+    page.getByRole("button", { name: "Expand sidebar" }),
+  ).toHaveAttribute("aria-expanded", "false");
+  await expect(
+    page.getByRole("link", { name: "Research workspace", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(main).toHaveCSS("margin-left", "76px");
+  await page.getByRole("button", { name: "Guest account menu" }).click();
+  await expect(
+    page.locator(".account-menu").getByRole("button", { name: "Sign in" }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(main).toHaveCSS("margin-left", "0px");
+  await page.getByRole("button", { name: "Open navigation" }).click();
+  await expect(page.locator(".agent-callout")).toBeVisible();
+  await expect(page.locator(".nav-link").first()).toContainText("Discover");
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await expect(main).toHaveCSS("margin-left", "76px");
+  await page.getByRole("button", { name: "Expand sidebar" }).click();
+  await expect(main).toHaveCSS("margin-left", "232px");
+});
+
 test("laptop sidebar keeps the agent panel and account within the viewport", async ({
   page,
 }) => {

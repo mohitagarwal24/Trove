@@ -21,6 +21,7 @@ type Token = {
   revokedAt: string | null;
 };
 const toolDescriptions = [
+  ["discover_data", "Match your agent’s exact data requirements"],
   ["search_offers", "Search free offer metadata"],
   ["get_offer", "Inspect fields, price, preview & terms"],
   ["create_quote", "Create an immutable exact-price plan"],
@@ -32,7 +33,8 @@ const toolDescriptions = [
 export function Connect() {
   const { user, ensureAuth, notify } = useTrove();
   const [tokens, setTokens] = useState<Token[]>([]);
-  const [name, setName] = useState("Codex research agent");
+  const [name, setName] = useState("Research agent");
+  const [client, setClient] = useState("codex");
   const [creating, setCreating] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [value, setValue] = useState("");
@@ -61,7 +63,57 @@ export function Connect() {
     typeof window !== "undefined"
       ? window.location.origin
       : "http://localhost:3000";
-  const config = `[mcp_servers.trove]\nurl = "${origin}/api/mcp"\nbearer_token_env_var = "TROVE_AGENT_TOKEN"`;
+  const configs: Record<
+    string,
+    { file: string; code: string; hint: string; docs: string }
+  > = {
+    codex: {
+      file: "~/.codex/config.toml",
+      code: `[mcp_servers.trove]\nurl = "${origin}/api/mcp"\nbearer_token_env_var = "TROVE_AGENT_TOKEN"`,
+      hint: "Set TROVE_AGENT_TOKEN in the environment where you launch Codex.",
+      docs: "https://developers.openai.com/codex/mcp",
+    },
+    claude: {
+      file: ".mcp.json",
+      code: JSON.stringify(
+        {
+          mcpServers: {
+            trove: {
+              type: "http",
+              url: `${origin}/api/mcp`,
+              headers: { Authorization: "Bearer ${TROVE_AGENT_TOKEN}" },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+      hint: "Set TROVE_AGENT_TOKEN in the environment where you launch Claude Code. This configuration contains no secret.",
+      docs: "https://code.claude.com/docs/en/mcp",
+    },
+    desktop: {
+      file: "claude_desktop_config.json",
+      code: JSON.stringify(
+        {
+          mcpServers: {
+            trove: {
+              command: "/absolute/path/to/node",
+              args: ["/absolute/path/to/Trove/scripts/mcp-bridge.mjs"],
+              env: {
+                TROVE_URL: origin,
+                TROVE_AGENT_TOKEN: "PASTE_YOUR_TOKEN_HERE",
+              },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+      hint: "Clone the Trove repository and run npm ci. Replace both absolute paths and the token in your private Claude Desktop configuration, then restart Claude. No database credentials are needed.",
+      docs: "https://modelcontextprotocol.io/docs/develop/connect-local-servers",
+    },
+  };
+  const config = configs[client];
   async function copy(text: string, key: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -95,7 +147,7 @@ export function Connect() {
       <section className="page-heading compact-heading">
         <div>
           <h1>Connect your agent</h1>
-          <p>Access Trove from Codex or any MCP-compatible client.</p>
+          <p>Bring Trove’s data to Codex or Claude.</p>
         </div>
         <span className="large-connect-icon">
           <Cable size={34} />
@@ -169,18 +221,25 @@ export function Connect() {
             <div className="setup-heading">
               <span className="step-number">02</span>
               <div>
-                <h2>Add Trove to Codex</h2>
-                <p>
-                  Set your token in the client environment, then add this MCP
-                  configuration.
-                </p>
+                <h2>Connect your client</h2>
               </div>
             </div>
+            <label className="client-picker">
+              Agent client
+              <select
+                value={client}
+                onChange={(event) => setClient(event.target.value)}
+              >
+                <option value="codex">Codex</option>
+                <option value="claude">Claude Code</option>
+                <option value="desktop">Claude Desktop</option>
+              </select>
+            </label>
             <div className="code-block">
               <div>
-                <span>config.toml</span>
+                <span>{config.file}</span>
                 <button
-                  onClick={() => copy(config, "config")}
+                  onClick={() => copy(config.code, "config")}
                   aria-label="Copy MCP configuration"
                 >
                   {copyState === "config" ? (
@@ -191,14 +250,10 @@ export function Connect() {
                   {copyState === "config" ? "Copied" : "Copy"}
                 </button>
               </div>
-              <pre>{config}</pre>
+              <pre>{config.code}</pre>
             </div>
-            <p className="caption">
-              Store the token in TROVE_AGENT_TOKEN on your computer.
-            </p>
-            <ExternalLink href="https://developers.openai.com/codex/mcp">
-              Codex MCP setup
-            </ExternalLink>
+            <p className="caption">{config.hint}</p>
+            <ExternalLink href={config.docs}>Client setup guide</ExternalLink>
           </section>
           <section className="panel setup-card">
             <div className="setup-heading">

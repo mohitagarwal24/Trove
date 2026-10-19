@@ -17,6 +17,8 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   ReceiptText,
   Settings2,
   ShieldCheck,
@@ -56,6 +58,7 @@ const tools = [
   { href: "/connect", label: "Connect your agent", icon: Cable },
 ];
 const defaults: Capabilities = {
+  googleAuth: false,
   paypal: false,
   paypalClientId: null,
   payouts: false,
@@ -72,6 +75,7 @@ export function TroveApp() {
   const [failure, setFailure] = useState("");
   const [mobile, setMobile] = useState(false);
   const [smallScreen, setSmallScreen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -94,6 +98,36 @@ export function TroveApp() {
   };
   const notify = (message: string, error = false) =>
     setToast({ message, error });
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem("trove-sidebar-collapsed") === "true");
+    } catch {
+      // Navigation still works when browser storage is unavailable.
+    }
+    const errors: Record<string, string> = {
+      google_start: "Google sign-in is unavailable. Please try again.",
+      google_callback:
+        "Google sign-in could not be completed. Please try again.",
+      google_link:
+        "This email already has an account. Sign in first, then connect Google in Account.",
+    };
+    const url = new URL(location.href);
+    const message = errors[url.searchParams.get("auth_error") || ""];
+    if (message) {
+      setToast({ message, error: true });
+      url.searchParams.delete("auth_error");
+      history.replaceState(null, "", url.pathname + url.search);
+    }
+  }, []);
+  function toggleSidebar() {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem("trove-sidebar-collapsed", String(next));
+    } catch {
+      // Persistence is optional; the current preference still applies.
+    }
+  }
   useEffect(() => {
     refresh()
       .catch((e) => setFailure(e.message))
@@ -226,7 +260,9 @@ export function TroveApp() {
     page = <Legal page={pathname.slice(1) as "privacy" | "terms"} />;
   return (
     <AppContext.Provider value={context}>
-      <div className="app-shell">
+      <div
+        className={`app-shell${collapsed && !smallScreen ? " sidebar-collapsed" : ""}`}
+      >
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
@@ -276,6 +312,8 @@ export function TroveApp() {
                 <Link
                   key={n.href}
                   href={n.href}
+                  aria-label={collapsed && !smallScreen ? n.label : undefined}
+                  title={collapsed && !smallScreen ? n.label : undefined}
                   aria-current={
                     pathname === n.href ||
                     (n.href !== "/" && pathname.startsWith(n.href))
@@ -298,6 +336,8 @@ export function TroveApp() {
                 <Link
                   key={n.href}
                   href={n.href}
+                  aria-label={collapsed && !smallScreen ? n.label : undefined}
+                  title={collapsed && !smallScreen ? n.label : undefined}
                   aria-current={
                     pathname === n.href ||
                     (n.href !== "/" && pathname.startsWith(n.href))
@@ -332,6 +372,14 @@ export function TroveApp() {
               className="profile"
               onClick={() => setAccountMenu((v) => !v)}
               aria-expanded={accountMenu}
+              aria-label={
+                collapsed && !smallScreen
+                  ? user
+                    ? `${user.name}: account menu`
+                    : "Guest account menu"
+                  : undefined
+              }
+              title={collapsed && !smallScreen ? "Account menu" : undefined}
             >
               <span className="avatar">
                 {user?.name
@@ -382,6 +430,20 @@ export function TroveApp() {
         <div className="main-shell" inert={smallScreen && mobile}>
           <header className="topbar">
             <div className="breadcrumb">
+              <button
+                className="icon-button sidebar-toggle"
+                onClick={toggleSidebar}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-expanded={!collapsed}
+                aria-controls="workspace-navigation"
+              >
+                {collapsed ? (
+                  <PanelLeftOpen size={20} />
+                ) : (
+                  <PanelLeftClose size={20} />
+                )}
+              </button>
               <button
                 ref={menuRef}
                 aria-expanded={mobile}

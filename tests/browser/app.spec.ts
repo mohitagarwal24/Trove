@@ -1,6 +1,9 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { resolve } from "node:path";
 const password = "Browser acceptance password 42";
 async function buyer(page: Page) {
   const email = `browser-${randomUUID()}@example.com`;
@@ -117,13 +120,11 @@ test("provider onboarding and encrypted upload remain pending review", async ({
   await dialog
     .getByLabel("Source last updated", { exact: true })
     .fill(source.freshnessAt.slice(0, 10));
-  await dialog
-    .getByLabel("Data file (JSON)")
-    .setInputFiles({
-      name: "fda-records.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(source.preview)),
-    });
+  await dialog.getByLabel("Data file (JSON)").setInputFiles({
+    name: "fda-records.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(source.preview)),
+  });
   await dialog
     .getByRole("checkbox", { name: /I have distribution rights/ })
     .check();
@@ -165,7 +166,7 @@ test("MCP uses a scoped revocable token and never delegates payment approval", a
     ).ok(),
   ).toBeTruthy();
   const listing = await (await call(2, "tools/list", {})).json();
-  expect(listing.result.tools).toHaveLength(7);
+  expect(listing.result.tools).toHaveLength(8);
   expect(
     listing.result.tools.map((t: { name: string }) => t.name),
   ).not.toContain("capture_payment");
@@ -176,12 +177,69 @@ test("MCP uses a scoped revocable token and never delegates payment approval", a
     })
   ).json();
   expect(search.result.content[0].text).toContain("Drug approval");
+  const discovery = await (
+    await call(4, "tools/call", {
+      name: "discover_data",
+      arguments: {
+        query: "Drug approvals",
+        purpose: "ai_inference",
+        budgetCents: 1000,
+        needs: [
+          {
+            category: "Drug approvals",
+            fields: ["brand_name"],
+            quantity: 2,
+            maxAgeDays: 3650,
+            filters: [],
+          },
+        ],
+      },
+    })
+  ).json();
+  const discovered = JSON.parse(discovery.result.content[0].text);
+  expect(discovered.selectedOfferIds.length).toBeGreaterThan(0);
+  expect(discovered.nextAction).toBe("create_quote");
+  const bridge = new Client({ name: "desktop-acceptance", version: "1" });
+  const stdio = new StdioClientTransport({
+    command: process.execPath,
+    args: [resolve("scripts/mcp-bridge.mjs")],
+    env: { TROVE_URL: new URL(page.url()).origin, TROVE_AGENT_TOKEN: token },
+    stderr: "pipe",
+  });
+  await bridge.connect(stdio);
+  expect((await bridge.listTools()).tools).toHaveLength(8);
+  const bridged = await bridge.callTool({
+    name: "discover_data",
+    arguments: {
+      query: "Drug recalls",
+      purpose: "ai_inference",
+      budgetCents: 1000,
+      needs: [
+        {
+          category: "Drug recalls",
+          fields: ["reason_for_recall"],
+          quantity: 2,
+          maxAgeDays: 3650,
+          filters: [],
+        },
+      ],
+    },
+  });
+  expect(bridged.isError).not.toBe(true);
   await page.getByRole("button", { name: "I’ve saved my token" }).click();
-  await page
-    .getByRole("button", { name: "Revoke Codex research agent" })
-    .click();
+  await page.getByRole("button", { name: "Revoke Research agent" }).click();
   await expect(page.getByText("Revoked", { exact: true })).toBeVisible();
   expect((await call(4, "tools/list", {})).status()).toBe(401);
+  await expect(
+    bridge.callTool({ name: "search_offers", arguments: {} }),
+  ).rejects.toThrow();
+  await bridge.close();
+  await page.getByLabel("Agent client").selectOption("claude");
+  await expect(page.locator(".code-block pre")).toContainText(
+    "${TROVE_AGENT_TOKEN}",
+  );
+  await page.getByLabel("Agent client").selectOption("desktop");
+  await expect(page.locator(".code-block pre")).toContainText("mcp-bridge.mjs");
 });
 test("research availability follows real configuration", async ({ page }) => {
   await buyer(page);

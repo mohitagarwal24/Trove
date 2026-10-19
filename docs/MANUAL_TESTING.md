@@ -15,7 +15,7 @@ App: https://trove-mohit24.onrender.com. Use a new private Trove account and fic
 2. Review selected sources and any record filters. A request with no matching records must not create a payable purchase. These are bounded batches, not an exhaustive database search.
 3. Continue with PayPal. Verify Sandbox is visible, then approve the exact amount using a personal Sandbox buyer from your PayPal Developer dashboard.
 4. Returning from approval alone is not proof of payment. Wait for validated delivery and confirmed capture. Inspect actual order, authorization and capture references in the receipt and PayPal dashboard.
-5. Download result and receipt. Reload/retrieve again: the same capture reference and data remain; no second charge. Another private account cannot open the purchase URL or result API.
+5. Download result and receipt. Reload/retrieve again: the same capture reference and data remain; no second charge. Find the same scope from a new task or agent: expect an owned source at $0 and no checkout. Change fields/quantity or use a genuinely updated batch: expect a new quote. Reopening an expired delivery cache restores the original batch without a new payment. Another private account cannot open the purchase URL or result API.
 6. Summarise with AI only if source terms permit it. This sends the purchased subset to Gemini. The response should cite sources and acknowledge coverage limits; it is not clinical advice.
 7. Request a refund with a reason. Wait for authoritative completion; new data retrieval must stop. Previously downloaded files cannot be recalled.
 
@@ -29,9 +29,15 @@ App: https://trove-mohit24.onrender.com. Use a new private Trove account and fic
 6. In Account, change the name and reload, export account records, and test password change. It should sign out all sessions and revoke tokens. Test recovery only once HTTPS email is configured; a reset link works once for 30 minutes.
 7. Close a disposable account. Further login, sessions and tokens should fail; accounting records remain and profile details are redacted.
 
+## Navigation and Google sign-in
+
+Collapse the desktop sidebar using the button beside the breadcrumb. Reload and navigate: the icon rail should persist, with labelled navigation and a usable account menu. Resize to mobile: open the full drawer, close with Escape, then return to desktop and expand. At 100% laptop zoom, the expanded agent callout and account should fit.
+
+Once Google credentials exist, choose Continue with Google in sign-in, complete consent, and expect a new private account. An existing email/password account must sign in normally and connect Google explicitly in Account. Test Google login again, cancelled consent, stale callbacks, and Google-only account closure after confirming identity. Automated tests validate the callback boundaries; they do not replace actual Google consent.
+
 ## Agent and recovery checks
 
-Create a scoped token in Connect your agent. Initialize `/api/mcp`, list seven tools and search. Read-only scope cannot create quotes/purchases; no tool approves or captures payment. Revoke it and confirm HTTP 401 on the next request.
+Create a scoped token in Connect your agent. Initialize `/api/mcp`, list eight tools and call `discover_data` with explicit needs, fields, filters, quantity, purpose, maxAgeDays and budgetCents. Read-only scope cannot create quotes/purchases; no tool approves or captures payment. Use the Codex/Claude configuration in Connect; the agent should choose its requirements, let Trove find data, and follow the browser approval URL before retrieving paid rows. Revoke its token and confirm HTTP 401 on the next request, including an already-running Desktop bridge.
 
 Verify genuine signed PayPal webhooks at the public endpoint and replay one: persist once, reconcile once. Controlled automated tests cover missing fields, corrupt source payloads, concurrent budget reservations, capture uncertainty, replay and encryption tampering; those test doubles are not product modes. Do not intentionally interrupt a live financial operation on the public service without a controlled test plan.
 

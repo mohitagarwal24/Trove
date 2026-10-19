@@ -73,6 +73,32 @@ export function Discover() {
   const [freshOnly, setFreshOnly] = useState(false);
   const [found, setFound] = useState<Offer[]>(offers);
   const [selected, setSelected] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const stored: unknown = JSON.parse(
+        sessionStorage.getItem("trove-comparison") || "[]",
+      );
+      if (Array.isArray(stored))
+        setSelected(
+          stored
+            .filter(
+              (id): id is string =>
+                typeof id === "string" &&
+                offers.some((offer) => offer.id === id),
+            )
+            .slice(0, 6),
+        );
+    } catch {
+      /* Browser storage is optional. */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("trove-comparison", JSON.stringify(selected));
+    } catch {
+      /* Browser storage is optional. */
+    }
+  }, [selected]);
   const [detail, setDetail] = useState<Offer | null>(null);
   const [quote, setQuote] = useState<QuoteView | null>(null);
   const [quoting, setQuoting] = useState(false);

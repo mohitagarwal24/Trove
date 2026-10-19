@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-19T11:45:36.675435+00:00",
+  "generatedAt": "2026-10-19T14:22:39.528384+00:00",
   "title": "Design System: Trove",
   "extensions": {
     "colorMeta": {
@@ -380,7 +380,7 @@
       "name": "Ink navigation",
       "kind": "nav",
       "refersTo": "navigation-active",
-      "description": "A selected route inside the dark workspace rail.",
+      "description": "A selected route inside the dark workspace rail; desktop supports an accessible 76px icon rail, while mobile retains a full-content drawer.",
       "html": "<nav class=\"ds-rail\" aria-label=\"Example workspace\"><a class=\"ds-nav ds-current\" href=\"#discover\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m16.2 7.8-2.4 6-6 2.4 2.4-6 6-2.4z\"/></svg><span>Discover</span><span class=\"ds-count\">6</span></a><a class=\"ds-nav\" href=\"#workspace\">Research workspace</a></nav>",
       "css": ".ds-rail{font-family:var(--font-body,Inter,Arial,sans-serif);width:200px;padding:16px;background:var(--sidebar,#171d30);border-radius:8px;}.ds-nav{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:3px;color:#c0c8dd;border-radius:8px;font-size:12px;text-decoration:none;transition:background .18s,color .18s;}.ds-nav:hover{background:#29324a;color:#fff;}.ds-current,.ds-current:hover{background:#354fbb;color:#fff;font-weight:600;}.ds-nav:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-nav>span:first-of-type{flex:1;}.ds-count{min-width:20px;padding:2px 5px;border-radius:4px;background:#ffffff1c;color:#fff;font-size:10px;text-align:center;} @media(prefers-reduced-motion:reduce){.ds-count,.ds-current,.ds-nav,.ds-rail{animation:none!important;transition:none!important;}}"
     },

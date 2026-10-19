@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { Client } from "@elastic/elasticsearch";
 import { db } from "@/lib/db";
 import { assert } from "@/lib/errors";
@@ -21,6 +22,16 @@ const elastic = () =>
           : {}),
       })
     : null;
+export async function rankMetadata(query: string) {
+  if (!query.trim()) return [];
+  return db.$queryRaw<{ id: string; rank: number }[]>(Prisma.sql`
+    SELECT o.id, ts_rank_cd(to_tsvector('english', o.title || ' ' || o.description || ' ' || o.category || ' ' || o.coverage), websearch_to_tsquery('english', ${query}))::float8 AS rank
+    FROM "OfferVersion" o JOIN "Seller" s ON s.id=o."sellerId"
+    WHERE o.current=true AND o."datasetId" IS NOT NULL AND s.status='active'
+      AND (to_tsvector('english', o.title || ' ' || o.description || ' ' || o.category || ' ' || o.coverage) @@ websearch_to_tsquery('english', ${query})
+        OR o.title ILIKE ${"%" + query + "%"} OR s.name ILIKE ${"%" + query + "%"} OR ${query}=ANY(o.fields))
+    ORDER BY rank DESC, o.id LIMIT 200`);
+}
 export async function searchOffers(
   input: { query?: string; category?: string } = {},
 ) {
@@ -49,6 +60,8 @@ export async function searchOffers(
       engine = "postgres_fallback";
     }
   }
+  if (!ids && input.query)
+    ids = (await rankMetadata(input.query)).map((r) => r.id);
   const offers = await db.offerVersion.findMany({
     where: {
       current: true,
@@ -57,26 +70,15 @@ export async function searchOffers(
       ...(input.category && input.category !== "All data"
         ? { category: input.category }
         : {}),
-      ...(ids
-        ? { id: { in: ids } }
-        : input.query
-          ? {
-              OR: [
-                { title: { contains: input.query, mode: "insensitive" } },
-                { description: { contains: input.query, mode: "insensitive" } },
-                { coverage: { contains: input.query, mode: "insensitive" } },
-                {
-                  seller: {
-                    name: { contains: input.query, mode: "insensitive" },
-                  },
-                },
-              ],
-            }
-          : {}),
+      ...(ids ? { id: { in: ids } } : {}),
     },
     include: { seller: { select: publicSeller } },
     orderBy: { createdAt: "asc" },
   });
+  if (ids) {
+    const order = new Map(ids.map((id, index) => [id, index]));
+    offers.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
+  }
   return { offers, engine };
 }
 export const getOffer = async (id: string) => {
@@ -96,6 +98,8 @@ const categoryFields: Record<string, readonly string[]> = Object.fromEntries(
   sourceDefinitions.map((s) => [s.category, s.fields]),
 );
 export function requiredFields(category: string, requirements: Requirements) {
+  const scoped = requirements.needs?.find((need) => need.category === category);
+  if (scoped) return scoped.fields;
   return requirements.fields.filter(
     (f) =>
       categoryFields[category]?.includes(f) ||
@@ -107,11 +111,14 @@ export function eligibility(
   requirements: Requirements,
   now = Date.now(),
 ) {
+  const maxAgeDays =
+    requirements.needs?.find((n) => n.category === offer.category)
+      ?.maxAgeDays ?? requirements.maxAgeDays;
   if (!offer.available) return "Seller has paused this offer.";
   if (!offer.purposes.includes(requirements.purpose))
     return "Licence does not permit the requested business use.";
-  if (now - offer.freshnessAt.getTime() > requirements.maxAgeDays * 86400000)
-    return `Declared snapshot is older than the ${requirements.maxAgeDays}-day freshness requirement.`;
+  if (now - offer.freshnessAt.getTime() > maxAgeDays * 86400000)
+    return `Declared snapshot is older than the ${maxAgeDays}-day freshness requirement.`;
   const filterFields = (requirements.filters || [])
     .filter((f) => f.category === offer.category)
     .map((f) => f.field);

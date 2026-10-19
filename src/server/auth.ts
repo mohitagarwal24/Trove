@@ -15,6 +15,10 @@ export type Actor = {
   scopes: string[];
   viaToken: boolean;
   tokenId?: string;
+  hasPassword?: boolean;
+  googleConnected?: boolean;
+  authenticatedAt?: Date;
+  authProvider?: string;
 };
 export const sessionCookie = "trove_session";
 export async function authenticate(
@@ -52,7 +56,7 @@ export async function authenticate(
     });
     assert(member, "FORBIDDEN", "Workspace access was revoked.", 403);
     return {
-      ...token.user,
+      ...profile(token.user),
       workspaceId: token.workspaceId,
       scopes: token.scopes,
       viaToken: true,
@@ -81,7 +85,9 @@ export async function authenticate(
     401,
   );
   return {
-    ...session.user,
+    ...profile(session.user),
+    authenticatedAt: session.authenticatedAt,
+    authProvider: session.authProvider,
     workspaceId: session.user.memberships[0].workspaceId,
     scopes: ["read", "purchase", "manage"],
     viaToken: false,
@@ -121,15 +127,38 @@ export async function login(email: string, password: string) {
     "Email or password is incorrect.",
     401,
   );
+  return createSession(user.id);
+}
+export async function createSession(userId: string, authProvider = "password") {
   const token = randomBytes(32).toString("base64url");
   await db.session.create({
     data: {
       id: hash(token),
-      userId: user.id,
+      userId,
+      authProvider,
       expiresAt: new Date(Date.now() + 7 * 86400000),
     },
   });
   return token;
+}
+function profile(user: {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  sellerId: string | null;
+  passwordHash: string | null;
+  googleSubject: string | null;
+}) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    sellerId: user.sellerId,
+    hasPassword: !!user.passwordHash,
+    googleConnected: !!user.googleSubject,
+  };
 }
 export async function logoutSession(request: Request) {
   const token = request.headers
@@ -311,14 +340,20 @@ export async function changePassword(
     await tx.passwordReset.deleteMany({ where: { userId: actor.id } });
   });
 }
-export async function closeAccount(actor: Actor, password: string) {
+export async function closeAccount(actor: Actor, password?: string) {
   requireBrowser(actor);
   await rateLimit(actor.id, "account-close", 5, 3600000);
   const user = await db.user.findUniqueOrThrow({ where: { id: actor.id } });
   assert(
-    await verifyPassword(password, user.passwordHash),
+    user.passwordHash
+      ? await verifyPassword(password || "", user.passwordHash)
+      : actor.authProvider === "google" &&
+          !!actor.authenticatedAt &&
+          Date.now() - actor.authenticatedAt.getTime() < 5 * 60000,
     "INVALID_CREDENTIALS",
-    "Password is incorrect.",
+    user.passwordHash
+      ? "Password is incorrect."
+      : "Confirm your Google identity again before closing your account.",
     401,
   );
   await db.$transaction(async (tx) => {
@@ -329,6 +364,8 @@ export async function closeAccount(actor: Actor, password: string) {
         email: `${actor.id}@closed.invalid`,
         disabledAt: new Date(),
         passwordHash: "disabled",
+        googleSubject: null,
+        emailVerifiedAt: null,
       },
     });
     await tx.session.deleteMany({ where: { userId: actor.id } });

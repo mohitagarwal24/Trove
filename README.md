@@ -4,7 +4,7 @@ Trove is a data marketplace for researchers and their agents. Discover sources, 
 
 [Application](https://trove-mohit24.onrender.com) · [Manual testing](docs/MANUAL_TESTING.md) · [Free hosting and credentials](docs/OPERATIONS.md) · [Data research](docs/DATA_RESEARCH.md)
 
-The initial catalogue contains six prepared regulatory-data products backed by real openFDA records. Payments use genuine PayPal APIs in Sandbox by default; there is no simulated checkout or canned AI response. Research requires a configured Gemini Free Tier key. Provider identities and hackathon supply assumptions are disclosed in [PITCH.md](docs/PITCH.md). Source provenance and upstream rights remain accurate in every product.
+The initial catalogue contains six prepared regulatory-data products backed by real openFDA records. Payments use genuine PayPal APIs in Sandbox by default; there is no simulated checkout or canned AI response. The browser research composer requires a Gemini Free Tier key; connected agents use their own model and need only a Trove token. Provider identities and hackathon supply assumptions are disclosed in [PITCH.md](docs/PITCH.md). Source provenance and upstream rights remain accurate in every product.
 
 ## Run locally
 
@@ -28,9 +28,9 @@ Without external credentials, registration, discovery, comparisons, provider pub
 
 ## Implementation
 
-Next.js 16, React 19, TypeScript, Prisma 6 and PostgreSQL. A durable PostgreSQL queue performs fulfilment, reconciliation, refunds, payouts, ingestion and retention. AES-256-GCM protects dataset and result payloads. Gemini interprets research requirements and chooses among permitted sources; the server enforces fields, filters, price, licence, freshness and budget. MCP exposes seven scoped tools with human browser approval for every purchase.
+Next.js 16, React 19, TypeScript, Prisma 6 and PostgreSQL. A durable PostgreSQL queue performs fulfilment, reconciliation, refunds, payouts, ingestion and retention. AES-256-GCM protects dataset and result payloads. Agents submit explicit requirements to Trove’s shared search/evaluation pipeline; Gemini only interprets natural-language requests from the browser workspace. PostgreSQL full-text search and server checks enforce fields, filters, price, licence, freshness, quantity and budget. MCP exposes eight scoped tools for Codex and Claude with human browser approval for every purchase.
 
-Quotes bind an immutable source version, record indexes, fields, provenance, licence, access period and total. All sources are prepared before capture. Confirmed capture grants access and writes balanced accounting and provider payables transactionally. A refund revokes further access; a submitted payout requires separate recovery.
+Quotes bind an immutable source version, record indexes, fields, provenance, licence, delivery-cache period and total. All sources are prepared before capture. Confirmed capture grants access and writes balanced accounting and provider payables transactionally. Purchased batches can be reused across clients without another payment; an expired delivery cache is rebuilt from the original snapshot. Changed content or expanded scope requires a new quote. A refund revokes further access; a submitted payout requires separate recovery.
 
 Optional Elasticsearch indexes public metadata only; PostgreSQL remains authoritative and provides search without it. Start local search with `docker compose --profile search up -d elasticsearch`, set `ELASTICSEARCH_URL=http://localhost:9201`, then run `npm run search:index`.
 

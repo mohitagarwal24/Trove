@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ArrowRight, Clock3, LockKeyhole, ShieldCheck } from "lucide-react";
 import type { PurchaseView, QuoteView } from "@/lib/types";
 import { money } from "@/lib/types";
@@ -70,6 +71,25 @@ export function QuoteReview({
             </span>
           </div>
           <div className="quote-lines">
+            {quote.reusedSources?.map((source) => (
+              <div
+                className="quote-line"
+                key={`${source.purchaseId}:${source.offerVersionId}`}
+              >
+                <div>
+                  <strong>{source.title}</strong>
+                  <span>Already purchased · {source.quantity} records</span>
+                  <Link
+                    className="text-link"
+                    href={`/purchases/${source.purchaseId}`}
+                    onClick={onClose}
+                  >
+                    Open purchased data
+                  </Link>
+                </div>
+                <strong>No charge</strong>
+              </div>
+            ))}
             {quote.lines.map((line) => (
               <div className="quote-line" key={line.id}>
                 <span
@@ -129,28 +149,34 @@ export function QuoteReview({
               </p>
             ))}
             <p>
-              Results are available for{" "}
-              {quote.lines[0]?.snapshot.accessHours || 24} hours after delivery.
-              You can download them during that period.
+              The same purchased batch and scope can be downloaded again at no
+              charge. Updated batches or additional records and fields require a
+              new quote. Source licence terms apply.
             </p>
           </details>
           {capabilities.paymentEnvironment === "sandbox" && (
             <p className="caption">PayPal Sandbox — no real money moves.</p>
           )}
-          {!capabilities.paypal && (
+          {quote.totalCents > 0 && !capabilities.paypal && (
             <Notice>
               Checkout is temporarily unavailable. Please try again later.
             </Notice>
           )}
-          <button
-            className="button button-paypal"
-            disabled={!capabilities.paypal || busy || seconds === 0}
-            onClick={checkout}
-          >
-            <span className="paypal-wordmark">PayPal</span>
-            <span>Continue with PayPal</span>
-            <ArrowRight size={17} />
-          </button>
+          {quote.totalCents > 0 ? (
+            <button
+              className="button button-paypal"
+              disabled={!capabilities.paypal || busy || seconds === 0}
+              onClick={checkout}
+            >
+              <span className="paypal-wordmark">PayPal</span>
+              <span>Continue with PayPal</span>
+              <ArrowRight size={17} />
+            </button>
+          ) : (
+            <Notice kind="success">
+              You already own this data. Open it above; no checkout is needed.
+            </Notice>
+          )}
         </div>
       )}
     </Modal>

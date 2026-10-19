@@ -11,6 +11,9 @@ export function capabilities() {
     paymentEnvironment: paymentEnvironment(),
     payouts: process.env.PAYPAL_PAYOUTS_ENABLED === "true",
     ai: !!process.env.GEMINI_API_KEY,
+    googleAuth: !!(
+      process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ),
   };
 }
 export const appUrl = () => process.env.APP_URL || "http://localhost:3000";

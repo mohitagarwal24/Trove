@@ -3312,6 +3312,74 @@ h1 {
 .sidebar .brand-period {
   color: var(--highlight);
 }
+.sidebar-toggle {
+  flex-shrink: 0;
+}
+.client-picker {
+  display: grid;
+  gap: 8px;
+  max-width: 240px;
+  margin-bottom: 16px;
+}
+.google-sign-in {
+  display: grid;
+  gap: 12px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.google-sign-in p {
+  margin: 0;
+  font-size: 12px;
+}
+@media (min-width: 761px) {
+  .sidebar-collapsed .sidebar {
+    width: 76px;
+    padding-inline: 12px;
+  }
+  .sidebar-collapsed .main-shell {
+    margin-left: 76px;
+  }
+  .sidebar-collapsed .brand-link {
+    padding-left: 11px;
+    margin-bottom: 28px;
+  }
+  .sidebar-collapsed .brand > span,
+  .sidebar-collapsed .workspace-switch,
+  .sidebar-collapsed .nav-label,
+  .sidebar-collapsed .nav-link > span,
+  .sidebar-collapsed .nav-link > svg:last-child:not(:first-child),
+  .sidebar-collapsed .sidebar-bottom,
+  .sidebar-collapsed .profile > span:nth-child(2),
+  .sidebar-collapsed .profile > svg {
+    display: none;
+  }
+  .sidebar-collapsed nav[aria-label="Developer and seller navigation"] {
+    margin-top: 20px;
+  }
+  .sidebar-collapsed .nav-link {
+    justify-content: center;
+    min-height: 44px;
+    padding: 12px;
+    margin-bottom: 6px;
+  }
+  .sidebar-collapsed .profile-container {
+    margin-inline: -12px;
+  }
+  .sidebar-collapsed .profile {
+    justify-content: center;
+    padding-inline: 12px;
+  }
+  .sidebar-collapsed .account-menu {
+    left: 12px;
+    right: auto;
+    width: 192px;
+  }
+}
+@media (max-width: 760px) {
+  .sidebar-toggle {
+    display: none;
+  }
+}
 .brand-link {
   padding-left: 12px;
   flex-shrink: 0;

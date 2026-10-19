@@ -14,6 +14,7 @@ export function AuthDialog({
   onOpenChange: (open: boolean) => void;
   onAuthenticated: () => Promise<void>;
 }) {
+  const { capabilities } = useTrove();
   const [mode, setMode] = useState<"login" | "register">("login"),
     [name, setName] = useState(""),
     [email, setEmail] = useState(""),
@@ -35,6 +36,17 @@ export function AuthDialog({
           : "Sign in to your workspace."
       }
     >
+      {capabilities.googleAuth && (
+        <div className="google-sign-in">
+          <a
+            className="button button-secondary"
+            href={`/api/auth/google?returnTo=${encodeURIComponent(typeof window === "undefined" ? "/" : location.pathname + location.search)}`}
+          >
+            Continue with Google
+          </a>
+          <p className="muted">or use your email</p>
+        </div>
+      )}
       <form
         className="form-stack"
         onSubmit={async (e) => {

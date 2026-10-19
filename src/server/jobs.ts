@@ -103,6 +103,9 @@ async function reconcileWebhook(eventId: string) {
 export async function maintenance() {
   const day = new Date().toISOString().slice(0, 10);
   await enqueue("sources", day);
+  await db.oAuthAttempt.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
+  });
   await db.session.deleteMany({ where: { expiresAt: { lt: new Date() } } });
   await db.passwordReset.deleteMany({
     where: { expiresAt: { lt: new Date() } },

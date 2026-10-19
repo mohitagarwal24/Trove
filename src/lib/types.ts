@@ -39,6 +39,7 @@ export type DataFilter = {
   value: string;
 };
 export type Requirements = {
+  needs?: import("./research").DataNeed[];
   filters?: DataFilter[];
   categories: string[];
   fields: string[];
@@ -82,7 +83,15 @@ export type QuoteLineView = {
   };
   offer: Offer;
 };
+export type ReusedSource = {
+  purchaseId: string;
+  offerVersionId: string;
+  title: string;
+  fields: string[];
+  quantity: number;
+};
 export type QuoteView = {
+  reusedSources: ReusedSource[];
   id: string;
   taskId: string | null;
   totalCents: number;
@@ -126,6 +135,8 @@ export type PurchaseView = {
   receipt: { id: string; document: unknown } | null;
 };
 export type UserView = {
+  hasPassword: boolean;
+  googleConnected: boolean;
   id: string;
   name: string;
   email: string;
@@ -134,6 +145,7 @@ export type UserView = {
   workspaceId: string;
 };
 export type Capabilities = {
+  googleAuth: boolean;
   paypal: boolean;
   paypalClientId: string | null;
   payouts: boolean;

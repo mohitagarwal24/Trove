@@ -10,16 +10,20 @@ model User {
   id           String @id @default(cuid())
   email        String @unique
   name         String
-  passwordHash String
+  passwordHash String?
   role         String @default("buyer")
   sellerId     String?
   createdAt    DateTime @default(now())
   disabledAt   DateTime?
+  googleSubject String? @unique
+  emailVerifiedAt DateTime?
   sessions     Session[]
   memberships  Membership[]
   tokens       AgentToken[]
 }
 model Session {
+  authProvider String @default("password")
+  authenticatedAt DateTime @default(now())
   id        String @id
   userId    String
   expiresAt DateTime
@@ -118,6 +122,7 @@ model TaskRun {
   purchases   Purchase[]
 }
 model Quote {
+  reusedSources Json @default("[]")
   id              String @id @default(cuid())
   workspaceId     String
   taskId          String?
@@ -326,4 +331,14 @@ model PasswordReset {
   expiresAt DateTime
   usedAt DateTime?
   @@index([userId])
+}
+
+model OAuthAttempt {
+  id String @id
+  browserHash String
+  nonceHash String
+  encryptedVerifier String
+  expiresAt DateTime
+  returnTo String
+  linkUserId String?
 }

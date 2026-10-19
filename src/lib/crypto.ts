@@ -18,7 +18,8 @@ export async function passwordHash(password: string) {
   const salt = randomBytes(16).toString("hex");
   return salt + ":" + (await derive(password, salt)).toString("hex");
 }
-export async function verifyPassword(password: string, stored: string) {
+export async function verifyPassword(password: string, stored: string | null) {
+  if (!stored) return false;
   const [salt, digest] = stored.split(":");
   if (!salt || !digest || !/^[a-f0-9]{128}$/i.test(digest)) return false;
   const candidate = await derive(password, salt),

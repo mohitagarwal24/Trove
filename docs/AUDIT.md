@@ -1,4 +1,18 @@
-# Implementation audit — 19 October 2026
+# Follow-up review — 19 October 2026
+
+Added a persistent desktop sidebar toggle with accessible icon navigation; mobile keeps the full focus-contained drawer. Google OpenID Connect signup/linking is implemented and waits for real Google OAuth credentials. Codex, Claude Code and a database-free Claude Desktop bridge share eight MCP tools. `discover_data` accepts the agent’s exact requirements; Trove owns metadata search, matching counts, eligibility, cheapest complete coverage and gaps. Browser natural-language research uses the same evaluator after one Gemini extraction call.
+
+Purchase history now authoritatively grants reuse of the same provider/batch/purpose/licence/field/record scope across tasks and clients. Quotes remove owned sources from their total; zero-total plans cannot create a payment. Acquisition locks block duplicate in-flight purchases across different quotes. Expired delivery caches rebuild from pinned snapshots without capture or accounting writes. Refunds remove eligibility for reuse. Updated content or additional scope requires a new quote. Historical purchases participate without a separate ownership backfill.
+
+Cleanup: replaced `scripts/mcp.ts` (which needed local database credentials) with the remote-only bridge. Removed three unreferenced `docs/previews/*.png` snapshots; they were listed only in the old inventory. Import reachability found no orphan source files among 64 code entries at that check. Retained migrations, font licences, operator scripts, optional Elastic search and Postman because they remain used. The previous file-by-file review is retained below with removed entries omitted.
+
+Validation: 53 backend checks, 11 Chrome browser checks, strict types, production build, dependency audit (zero reported vulnerabilities), and configured-secret scan passed. Browser coverage includes real HTTP MCP and the stdio-to-HTTP bridge without database credentials, token revocation, exact requirement discovery, client configuration selection, sidebar persistence/resizing and axe checks. The independent Impeccable navigation/Connect finish review returned **disposition: ship** with no material fixes. The existing intentional Inter exception is retained; no new findings were suppressed. Google provider consent and actual Codex/Claude model sessions still require the user’s credentials/client setup; protocol tests do not claim those external acceptances.
+
+New retained files: `src/lib/research.ts` owns the shared request schema; `src/server/discovery.ts` owns exact requirement evaluation; `src/server/google-auth.ts` owns OpenID Connect; `src/server/ownership.ts` derives reusable rights from captured purchases; `scripts/mcp-bridge.mjs` provides remote stdio access; `tests/google-auth.test.ts` verifies callback boundaries. Four forward migrations add metadata search, Google identity/state, reused-source quote bindings, and safe authentication-age handling for pre-existing sessions. No migration history was rewritten.
+
+---
+
+# Previous implementation audit — 19 October 2026
 
 This revision replaces the application's shared demonstration paths with private account, provider, research and payment workflows. It is an implementation review and validation record, not a certification of merchant approval, legal compliance or market demand.
 
@@ -83,9 +97,6 @@ The list below records the review boundary, including unchanged configuration, m
 - `docs/OPERATIONS.md` — Reviewed/updated current research, system, operations, acceptance or disclosure documentation.
 - `docs/PITCH.md` — Reviewed/updated current research, system, operations, acceptance or disclosure documentation.
 - `docs/RESOURCES.md` — Reviewed/updated current research, system, operations, acceptance or disclosure documentation.
-- `docs/previews/discover-desktop.png` — Replaced stale screenshot with current production-build capture.
-- `docs/previews/discover-mobile.png` — Replaced stale screenshot with current production-build capture.
-- `docs/previews/workspace-desktop.png` — Replaced stale screenshot with current production-build capture.
 - `next-env.d.ts` — Retained Next-generated declarations; validated by compiler.
 - `next.config.ts` — Retained security headers and framework configuration.
 - `package-lock.json` — Regenerated after dependency cleanup; pinned installation and audit checked.
@@ -113,7 +124,7 @@ The list below records the review boundary, including unchanged configuration, m
 - `scripts/hosted-request.mjs` — Reviewed operator/deployment entry point, private configuration handling and bounded operations.
 - `scripts/hosted-start.mjs` — Reviewed operator/deployment entry point, private configuration handling and bounded operations.
 - `scripts/index-search.ts` — Reviewed operator/deployment entry point, private configuration handling and bounded operations.
-- `scripts/mcp.ts` — Reviewed operator/deployment entry point, private configuration handling and bounded operations.
+- `scripts/mcp-bridge.mjs` — Replaces the database-backed stdio entry with a remote-only MCP bridge.
 - `scripts/review-provider.ts` — Reviewed operator/deployment entry point, private configuration handling and bounded operations.
 - `scripts/sync-data.ts` — Reviewed operator/deployment entry point, private configuration handling and bounded operations.
 - `scripts/worker.ts` — Reviewed operator/deployment entry point, private configuration handling and bounded operations.

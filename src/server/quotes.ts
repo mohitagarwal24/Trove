@@ -8,6 +8,7 @@ import { assert } from "@/lib/errors";
 import { eligibility, requiredFields, publicSeller } from "./catalog";
 import type { Actor } from "./auth";
 import type { Requirements } from "@/lib/types";
+import { ownershipMatcher } from "./ownership";
 export const quoteInclude = {
   lines: {
     include: { offer: { include: { seller: { select: publicSeller } } } },
@@ -83,6 +84,14 @@ export async function createQuote(
       "The requested fields are not available from these sources.",
     );
   }
+  if (requirements?.needs)
+    assert(
+      requirements.needs.every((n) =>
+        offers.some((o) => o.category === n.category),
+      ),
+      "INCOMPLETE_COVERAGE",
+      "Select sources covering every requested category.",
+    );
   const bps = Number(process.env.PLATFORM_COMMISSION_BPS || 1000);
   assert(
     Number.isInteger(bps) && bps >= 0 && bps <= 10000,
@@ -95,7 +104,7 @@ export async function createQuote(
       id: { in: offers.flatMap((o) => (o.datasetId ? [o.datasetId] : [])) },
     },
   });
-  const lines = offers
+  const requestedLines = offers
     .sort((a, b) => a.id.localeCompare(b.id))
     .map((offer) => {
       assert(
@@ -108,7 +117,15 @@ export async function createQuote(
         "LICENCE_RESTRICTED",
         "This offer does not permit your intended use.",
       );
+      const need = requirements?.needs?.find(
+        (n) => n.category === offer.category,
+      );
       if (requirements) {
+        assert(
+          requirements.categories.includes(offer.category),
+          "UNREQUESTED_CATEGORY",
+          "This source is outside the requested categories.",
+        );
         const reason = eligibility(offer, requirements);
         assert(
           !reason,
@@ -131,6 +148,12 @@ export async function createQuote(
         "PROHIBITED_FIELD",
         "Requested fields are not permitted by the seller.",
       );
+      if (need)
+        assert(
+          need.fields.every((f) => effectiveFields.includes(f)),
+          "INCOMPLETE_FIELDS",
+          "The quote must include every requested field.",
+        );
       const dataset = datasets.find((d) => d.id === offer.datasetId);
       assert(
         dataset,
@@ -154,9 +177,19 @@ export async function createQuote(
       );
       const quantity = Math.min(
         matched.length,
-        input.quantity || requirements?.quantity || offer.recordLimit,
+        need?.quantity ||
+          input.quantity ||
+          requirements?.quantity ||
+          offer.recordLimit,
         offer.recordLimit,
       );
+      if (need)
+        assert(
+          quantity === need.quantity,
+          "INSUFFICIENT_RECORDS",
+          "The source no longer satisfies the requested record quantity. Discover sources again.",
+          409,
+        );
       assert(
         Number.isInteger(quantity) && quantity > 0,
         "INVALID_QUANTITY",
@@ -191,6 +224,16 @@ export async function createQuote(
         },
       };
     });
+  const match = await ownershipMatcher(actor.workspaceId);
+  const reusedSources = [];
+  const lines = [];
+  for (const line of requestedLines) {
+    const owned = await match(line);
+    if (owned) {
+      const { pending: _pending, ...reference } = owned;
+      reusedSources.push(reference);
+    } else lines.push(line);
+  }
   const totalCents = lines.reduce((s, l) => s + l.priceCents, 0);
   assert(
     !task ||
@@ -204,13 +247,22 @@ export async function createQuote(
       workspaceId: actor.workspaceId,
       taskId: task?.id,
       purpose,
+      reusedSources,
       totalCents,
       commissionCents: lines.reduce(
         (s, l) => s + l.priceCents - l.sellerCents,
         0,
       ),
       expiresAt,
-      planHash: hash(JSON.stringify({ lines, purpose, totalCents, expiresAt })),
+      planHash: hash(
+        JSON.stringify({
+          lines,
+          reusedSources,
+          purpose,
+          totalCents,
+          expiresAt,
+        }),
+      ),
       lines: { create: lines },
     },
     include: quoteInclude,

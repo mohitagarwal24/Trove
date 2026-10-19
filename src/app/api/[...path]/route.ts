@@ -1,8 +1,11 @@
+import { beginGoogle, finishGoogle, googleCookie } from "@/server/google-auth";
+import { discoverySchema } from "@/lib/research";
+import { discoverData } from "@/server/discovery";
 import { NextRequest, NextResponse, after } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { AppError, assert } from "@/lib/errors";
-import { capabilities, paymentEnvironment } from "@/lib/config";
+import { appUrl, capabilities, paymentEnvironment } from "@/lib/config";
 import {
   authenticate,
   checkOrigin,
@@ -81,6 +84,73 @@ async function handler(
       await persistVerifiedWebhook(body);
       wakeQueue = true;
       return json({ received: true });
+    }
+    if (route === "auth/google" && method === "GET") {
+      try {
+        const attempt = await beginGoogle(
+          request,
+          request.nextUrl.searchParams.get("returnTo"),
+          request.nextUrl.searchParams.get("intent") === "link",
+        );
+        const response = NextResponse.redirect(attempt.url);
+        response.cookies.set(googleCookie, attempt.browser, {
+          httpOnly: true,
+          secure:
+            new URL(process.env.APP_URL || request.url).protocol === "https:",
+          sameSite: "lax",
+          path: "/api/auth/google",
+          maxAge: 600,
+        });
+        return response;
+      } catch {
+        return NextResponse.redirect(
+          new URL("/?auth_error=google_start", appUrl()),
+        );
+      }
+    }
+    if (route === "auth/google/callback" && method === "GET") {
+      let response;
+      try {
+        const input = z
+          .object({
+            state: z.string().min(20).max(100),
+            code: z.string().min(1).max(4000),
+            browser: z.string().min(20).max(100),
+          })
+          .parse({
+            state: request.nextUrl.searchParams.get("state"),
+            code: request.nextUrl.searchParams.get("code"),
+            browser: request.cookies.get(googleCookie)?.value,
+          });
+        const result = await finishGoogle(request, input);
+        response = NextResponse.redirect(
+          new URL(result.returnTo, process.env.APP_URL || request.url),
+        );
+        response.cookies.set(sessionCookie, result.token, {
+          httpOnly: true,
+          secure:
+            new URL(process.env.APP_URL || request.url).protocol === "https:",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 7 * 86400,
+        });
+      } catch (error) {
+        const message =
+          error instanceof AppError && error.code === "GOOGLE_LINK_REQUIRED"
+            ? "google_link"
+            : "google_callback";
+        response = NextResponse.redirect(
+          new URL(
+            "/?auth_error=" + message,
+            process.env.APP_URL || request.url,
+          ),
+        );
+      }
+      response.cookies.set(googleCookie, "", {
+        path: "/api/auth/google",
+        maxAge: 0,
+      });
+      return response;
     }
     checkOrigin(request);
     if (route === "auth/login" && method === "POST") {
@@ -163,6 +233,8 @@ async function handler(
           role: actor.role,
           sellerId: actor.sellerId,
           workspaceId: actor.workspaceId,
+          hasPassword: actor.hasPassword,
+          googleConnected: actor.googleConnected,
         };
       } catch {}
       return json({
@@ -208,7 +280,7 @@ async function handler(
     }
     if (route === "auth/close-account" && method === "POST") {
       const input = z
-        .object({ password: z.string().min(1).max(128) })
+        .object({ password: z.string().min(1).max(128).optional() })
         .parse(await readJson(request));
       await closeAccount(actor, input.password);
       const response = json({ closed: true });
@@ -236,6 +308,15 @@ async function handler(
       const response = json({ signedIn: false });
       response.cookies.delete(sessionCookie);
       return response;
+    }
+    if (route === "discovery" && method === "POST") {
+      await rateLimit(actor.id, "discovery", 30, 60000);
+      return json(
+        await discoverData(
+          actor,
+          discoverySchema.parse(await readJson(request)),
+        ),
+      );
     }
     if (route === "tasks" && method === "GET")
       return json(

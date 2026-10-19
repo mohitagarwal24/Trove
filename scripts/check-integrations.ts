@@ -10,6 +10,7 @@ async function main() {
     JSON.stringify(
       {
         database: "connected",
+        googleSignIn: caps.googleAuth ? "configured_requires_consent_test" : "not_configured",
         offers: await db.offerVersion.count({
           where: {
             current: true,

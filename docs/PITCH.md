@@ -13,7 +13,7 @@ The application uses ordinary paid-product contracts and storage for these offer
 - Approve the exact amount using a PayPal Sandbox personal buyer. Show delivery only after confirmed capture and inspect actual payment references.
 - Retrieve the same result again without another purchase. Inspect source attribution, receipt and usage terms.
 - Show a real provider profile, pending review/upload flow and immutable offer edit. Earnings remain owed unless an actual payout item succeeds.
-- Show an agent token and seven bounded MCP tools. Explain that agents can prepare purchases but humans approve them.
+- Show an agent token and eight bounded MCP tools. Explain that agents can prepare purchases but humans approve them.
 
 ## Tracks and evidence
 

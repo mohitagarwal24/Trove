@@ -191,13 +191,15 @@ Inherited compact metadata and uppercase utility labels remain in secondary scre
 
 The fixed rail is (232px) wide, matched by the main shell's left margin. At widths up to (1250px), both become (208px). The rail uses (100dvh): its brand and account footer do not shrink, and the middle region has `min-height: 0` with vertical scrolling. The agent callout lives inside that scrollable region, so “Your agent. Better informed.” stays reachable on shorter laptops. At desktop heights up to (820px), rail padding and gaps compress; up to (700px), the callout icon hides and copy spacing tightens. Account controls remain outside the scroll region.
 
+Above the mobile breakpoint, a labelled utility-bar toggle switches the expanded rail to a (76px) icon rail and matches the main shell margin to it. The preference is stored in browser storage. The compact rail hides the workspace switch, group labels, callout, and profile text while retaining route icons with accessible names and native titles. Its account avatar still opens the account menu.
+
 The utility bar is (64px) tall. Main content is centered with a maximum width of (1510px), desktop horizontal gutters of (38px), top padding of (32px), and bottom padding of (55px). Up to (1250px), horizontal gutters become (25px) and bottom padding (45px). Up to (760px), gutters become (20px) and the utility bar (61px); up to (460px), gutters become (16px).
 
 Discover has a flexible inventory plus a (294px) composer column, separated by (26px). At (1600px) and above, the composer becomes (320px) with a (32px) gap. Up to (1250px), it becomes (260px) with a (20px) gap. Up to (1050px), the composer group moves below the inventory and uses a (1.5fr / 1fr) internal grid; up to (460px), that group becomes one column. Offers use two equal columns and a (16px) gap, collapsing to one column up to (460px). Category tabs scroll horizontally rather than wrap.
 
 Workspace uses a (350px) composer beside flexible output, becoming (300px) up to (1250px) and one column up to (1050px). Connect uses a single stacked column with a maximum width of (1000px); token management, client configuration, and the example task remain in that reading order. Its tool reference is collapsed until requested. Purchase details similarly collapse their summary aside at (1050px). Data tables preserve columns inside horizontally scrollable containers.
 
-Up to (760px), the rail becomes a drawer of `min(288px, 86vw)`. It opens above a backdrop, makes the main shell inert, locks body scrolling, traps keyboard focus, closes on Escape, and restores focus. Closed mobile navigation is inert. Retain its labelled dialog and modal semantics when open. A skip link precedes the shell.
+Up to (760px), the rail becomes a full-content drawer of `min(288px, 86vw)`, regardless of the stored desktop rail preference; the desktop collapse toggle is hidden. It opens above a backdrop, makes the main shell inert, locks body scrolling, traps keyboard focus, closes on Escape, and restores focus. Closed mobile navigation is inert. Retain its labelled dialog and modal semantics when open. A skip link precedes the shell.
 
 **The Reachable Rail Rule.** Preserve the scrollable middle and pinned account footer; never make navigation depend on a tall viewport or reduced browser zoom.
 
@@ -243,7 +245,7 @@ Search is a (46px) white field with an inline search icon and optional keyboard 
 
 ### Navigation
 
-The rail uses pale text on ink. Hover lightens the inset; the active route uses cobalt with white text and `aria-current="page"`. The callout uses a lighter ink panel, amber icon/link, and readable supporting text. Profile settings stay pinned at the rail foot; the account menu opens upward. Preserve the drawer and height behavior described in Layout.
+The rail uses pale text on ink. Hover lightens the inset; the active route uses cobalt with white text and `aria-current="page"`. The callout uses a lighter ink panel, amber icon/link, and readable supporting text. Profile settings stay pinned at the rail foot; the account menu opens upward and remains available in the icon rail. Preserve the labelled collapse control, accessible icon names, drawer, and height behavior described in Layout.
 
 ### Research Composer
 
@@ -257,17 +259,17 @@ Selecting sources reveals a fixed dark-ink dock with selection count, exact comb
 
 Dialogs are centered white surfaces with (16px) corners, (26px) padding, a maximum height of (88vh), and scrolling content. Standard width is `min(480px, calc(100vw - 32px))`; wide dialogs use (710px) instead of (480px). Keep labelled dialog semantics, focus trapping, focus restoration, Escape dismissal, and explicit close controls.
 
-Loading, empty search, connection failure, expired quote, unavailable integration, and uncertain-payment states retain concise explanations and recovery controls. Payment approval uses PayPal; Sandbox is identified when that environment is active. Payment and fulfilment remain distinct in purchase status; seller earnings and payout status appear in the provider workspace. Voids remain distinct from refunds. Results expose purchased rows, provenance, download, receipt, and a genuine AI summary only when integration and source permissions allow it. Missing integrations fail closed. Quote scope, filtered rows, expiry, and exact total precede approval; source licences and access details use an expandable section rather than repeated explanatory blocks.
+Loading, empty search, connection failure, expired quote, unavailable integration, and uncertain-payment states retain concise explanations and recovery controls. Payment approval uses PayPal; Sandbox is identified when that environment is active. Payment and fulfilment remain distinct in purchase status; seller earnings and payout status appear in the provider workspace. Voids remain distinct from refunds. Results expose purchased rows, provenance, download, receipt, and a genuine AI summary only when integration and source permissions allow it. Missing integrations fail closed. Quote scope, filtered rows, expiry, and exact total precede approval; source licences and access details use an expandable section rather than repeated explanatory blocks. Previously purchased sources appear as separate no-charge rows with links to the purchased data. A zero-total plan explains that the data is already owned and shows no checkout action.
 
 ### Accounts and Provider Publishing
 
-Private workspaces use a shared sign-in and registration dialog with visible field labels, inline errors, and password guidance only when needed. Profile changes, password changes, account export, and account closure live on Account; destructive closure uses a separate confirmation dialog. Password recovery uses its own focused form and reports real service availability.
+Private workspaces use a shared sign-in and registration dialog with visible field labels, inline errors, and password guidance only when needed. Profile changes, password changes, account export, and account closure live on Account; destructive closure uses a separate confirmation dialog. Password recovery uses its own focused form and reports real service availability. When Google authentication is configured, the shared dialog offers a secondary “Continue with Google” action above the email form. Account exposes explicit Google linking; accounts without a password use Google identity confirmation for closure. These controls follow the existing button and form vocabulary.
 
 Provider onboarding collects profile details and distribution-rights attestation. Pending providers can prepare datasets, with a short review notice explaining why offers are not yet discoverable. Dataset publishing uses the same form vocabulary for a real JSON upload, source and licence links, attribution, declared source date, price, and explicit rights and AI-processing choices. Published offer edits create new versions. Keep review, publishing, earnings, and payout states truthful and specific to their audience.
 
 ### Agent Connection
 
-Connect presents three stacked setup panels: create a scoped token, copy the client configuration, and give the agent a task. Tokens show scope and active, expired, or revoked status; a token secret is displayed once, with copy feedback. Tool descriptions sit in an expandable reference. Browser approval remains required for agent-prepared purchases. These are customer workflows and use the same shell, forms, focus treatment, and error handling as the rest of the application.
+Connect presents three stacked setup panels: create a scoped token, copy the client configuration, and give the agent a task. Tokens show scope and active, expired, or revoked status; a token secret is displayed once, with copy feedback. The configuration panel uses a visibly labelled client selector for Codex, Claude Code, and Claude Desktop. File name, configuration text, setup hint, documentation link, and copied content follow the selected client. Tool descriptions sit in an expandable reference. Browser approval remains required for agent-prepared purchases. These are customer workflows and use the same shell, forms, focus treatment, and error handling as the rest of the application.
 
 ## Do's and Don'ts
 

@@ -75,14 +75,10 @@ export function Purchases() {
         <Metric
           label="Ready to download"
           value={String(
-            real.filter(
-              (p) =>
-                p.entitlement &&
-                !p.entitlement.revokedAt &&
-                new Date(p.entitlement.expiresAt) > new Date(),
-            ).length,
+            real.filter((p) => p.entitlement && !p.entitlement.revokedAt)
+              .length,
           )}
-          detail="Within the access period"
+          detail="Available from your purchases"
           icon={PackageCheck}
         />
         <Metric
@@ -265,11 +261,17 @@ export function PurchaseDetail({ id }: { id: string }) {
     if (
       p.paymentState === "captured" &&
       p.entitlement &&
-      new Date(p.entitlement.expiresAt) > new Date() &&
       !p.entitlement.revokedAt
     ) {
       try {
-        setResult(await api<Result>(`/purchases/${id}/result`));
+        const data = await api<Result>(`/purchases/${id}/result`);
+        setResult(data);
+        setError("");
+        if (data.expiresAt !== p.entitlement.expiresAt)
+          setPurchase({
+            ...p,
+            entitlement: { ...p.entitlement, expiresAt: data.expiresAt },
+          });
       } catch (e) {
         setError((e as Error).message);
       }
@@ -389,10 +391,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                 },
                 {
                   label: "Result available",
-                  done:
-                    !!p.entitlement &&
-                    !p.entitlement.revokedAt &&
-                    new Date(p.entitlement.expiresAt) > new Date(),
+                  done: !!p.entitlement && !p.entitlement.revokedAt,
                   Icon: PackageCheck,
                 },
               ].map((s, i) => (
@@ -517,8 +516,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                   <div className="result-ready">
                     <span>
                       <Check size={15} />
-                      Accessible until{" "}
-                      {new Date(result.expiresAt).toLocaleString()}
+                      Purchased · download again at no charge
                     </span>
                     <button
                       className="button button-small button-secondary"
@@ -530,6 +528,23 @@ export function PurchaseDetail({ id }: { id: string }) {
                       Download JSON
                     </button>
                   </div>
+                  {!!p.quote.reusedSources?.length && (
+                    <div className="source-result">
+                      <h3>Previously purchased sources</h3>
+                      {p.quote.reusedSources.map((source) => (
+                        <p
+                          key={`${source.purchaseId}:${source.offerVersionId}`}
+                        >
+                          <Link
+                            className="text-link"
+                            href={`/purchases/${source.purchaseId}`}
+                          >
+                            {source.title}
+                          </Link>
+                        </p>
+                      ))}
+                    </div>
+                  )}
                   {result.sources.map((source, i) => (
                     <div className="source-result" key={i}>
                       <div className="source-result-heading">
@@ -555,7 +570,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                 <EmptyState
                   title={
                     p.fulfilmentState === "access_expired"
-                      ? "Result access has expired"
+                      ? "Restoring purchased data"
                       : p.paymentState === "refunded"
                         ? "Access revoked after refund"
                         : "The result stays protected"

@@ -169,6 +169,32 @@
               }
             }
           ]
+        },
+        {
+          "name": "Find data for agent requirements",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/discovery",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Drug approval research\",\n  \"needs\": [\n    {\n      \"category\": \"Drug approvals\",\n      \"fields\": [\n        \"brand_name\",\n        \"active_ingredients\"\n      ],\n      \"quantity\": 10,\n      \"maxAgeDays\": 3650,\n      \"filters\": []\n    }\n  ],\n  \"purpose\": \"ai_inference\",\n  \"budgetCents\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         }
       ]
     },
