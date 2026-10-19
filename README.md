@@ -4,6 +4,8 @@ A data marketplace where research agents discover, compare, and purchase precise
 
 [Open the hosted demo](https://trove-mohit24.onrender.com) · [Hosting and first-run credentials](docs/HOSTING.md). The hosted environment uses synthetic fixtures and labelled simulated payments until sandbox credentials are configured.
 
+Follow [the manual testing checklist](docs/MANUAL_TESTING.md) for buyer/seller accounts, guided and live AI research, PayPal sandbox checkout, separate seller payouts, refunds and failure scenarios.
+
 **Current external verification:** no PayPal or Gemini credentials were supplied during implementation. The local simulation is functional and explicitly labelled. Actual sandbox buyer payments, signature-verified webhook delivery, model calls, and seller payouts are implemented but require credentialed end-to-end validation. This repository does not claim live marketplace approval.
 
 ## Local setup
