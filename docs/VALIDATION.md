@@ -9,6 +9,7 @@
 - Independent Impeccable review accepted the fitted rail and non-green identity, then scored all three requested corrections resolved. Updated screenshots below come from the final production build.
 - No PayPal checkout or Gemini call was made for this design revision. Browser tasks explicitly use guided mode; the summary check runs only when AI is unconfigured. Sandbox checkout availability follows configuration without initiating a transaction. Backend lifecycle code was unchanged; earlier backend results below were not rerun for this interface change.
 - Mobbin reference search was attempted but its connector required a paid plan. No upgrade or paid design resource was used.
+- After deployment, all three new regression tests also passed against the public Render site (13.9 seconds); health returned HTTP 200. Local preview servers and the worker were stopped after verification.
 
 Validated locally on 18 October 2026 with Node 24.21.0, PostgreSQL 17, Elasticsearch 9.2.0 and Chromium. The current version is a working synthetic-data MVP. External payment, payout, webhook-delivery and model acceptance remain pending credentials.
 
