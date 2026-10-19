@@ -31,7 +31,10 @@ jobs:
           POSTGRES_PASSWORD: trove_local
           POSTGRES_DB: trove
         ports: ["5434:5432"]
-        options: --health-cmd 'pg_isready -U trove -d trove' --health-interval 3s --health-retries 20
+        options: >-
+          --health-cmd "pg_isready -U trove -d trove"
+          --health-interval 3s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
