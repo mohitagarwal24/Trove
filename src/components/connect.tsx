@@ -87,10 +87,6 @@ export function Connect() {
     <div className="page-enter">
       <section className="page-heading compact-heading">
         <div>
-          <div className="section-eyebrow">
-            <span className="eyebrow-line" />
-            BUILT FOR YOUR EXISTING AGENT
-          </div>
           <h1>
             Your workflow.
             <br />
@@ -285,7 +281,6 @@ export function Connect() {
             </div>
           </section>
           <section className="panel resources-card">
-            <div className="section-eyebrow">IMPLEMENTATION RESOURCES</div>
             <h3>Built with the right context.</h3>
             <p>
               Official references and hackathon resources guide the integration.

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -49,6 +49,24 @@ const categoryIcons: Record<string, typeof Database> = {
 export function Discover() {
   const { offers, ensureAuth, notify, capabilities } = useTrove();
   const router = useRouter();
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const shortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        event.key === "/" &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        !target.closest("input, textarea, select, [contenteditable=true]")
+      ) {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", shortcut);
+    return () => window.removeEventListener("keydown", shortcut);
+  }, []);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All data");
   const [sort, setSort] = useState("recommended");
@@ -114,10 +132,6 @@ export function Discover() {
     <div className="page-enter discover-page">
       <section className="page-heading">
         <div>
-          <div className="section-eyebrow">
-            <span className="eyebrow-line" />
-            THE DATA MARKETPLACE
-          </div>
           <h1>
             Better data.
             <br />
@@ -143,6 +157,7 @@ export function Discover() {
             <div className="search-input">
               <Search size={18} />
               <input
+                ref={searchRef}
                 aria-label="Search data offers"
                 placeholder="Search datasets, suppliers, or topics…"
                 value={query}
@@ -260,15 +275,10 @@ export function Discover() {
         </div>
         <aside className="research-aside">
           <div className="research-panel">
-            <div className="panel-eyebrow">
-              <span className="sparkle-box">
-                <Sparkles size={17} />
-              </span>
-              RESEARCH, WITH INTENT
-            </div>
             <h2>
-              A question is
-              <br />a good place to start.
+              What are you
+              <br />
+              working on?
             </h2>
             <p>
               Let your agent find the right sources.
@@ -305,7 +315,7 @@ export function Discover() {
                 : "Guided demo · no AI key required"}
             </span>
             <div className="panel-divider" />
-            <div className="section-eyebrow">OR TRY A STARTING POINT</div>
+            <div className="suggestion-label">Try a starting point</div>
             <button
               className="prompt-suggestion"
               onClick={() => startResearch(examplePrompts[1])}
@@ -355,7 +365,7 @@ export function Discover() {
         </aside>
       </div>
       {selected.length > 0 && (
-        <div className="comparison-tray">
+        <div className="comparison-tray" aria-label="Offer comparison">
           <div>
             <span className="tray-icon">
               <Layers3 size={18} />

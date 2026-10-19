@@ -124,10 +124,6 @@ export function SellerStudio() {
     <div className="page-enter">
       <section className="page-heading compact-heading">
         <div>
-          <div className="section-eyebrow">
-            <span className="eyebrow-line" />
-            SELLER STUDIO
-          </div>
           <h1>
             Your data.
             <br />

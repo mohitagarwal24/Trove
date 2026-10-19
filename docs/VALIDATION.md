@@ -1,5 +1,15 @@
 # Validation and acceptance status
 
+## Interface revision — 19 October 2026
+
+- Production build and TypeScript pass. All **10 browser tests pass against the production build**, including the three new layout/keyboard regressions.
+- At 1366 × 768 and 1280 × 720, the entire “Your agent. Better informed.” panel and account control fit within the viewport. A shorter 1093 × 614 CSS viewport uses a scrollable middle section; the account footer stays pinned. These are viewport checks, not a claim to have changed Chrome's toolbar zoom setting.
+- At 390 × 844, navigation opens as a modal drawer with an inert background, contained keyboard focus, Escape dismissal and focus return. Search's `/` shortcut preserves typing inside fields. Selected offers appear in the comparison dock.
+- Catalogue axe scan reports no serious or critical violations. This is automated evidence, not full accessibility certification.
+- Independent Impeccable review accepted the fitted rail and non-green identity, then scored all three requested corrections resolved. Updated screenshots below come from the final production build.
+- No PayPal checkout or Gemini call was made for this design revision. Browser tasks explicitly use guided mode; the summary check runs only when AI is unconfigured. Sandbox checkout availability follows configuration without initiating a transaction. Backend lifecycle code was unchanged; earlier backend results below were not rerun for this interface change.
+- Mobbin reference search was attempted but its connector required a paid plan. No upgrade or paid design resource was used.
+
 Validated locally on 18 October 2026 with Node 24.21.0, PostgreSQL 17, Elasticsearch 9.2.0 and Chromium. The current version is a working synthetic-data MVP. External payment, payout, webhook-delivery and model acceptance remain pending credentials.
 
 ## Completed checks

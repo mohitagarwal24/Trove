@@ -7,3 +7,7 @@ playwright-report/
 *.tsbuildinfo
 .DS_Store
 .local/
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/build/
+.impeccable/hook.cache.json

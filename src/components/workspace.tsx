@@ -93,10 +93,6 @@ export function Workspace() {
     <div className="page-enter">
       <section className="page-heading compact-heading">
         <div>
-          <div className="section-eyebrow">
-            <span className="eyebrow-line" />
-            RESEARCH WORKSPACE
-          </div>
           <h1>
             From a question
             <br />

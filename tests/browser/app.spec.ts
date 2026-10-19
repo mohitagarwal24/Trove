@@ -28,15 +28,24 @@ test("catalogue filtering, offer previews and immutable comparison", async ({
   await page.getByRole("button", { name: "Back to catalogue" }).click();
   await page.getByRole("button", { name: "Compare & review" }).click();
   await expect(page.getByRole("dialog")).toContainText("$2.40");
-  await expect(
-    page.getByRole("button", { name: /Continue to sandbox checkout/ }),
-  ).toBeDisabled();
+  const { capabilities } = await (
+    await page.request.get("/api/bootstrap")
+  ).json();
+  // Configuration controls availability; this test never starts PayPal checkout.
+  const checkout = page.getByRole("button", {
+    name: /Continue to sandbox checkout/,
+  });
+  if (capabilities.paypal) await expect(checkout).toBeEnabled();
+  else await expect(checkout).toBeDisabled();
 });
 test("research task completes a labelled simulation and preserves results on reload", async ({
   page,
 }) => {
   await buyer(page);
   await page.goto("/workspace");
+  await page
+    .getByRole("combobox", { name: /^Research mode/ })
+    .selectOption("demo");
   await page.getByRole("button", { name: "Run guided research" }).click();
   await page.getByRole("button", { name: "Review purchase plan" }).click();
   await page.getByRole("button", { name: "Continue in simulation" }).click();
@@ -48,11 +57,16 @@ test("research task completes a labelled simulation and preserves results on rel
   await expect(page.locator(".source-result")).toHaveCount(2);
   await page.reload();
   await expect(page.locator(".source-result")).toHaveCount(2);
-  await page.getByRole("button", { name: "Summarise demo data" }).click();
-  await expect(page.locator(".answer-text")).toContainText(
-    "without an AI model call",
-  );
-  await expect(page.locator(".answer-text")).toContainText("Atlas Supply");
+  const { capabilities } = await (
+    await page.request.get("/api/bootstrap")
+  ).json();
+  if (!capabilities.ai) {
+    await page.getByRole("button", { name: "Summarise demo data" }).click();
+    await expect(page.locator(".answer-text")).toContainText(
+      "without an AI model call",
+    );
+    await expect(page.locator(".answer-text")).toContainText("Atlas Supply");
+  }
   await page.getByRole("button", { name: "Receipt & provenance" }).click();
   await expect(page.locator(".receipt-sheet")).toContainText("SIM-CAPTURE-");
   await page.getByRole("button", { name: "Delivery checks" }).click();
@@ -76,6 +90,9 @@ test("failed connector checks stop a bundle without a charge", async ({
 }) => {
   await buyer(page);
   await page.goto("/workspace");
+  await page
+    .getByRole("combobox", { name: /^Research mode/ })
+    .selectOption("demo");
   await page.getByRole("button", { name: "Run guided research" }).click();
   await page.getByRole("button", { name: "Review purchase plan" }).click();
   await page.getByRole("button", { name: "Continue in simulation" }).click();
@@ -186,6 +203,9 @@ test("mobile layout stays within the viewport and navigation remains usable", as
   await page
     .getByRole("link", { name: "Research workspace", exact: true })
     .click();
+  await page
+    .getByRole("combobox", { name: /^Research mode/ })
+    .selectOption("demo");
   await expect(
     page.getByRole("button", { name: "Run guided research" }),
   ).toBeVisible();

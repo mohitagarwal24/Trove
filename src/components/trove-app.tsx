@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useRef,
   type ReactNode,
 } from "react";
 import Link from "next/link";
@@ -73,6 +74,10 @@ export function TroveApp() {
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState("");
   const [mobile, setMobile] = useState(false);
+  const [smallScreen, setSmallScreen] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
   const [auth, setAuth] = useState(false);
   const [accountMenu, setAccountMenu] = useState(false);
   const [toast, setToast] = useState<{
@@ -110,6 +115,72 @@ export function TroveApp() {
     setAccountMenu(false);
     window.scrollTo({ top: 0 });
   }, [pathname]);
+  useEffect(() => {
+    const query = matchMedia("(max-width: 760px)");
+    const sync = () => {
+      setSmallScreen(query.matches);
+      if (!query.matches) setMobile(false);
+    };
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+  useEffect(() => {
+    if (!mobile) return;
+    const previous =
+      menuRef.current || (document.activeElement as HTMLElement | null);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    sidebarRef.current
+      ?.querySelector<HTMLButtonElement>(".mobile-nav-close")
+      ?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobile(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const controls = Array.from(
+        sidebarRef.current?.querySelectorAll<HTMLElement>(
+          "a[href], button:not(:disabled), input:not(:disabled)",
+        ) || [],
+      ).filter((el) => el.getClientRects().length);
+      const first = controls[0],
+        last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = overflow;
+      document.removeEventListener("keydown", onKey);
+      previous?.focus();
+    };
+  }, [mobile]);
+  useEffect(() => {
+    if (!accountMenu) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!profileRef.current?.contains(event.target as Node))
+        setAccountMenu(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setAccountMenu(false);
+        profileRef.current?.querySelector("button")?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [accountMenu]);
   async function switchAccount(account: string) {
     await post("/auth/demo", { account });
     await refresh();
@@ -156,6 +227,9 @@ export function TroveApp() {
   return (
     <AppContext.Provider value={context}>
       <div className="app-shell">
+        <a className="skip-link" href="#main-content">
+          Skip to content
+        </a>
         {mobile && (
           <button
             className="mobile-backdrop"
@@ -163,155 +237,187 @@ export function TroveApp() {
             onClick={() => setMobile(false)}
           />
         )}
-        <aside className={`sidebar ${mobile ? "sidebar-open" : ""}`}>
+        <aside
+          ref={sidebarRef}
+          id="workspace-navigation"
+          aria-label="Workspace navigation"
+          role={smallScreen && mobile ? "dialog" : undefined}
+          aria-modal={smallScreen && mobile ? true : undefined}
+          inert={smallScreen && !mobile}
+          className={`sidebar ${mobile ? "sidebar-open" : ""}`}
+        >
+          <button
+            className="icon-button mobile-nav-close"
+            aria-label="Close navigation"
+            onClick={() => setMobile(false)}
+          >
+            <X size={20} />
+          </button>
           <Link href="/" className="brand-link" aria-label="Trove home">
             <Logo />
           </Link>
-          <button className="workspace-switch" onClick={() => setAuth(true)}>
-            <span className="workspace-icon">
-              <span>T</span>
-            </span>
-            <span>
-              <strong>
-                {user?.role === "seller"
-                  ? "Seller workspace"
-                  : "Personal workspace"}
-              </strong>
-              <small>{user ? "Sandbox account" : "Explore Trove"}</small>
-            </span>
-            <ChevronDown size={14} />
-          </button>
-          <div className="nav-label">WORKSPACE</div>
-          <nav aria-label="Main navigation">
-            {nav.map((n) => (
-              <Link
-                key={n.href}
-                href={n.href}
-                className={`nav-link ${pathname === n.href || (n.href !== "/" && pathname.startsWith(n.href)) ? "active" : ""}`}
-              >
-                <n.icon size={18} />
-                <span>{n.label}</span>
-                {n.href === "/" && (
-                  <span className="nav-count">{offers.length}</span>
-                )}
-              </Link>
-            ))}
-          </nav>
-          <div className="nav-label nav-label-second">BUILD WITH TROVE</div>
-          <nav aria-label="Developer and seller navigation">
-            {tools.map((n) => (
-              <Link
-                key={n.href}
-                href={n.href}
-                className={`nav-link ${pathname === n.href ? "active" : ""}`}
-              >
-                <n.icon size={18} />
-                <span>{n.label}</span>
-                {n.href === "/connect" && <ArrowUpRight size={13} />}
-              </Link>
-            ))}
-          </nav>
-          <div className="sidebar-bottom">
-            <div className="agent-callout">
-              <div className="callout-icon">
-                <Cable size={20} />
-              </div>
-              <strong>Your agent. Better informed.</strong>
-              <p>
-                Bring Trove’s data marketplace to the tools you already use.
-              </p>
-              <Link href="/connect">
-                Connect an agent <ArrowUpRight size={14} />
-              </Link>
-            </div>
-            <a
-              className="sidebar-help"
-              href="https://github.com/paypaldev/getting-started-with-paypal-sandbox"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <BookOpen size={16} />
-              Sandbox setup guide
-              <ArrowUpRight size={13} />
-            </a>
-            <div className="profile-container">
-              <button
-                className="profile"
-                onClick={() => setAccountMenu((v) => !v)}
-                aria-expanded={accountMenu}
-              >
-                <span className="avatar">
-                  {user?.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .slice(0, 2)
-                    .join("") || "G"}
-                </span>
-                <span>
-                  <strong>{user?.name || "Guest workspace"}</strong>
-                  <small>
-                    {user?.role === "seller"
-                      ? "Seller account"
-                      : "Research & discovery"}
-                  </small>
-                </span>
-                <ChevronDown size={14} />
-              </button>
-              {accountMenu && (
-                <div className="account-menu">
-                  {caps.demo && (
-                    <>
-                      <button
-                        onClick={() =>
-                          switchAccount("buyer").catch((e) =>
-                            notify(e.message, true),
-                          )
-                        }
-                      >
-                        Buyer demo account
-                      </button>
-                      <button
-                        onClick={() =>
-                          switchAccount("pricing").catch((e) =>
-                            notify(e.message, true),
-                          )
-                        }
-                      >
-                        Northstar seller demo
-                      </button>
-                    </>
+          <div className="sidebar-scroll">
+            <button className="workspace-switch" onClick={() => setAuth(true)}>
+              <span className="workspace-icon">
+                <span>T</span>
+              </span>
+              <span>
+                <strong>
+                  {user?.role === "seller"
+                    ? "Seller workspace"
+                    : "Personal workspace"}
+                </strong>
+                <small>{user ? "Sandbox account" : "Explore Trove"}</small>
+              </span>
+              <ChevronDown size={14} />
+            </button>
+            <div className="nav-label">WORKSPACE</div>
+            <nav aria-label="Main navigation">
+              {nav.map((n) => (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  aria-current={
+                    pathname === n.href ||
+                    (n.href !== "/" && pathname.startsWith(n.href))
+                      ? "page"
+                      : undefined
+                  }
+                  className={`nav-link ${pathname === n.href || (n.href !== "/" && pathname.startsWith(n.href)) ? "active" : ""}`}
+                >
+                  <n.icon size={18} />
+                  <span>{n.label}</span>
+                  {n.href === "/" && (
+                    <span className="nav-count">{offers.length}</span>
                   )}
-                  <button
-                    onClick={() => {
-                      setAuth(true);
-                      setAccountMenu(false);
-                    }}
-                  >
-                    <Settings2 size={14} />
-                    Sign in / switch account
-                  </button>
-                  {user && (
-                    <button
-                      onClick={async () => {
-                        await post("/auth/logout");
-                        await refresh();
-                        setAccountMenu(false);
-                        router.push("/");
-                      }}
-                    >
-                      <LogOut size={14} />
-                      Sign out
-                    </button>
-                  )}
+                </Link>
+              ))}
+            </nav>
+            <div className="nav-label nav-label-second">BUILD WITH TROVE</div>
+            <nav aria-label="Developer and seller navigation">
+              {tools.map((n) => (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  aria-current={
+                    pathname === n.href ||
+                    (n.href !== "/" && pathname.startsWith(n.href))
+                      ? "page"
+                      : undefined
+                  }
+                  className={`nav-link ${pathname === n.href ? "active" : ""}`}
+                >
+                  <n.icon size={18} />
+                  <span>{n.label}</span>
+                  {n.href === "/connect" && <ArrowUpRight size={13} />}
+                </Link>
+              ))}
+            </nav>
+            <div className="sidebar-bottom">
+              <div className="agent-callout">
+                <div className="callout-icon">
+                  <Cable size={20} />
                 </div>
-              )}
+                <strong>Your agent. Better informed.</strong>
+                <p>
+                  Bring Trove’s data marketplace to the tools you already use.
+                </p>
+                <Link href="/connect">
+                  Connect an agent <ArrowUpRight size={14} />
+                </Link>
+              </div>
+              <a
+                className="sidebar-help"
+                href="https://github.com/paypaldev/getting-started-with-paypal-sandbox"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <BookOpen size={16} />
+                Sandbox setup guide
+                <ArrowUpRight size={13} />
+              </a>
             </div>
           </div>
+          <div className="profile-container" ref={profileRef}>
+            <button
+              className="profile"
+              onClick={() => setAccountMenu((v) => !v)}
+              aria-expanded={accountMenu}
+            >
+              <span className="avatar">
+                {user?.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join("") || "G"}
+              </span>
+              <span>
+                <strong>{user?.name || "Guest workspace"}</strong>
+                <small>
+                  {user?.role === "seller"
+                    ? "Seller account"
+                    : "Research & discovery"}
+                </small>
+              </span>
+              <ChevronDown size={14} />
+            </button>
+            {accountMenu && (
+              <div className="account-menu">
+                {caps.demo && (
+                  <>
+                    <button
+                      onClick={() =>
+                        switchAccount("buyer").catch((e) =>
+                          notify(e.message, true),
+                        )
+                      }
+                    >
+                      Buyer demo account
+                    </button>
+                    <button
+                      onClick={() =>
+                        switchAccount("pricing").catch((e) =>
+                          notify(e.message, true),
+                        )
+                      }
+                    >
+                      Northstar seller demo
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => {
+                    setAuth(true);
+                    setAccountMenu(false);
+                  }}
+                >
+                  <Settings2 size={14} />
+                  Sign in / switch account
+                </button>
+                {user && (
+                  <button
+                    onClick={async () => {
+                      await post("/auth/logout");
+                      await refresh();
+                      setAccountMenu(false);
+                      router.push("/");
+                    }}
+                  >
+                    <LogOut size={14} />
+                    Sign out
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </aside>
-        <div className="main-shell">
+        <div className="main-shell" inert={smallScreen && mobile}>
           <header className="topbar">
             <div className="breadcrumb">
               <button
+                ref={menuRef}
+                aria-expanded={mobile}
+                aria-controls="workspace-navigation"
                 className="icon-button mobile-menu-button"
                 onClick={() => setMobile(true)}
                 aria-label="Open navigation"
@@ -344,7 +450,7 @@ export function TroveApp() {
               </button>
             </div>
           </header>
-          <main className="main-content">
+          <main id="main-content" tabIndex={-1} className="main-content">
             {loading ? (
               <Loading />
             ) : failure ? (

@@ -58,10 +58,6 @@ export function Purchases() {
     <div className="page-enter">
       <section className="page-heading compact-heading">
         <div>
-          <div className="section-eyebrow">
-            <span className="eyebrow-line" />
-            PURCHASES & RECEIPTS
-          </div>
           <h1>
             Every purchase.
             <br />
