@@ -1,0 +1,577 @@
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  ArrowDownUp,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  ChevronRight,
+  Clock3,
+  Database,
+  Filter,
+  Globe2,
+  Layers3,
+  Package,
+  Plus,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  UsersRound,
+  X,
+} from "lucide-react";
+import type { Offer, QuoteView } from "@/lib/types";
+import { money } from "@/lib/types";
+import { api, post } from "@/lib/client";
+import { examplePrompts } from "@/lib/examples";
+import { useTrove } from "./trove-app";
+import { Badge, DataTable, EmptyState, Modal } from "./ui";
+import { QuoteReview } from "./quote-review";
+export function ageLabel(timestamp: string) {
+  const hours = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(timestamp).getTime()) / 3600000),
+  );
+  return hours < 1
+    ? "Updated just now"
+    : hours < 24
+      ? `Updated ${hours}h ago`
+      : `Updated ${Math.floor(hours / 24)}d ago`;
+}
+const categoryIcons: Record<string, typeof Database> = {
+  "All data": Layers3,
+  "Product pricing": Package,
+  "Supplier intelligence": UsersRound,
+  "Market indicators": TrendingUp,
+};
+export function Discover() {
+  const { offers, ensureAuth, notify, capabilities } = useTrove();
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("All data");
+  const [sort, setSort] = useState("recommended");
+  const [freshOnly, setFreshOnly] = useState(false);
+  const [found, setFound] = useState<Offer[]>(offers);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [detail, setDetail] = useState<Offer | null>(null);
+  const [quote, setQuote] = useState<QuoteView | null>(null);
+  const [quoting, setQuoting] = useState(false);
+  const [prompt, setPrompt] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!query && category === "All data") {
+        setFound(offers);
+        return;
+      }
+      api<{ offers: Offer[] }>(
+        `/offers?q=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`,
+      )
+        .then((d) => setFound(d.offers))
+        .catch((e) => notify(e.message, true));
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [query, category, offers]);
+  const visible = found
+    .filter(
+      (o) =>
+        !freshOnly ||
+        Date.now() - new Date(o.freshnessAt).getTime() <= 7 * 86400000,
+    )
+    .sort((a, b) =>
+      sort === "price"
+        ? a.priceCents - b.priceCents
+        : sort === "freshness"
+          ? +new Date(b.freshnessAt) - +new Date(a.freshnessAt)
+          : 0,
+    );
+  function toggle(id: string) {
+    setSelected((prev) =>
+      prev.includes(id)
+        ? prev.filter((v) => v !== id)
+        : prev.length < 6
+          ? [...prev, id]
+          : prev,
+    );
+  }
+  async function review() {
+    try {
+      if (!(await ensureAuth())) return;
+      setQuoting(true);
+      setQuote(await post<QuoteView>("/quotes", { offerIds: selected }));
+    } catch (e) {
+      notify((e as Error).message, true);
+    } finally {
+      setQuoting(false);
+    }
+  }
+  function startResearch(text: string) {
+    sessionStorage.setItem("trove-prompt", text || examplePrompts[0]);
+    router.push("/workspace");
+  }
+  return (
+    <div className="page-enter discover-page">
+      <section className="page-heading">
+        <div>
+          <div className="section-eyebrow">
+            <span className="eyebrow-line" />
+            THE DATA MARKETPLACE
+          </div>
+          <h1>
+            Better data.
+            <br />
+            <span className="heading-soft">Clearer answers.</span>
+          </h1>
+          <p>
+            Find precisely what your research needs.
+            <br className="desktop-br" /> Compare sources, understand the terms,
+            and buy with confidence.
+          </p>
+        </div>
+        <Link
+          className="button button-secondary heading-action"
+          href="/connect"
+        >
+          Bring your own agent
+          <ArrowUpRight size={16} />
+        </Link>
+      </section>
+      <div className="discovery-layout">
+        <div className="catalog-column">
+          <div className="catalog-toolbar">
+            <div className="search-input">
+              <Search size={18} />
+              <input
+                aria-label="Search data offers"
+                placeholder="Search datasets, suppliers, or topics…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              {query ? (
+                <button
+                  className="icon-button"
+                  aria-label="Clear search"
+                  onClick={() => setQuery("")}
+                >
+                  <X size={14} />
+                </button>
+              ) : (
+                <kbd>/</kbd>
+              )}
+            </div>
+            <button
+              className={`button button-filter ${freshOnly ? "filter-active" : ""}`}
+              onClick={() => setFreshOnly((v) => !v)}
+              aria-pressed={freshOnly}
+            >
+              <Filter size={16} />
+              {freshOnly ? "Fresh only" : "Freshness"}
+              {freshOnly && <span className="filter-count">1</span>}
+            </button>
+          </div>
+          <div
+            className="category-tabs"
+            role="tablist"
+            aria-label="Data categories"
+          >
+            {Object.entries(categoryIcons).map(([name, Icon]) => (
+              <button
+                key={name}
+                role="tab"
+                aria-selected={category === name}
+                className={category === name ? "selected" : ""}
+                onClick={() => setCategory(name)}
+              >
+                <Icon size={15} />
+                {name === "Supplier intelligence"
+                  ? "Suppliers"
+                  : name === "Market indicators"
+                    ? "Market signals"
+                    : name}
+                <span>
+                  {name === "All data"
+                    ? offers.length
+                    : offers.filter((o) => o.category === name).length}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="catalog-label">
+            <div>
+              <h2>
+                {query
+                  ? "Search results"
+                  : category === "All data"
+                    ? "Explore the catalogue"
+                    : category}
+              </h2>
+              <span>{visible.length} scoped offers</span>
+            </div>
+            <label className="sort-control">
+              <ArrowDownUp size={13} />
+              <select
+                aria-label="Sort offers"
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+              >
+                <option value="recommended">Featured</option>
+                <option value="price">Lowest price</option>
+                <option value="freshness">Most recent</option>
+              </select>
+            </label>
+          </div>
+          {visible.length ? (
+            <div className="offer-grid">
+              {visible.map((offer) => (
+                <OfferCard
+                  key={offer.id}
+                  offer={offer}
+                  selected={selected.includes(offer.id)}
+                  onToggle={() => toggle(offer.id)}
+                  onOpen={() => setDetail(offer)}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No matching offers"
+              description="Try another topic or remove the freshness filter."
+              action={
+                <button
+                  className="button button-secondary"
+                  onClick={() => {
+                    setQuery("");
+                    setCategory("All data");
+                    setFreshOnly(false);
+                  }}
+                >
+                  Clear filters
+                </button>
+              }
+            />
+          )}
+          <div className="catalog-footnote">
+            <FlaskLabel />
+            <span>
+              All providers and data in this catalogue are synthetic fixtures.
+            </span>
+          </div>
+        </div>
+        <aside className="research-aside">
+          <div className="research-panel">
+            <div className="panel-eyebrow">
+              <span className="sparkle-box">
+                <Sparkles size={17} />
+              </span>
+              RESEARCH, WITH INTENT
+            </div>
+            <h2>
+              A question is
+              <br />a good place to start.
+            </h2>
+            <p>
+              Let your agent find the right sources.
+              <br />
+              You stay in control of every purchase.
+            </p>
+            <label className="sr-only" htmlFor="discover-prompt">
+              Your research question
+            </label>
+            <textarea
+              id="discover-prompt"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder={
+                "What are you researching?\n\nFind current prices and supplier details for consumer electronics…"
+              }
+              rows={5}
+            />
+            <div className="research-panel-meta">
+              <ShieldCheck size={13} />
+              <span>No purchase without your approval</span>
+            </div>
+            <button
+              className="button button-primary research-submit"
+              onClick={() => startResearch(prompt)}
+            >
+              <Sparkles size={16} />
+              Start a research task
+              <ArrowRight size={17} />
+            </button>
+            <span className="guided-caption">
+              {capabilities.ai
+                ? "Live agent available"
+                : "Guided demo · no AI key required"}
+            </span>
+            <div className="panel-divider" />
+            <div className="section-eyebrow">OR TRY A STARTING POINT</div>
+            <button
+              className="prompt-suggestion"
+              onClick={() => startResearch(examplePrompts[1])}
+            >
+              <Package size={16} />
+              <span>Compare current product prices</span>
+              <ChevronRight size={15} />
+            </button>
+            <button
+              className="prompt-suggestion"
+              onClick={() => startResearch(examplePrompts[2])}
+            >
+              <TrendingUp size={16} />
+              <span>Explore a market & its suppliers</span>
+              <ChevronRight size={15} />
+            </button>
+          </div>
+          <div className="trust-panel">
+            <div className="trust-panel-icon">
+              <ShieldCheck size={21} />
+            </div>
+            <div>
+              <strong>Know what you’re buying.</strong>
+              <p>
+                Exact prices. Explicit permissions.
+                <br />
+                Source-linked receipts.
+              </p>
+              <Link href="/connect">
+                How Trove works
+                <ArrowUpRight size={13} />
+              </Link>
+            </div>
+          </div>
+          <div className="catalog-summary">
+            <span>
+              <span className="status-dot" />3 participating fixture providers
+            </span>
+            <span>
+              <Database size={13} />3 specialised connector adapters
+            </span>
+            <span>
+              <Globe2 size={13} />
+              Business & product research
+            </span>
+          </div>
+        </aside>
+      </div>
+      {selected.length > 0 && (
+        <div className="comparison-tray">
+          <div>
+            <span className="tray-icon">
+              <Layers3 size={18} />
+            </span>
+            <strong>
+              {selected.length} {selected.length === 1 ? "offer" : "offers"}{" "}
+              selected
+            </strong>
+            <span className="muted">
+              {money(
+                offers
+                  .filter((o) => selected.includes(o.id))
+                  .reduce((s, o) => s + o.priceCents, 0),
+              )}{" "}
+              total
+            </span>
+          </div>
+          <div>
+            <button className="text-button" onClick={() => setSelected([])}>
+              Clear
+            </button>
+            <button
+              className="button button-primary"
+              onClick={review}
+              disabled={quoting}
+            >
+              {quoting ? "Preparing quote…" : "Compare & review"}
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+      <OfferDetail
+        offer={detail}
+        onClose={() => setDetail(null)}
+        selected={!!detail && selected.includes(detail.id)}
+        onToggle={() => detail && toggle(detail.id)}
+      />
+      <QuoteReview quote={quote} onClose={() => setQuote(null)} />
+    </div>
+  );
+}
+function FlaskLabel() {
+  return (
+    <span className="fixture-indicator">
+      <span />
+      Demo catalogue
+    </span>
+  );
+}
+export function OfferCard({
+  offer,
+  selected,
+  onToggle,
+  onOpen,
+}: {
+  offer: Offer;
+  selected: boolean;
+  onToggle: () => void;
+  onOpen: () => void;
+}) {
+  return (
+    <article className={`offer-card ${selected ? "offer-selected" : ""}`}>
+      <div className="offer-card-top">
+        <div className="provider">
+          <span className={`provider-logo provider-${offer.seller.color}`}>
+            {offer.seller.initials}
+            <span />
+          </span>
+          <span>
+            {offer.seller.name}
+            <small>Fictional provider</small>
+          </span>
+        </div>
+        <button
+          className={`select-offer ${selected ? "is-selected" : ""}`}
+          aria-label={`${selected ? "Remove" : "Select"} ${offer.title}`}
+          aria-pressed={selected}
+          onClick={onToggle}
+        >
+          {selected ? <Check size={16} /> : <Plus size={16} />}
+        </button>
+      </div>
+      <button className="offer-title-button" onClick={onOpen}>
+        <h3>{offer.title}</h3>
+      </button>
+      <p>{offer.description}</p>
+      <div className="offer-tags">
+        <span>{offer.category}</span>
+        {offer.accessClass === "summary_only" && <span>Aggregate only</span>}
+      </div>
+      <div className="offer-metadata">
+        <Clock3 size={12} />
+        <span>{ageLabel(offer.freshnessAt)}</span>
+        <span className="small-dot">·</span>
+        <span>Up to {offer.recordLimit} records</span>
+      </div>
+      <div className="offer-card-bottom">
+        <div>
+          <strong>{money(offer.priceCents)}</strong>
+          <span>/ scoped batch</span>
+        </div>
+        <button
+          className="offer-view"
+          onClick={onOpen}
+          aria-label={`View ${offer.title}`}
+        >
+          <ArrowUpRight size={18} />
+        </button>
+      </div>
+    </article>
+  );
+}
+export function OfferDetail({
+  offer,
+  onClose,
+  selected,
+  onToggle,
+}: {
+  offer: Offer | null;
+  onClose: () => void;
+  selected: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Modal
+      open={!!offer}
+      onOpenChange={(open) => !open && onClose()}
+      title={offer?.title || "Offer details"}
+      description="Review the source, permitted scope, and fixed public preview before buying."
+      wide
+    >
+      {offer && (
+        <div className="offer-detail">
+          <div className="detail-provider">
+            <div className="provider">
+              <span className={`provider-logo provider-${offer.seller.color}`}>
+                {offer.seller.initials}
+              </span>
+              <span>
+                {offer.seller.name}
+                <small>Fictional provider · Synthetic data</small>
+              </span>
+            </div>
+            <div className="detail-price">
+              {money(offer.priceCents)}
+              <small>USD / scoped batch</small>
+            </div>
+          </div>
+          <p className="detail-description">{offer.description}</p>
+          <div className="detail-facts">
+            <div>
+              <span>Coverage</span>
+              <strong>{offer.coverage}</strong>
+            </div>
+            <div>
+              <span>Declared snapshot</span>
+              <strong>{new Date(offer.freshnessAt).toLocaleString()}</strong>
+            </div>
+            <div>
+              <span>Scope</span>
+              <strong>
+                Up to {offer.recordLimit} records · v{offer.version}
+              </strong>
+            </div>
+            <div>
+              <span>Access</span>
+              <strong>{offer.accessClass.replaceAll("_", " ")}</strong>
+            </div>
+          </div>
+          <h4>Available fields</h4>
+          <div className="field-chips">
+            {offer.fields.map((f) => (
+              <span key={f}>
+                <Check size={12} />
+                {f}
+              </span>
+            ))}
+          </div>
+          <h4>Never exposed</h4>
+          <div className="field-chips prohibited">
+            {offer.prohibited.map((f) => (
+              <span key={f}>
+                <X size={12} />
+                {f}
+              </span>
+            ))}
+          </div>
+          <div className="licence-box">
+            <ShieldCheck size={18} />
+            <div>
+              <strong>Usage licence</strong>
+              <p>{offer.license}</p>
+              <small>Permitted purposes: {offer.purposes.join(", ")}</small>
+            </div>
+          </div>
+          <h4>
+            Approved public preview <Badge>2 sample rows</Badge>
+          </h4>
+          <DataTable rows={offer.preview as Record<string, unknown>[]} />
+          <p className="caption">
+            This fixed preview is public. Purchased results are accessible only
+            after confirmed payment. Delivery checks do not establish objective
+            accuracy.
+          </p>
+          <div className="dialog-actions">
+            <button className="button button-secondary" onClick={onClose}>
+              Back to catalogue
+            </button>
+            <button className="button button-primary" onClick={onToggle}>
+              {selected ? <Check size={16} /> : <Plus size={16} />}{" "}
+              {selected ? "Added to comparison" : "Add to comparison"}
+            </button>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}

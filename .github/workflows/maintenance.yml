@@ -1,0 +1,21 @@
+name: Hosted queue maintenance
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: trove-maintenance
+  cancel-in-progress: false
+jobs:
+  tick:
+    if: vars.TROVE_HOSTED_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/hosted-request.mjs maintenance
+        env:
+          TROVE_HOSTED_URL: ${{ vars.TROVE_HOSTED_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

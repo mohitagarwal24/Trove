@@ -1,0 +1,7 @@
+# Implementation decisions
+
+Single Next.js/TypeScript repository; PostgreSQL/Prisma authoritative state; PostgreSQL outbox and independent worker; three approved fixture connectors; optional Elasticsearch for free metadata only; MCP stdio and authenticated Streamable HTTP; one Responses API function-calling planner. No payment model tools, Redis or arbitrary connector URLs. Render blueprint includes web, worker and database.
+
+Purchases approve exact, immutable quote totals. A task budget is an application policy. Budget reservations use a PostgreSQL row lock and are retained during uncertain external operations. Quotes pin offer versions, fields, licence, timestamps, quantity and total. Every external mutation has a persisted request identity. Provider output is encrypted with AES-256-GCM before capture; an entitlement is created transactionally with accounting after authoritative capture confirmation. All-or-nothing preparation happens before capture. Capture recovery never repeats a charge under a new identity.
+
+Separate payment, fulfilment and settlement state machines. Seller receivables and processor expenses are independent. Refunds block unsettled payables and flag already submitted/paid settlement for recovery. Webhooks are verified through PayPal, persisted uniquely, acknowledged and reconciled asynchronously. Local simulation is opt-in and identified throughout. Missing credentials fail closed. External sandbox acceptance cannot be claimed without credentials and actual successful calls.

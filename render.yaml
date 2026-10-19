@@ -1,0 +1,36 @@
+# One free web service with an external Neon Free database. No paid worker or disk.
+services:
+  - type: web
+    name: trove
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start:hosted
+    healthCheckPath: /api/health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: 24.21.0
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: RESULT_ENCRYPTION_KEY
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true
+      - key: TROVE_JOB_MODE
+        value: embedded
+      - key: TROVE_DEMO_ENABLED
+        value: "true"
+      - key: TROVE_SIMULATION_ENABLED
+        value: "true"
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      - key: GEMINI_DAILY_REQUEST_LIMIT
+        value: "30"
+      - key: PAYPAL_PAYOUTS_ENABLED
+        value: "false"

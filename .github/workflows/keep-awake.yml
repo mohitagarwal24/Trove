@@ -1,0 +1,21 @@
+name: Optional hosted health ping
+on:
+  schedule:
+    - cron: "7,17,27,37,47,57 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: trove-health-ping
+  cancel-in-progress: true
+jobs:
+  ping:
+    # Opt in after checking the Render workspace's shared free-hour allowance.
+    if: vars.TROVE_KEEP_AWAKE == 'true' && vars.TROVE_HOSTED_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/hosted-request.mjs health
+        env:
+          TROVE_HOSTED_URL: ${{ vars.TROVE_HOSTED_URL }}

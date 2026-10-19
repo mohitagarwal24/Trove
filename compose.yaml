@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: trove
+      POSTGRES_PASSWORD: trove_local
+      POSTGRES_DB: trove
+    ports: ["127.0.0.1:5434:5432"]
+    volumes: ["trove-postgres:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trove -d trove"]
+      interval: 3s
+      retries: 20
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.0
+    profiles: ["search"]
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports: ["127.0.0.1:9201:9200"]
+    volumes: ["trove-elastic:/usr/share/elasticsearch/data"]
+volumes:
+  trove-postgres:
+  trove-elastic:

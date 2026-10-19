@@ -1,0 +1,289 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+model User {
+  id           String @id @default(cuid())
+  email        String @unique
+  name         String
+  passwordHash String
+  role         String @default("buyer")
+  sellerId     String?
+  createdAt    DateTime @default(now())
+  sessions     Session[]
+  memberships  Membership[]
+  tokens       AgentToken[]
+}
+model Session {
+  id        String @id
+  userId    String
+  expiresAt DateTime
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model Workspace {
+  id          String @id @default(cuid())
+  name        String
+  memberships Membership[]
+  tasks       TaskRun[]
+  quotes      Quote[]
+  purchases   Purchase[]
+}
+model Membership {
+  id          String @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        String @default("member")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  user        User @relation(fields: [userId], references: [id])
+  @@unique([workspaceId, userId])
+}
+model AgentToken {
+  id          String @id @default(cuid())
+  userId      String
+  workspaceId String
+  name        String
+  hash        String @unique
+  prefix      String
+  scopes      String[]
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  user        User @relation(fields: [userId], references: [id])
+}
+model Seller {
+  id          String @id
+  name        String
+  initials    String
+  color       String
+  description String
+  connectorId String
+  synthetic   Boolean @default(true)
+  offers      OfferVersion[]
+  payables    SellerPayable[]
+}
+model OfferVersion {
+  id           String @id @default(cuid())
+  offerId      String
+  version      Int
+  sellerId     String
+  title        String
+  description  String
+  category     String
+  tags         String[]
+  priceCents   Int
+  recordLimit  Int
+  fields       String[]
+  prohibited   String[]
+  purposes     String[]
+  license      String
+  coverage     String
+  freshnessAt  DateTime
+  schema       Json
+  preview      Json
+  available    Boolean @default(true)
+  current      Boolean @default(true)
+  accessClass  String @default("paid_result")
+  createdAt    DateTime @default(now())
+  seller       Seller @relation(fields: [sellerId], references: [id])
+  quoteLines   QuoteLine[]
+  @@unique([offerId, version])
+  @@index([current, available, category])
+}
+model TaskRun {
+  id          String @id @default(cuid())
+  workspaceId String
+  prompt      String
+  budgetCents Int
+  spentCents  Int @default(0)
+  reservedCents Int @default(0)
+  requirements Json
+  decisions   Json
+  planner     String
+  createdAt   DateTime @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  quotes      Quote[]
+  purchases   Purchase[]
+}
+model Quote {
+  id              String @id @default(cuid())
+  workspaceId     String
+  taskId          String?
+  totalCents      Int
+  commissionCents Int
+  currency        String @default("USD")
+  purpose         String
+  planHash        String
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  workspace       Workspace @relation(fields: [workspaceId], references: [id])
+  task            TaskRun? @relation(fields: [taskId], references: [id])
+  lines           QuoteLine[]
+  purchase        Purchase?
+}
+model QuoteLine {
+  id             String @id @default(cuid())
+  quoteId        String
+  offerVersionId String
+  sellerId       String
+  fields         String[]
+  quantity       Int
+  priceCents     Int
+  sellerCents    Int
+  snapshot       Json
+  quote          Quote @relation(fields: [quoteId], references: [id])
+  offer          OfferVersion @relation(fields: [offerVersionId], references: [id])
+}
+model Purchase {
+  id             String @id @default(cuid())
+  workspaceId    String
+  quoteId        String @unique
+  taskId         String?
+  idempotencyKey String
+  mode           String
+  paymentState   String @default("created")
+  fulfilmentState String @default("pending")
+  settlementState String @default("not_due")
+  paypalOrderId  String? @unique
+  authorizationId String? @unique
+  captureId      String? @unique
+  approvedAt     DateTime?
+  cancelledAt    DateTime?
+  processingUntil DateTime?
+  error          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  workspace      Workspace @relation(fields: [workspaceId], references: [id])
+  quote          Quote @relation(fields: [quoteId], references: [id])
+  task           TaskRun? @relation(fields: [taskId], references: [id])
+  reservation    BudgetReservation?
+  attempts       PaymentAttempt[]
+  executions     ProviderExecution[]
+  entitlement    ResultEntitlement?
+  receipt        Receipt?
+  payables       SellerPayable[]
+  refunds        Refund[]
+  @@unique([workspaceId, idempotencyKey])
+}
+model BudgetReservation {
+  id         String @id @default(cuid())
+  purchaseId String @unique
+  amountCents Int
+  state      String @default("reserved")
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+}
+model PaymentAttempt {
+  id          String @id @default(cuid())
+  purchaseId  String
+  operation   String
+  requestId   String @unique
+  resourceId  String?
+  status      String @default("started")
+  error       String?
+  response    Json?
+  createdAt   DateTime @default(now())
+  purchase    Purchase @relation(fields: [purchaseId], references: [id])
+  @@unique([purchaseId, operation])
+}
+model ProviderExecution {
+  id          String @id @default(cuid())
+  purchaseId  String
+  quoteLineId String
+  state       String
+  encrypted   String?
+  resultHash  String?
+  checks      Json
+  expiresAt   DateTime
+  purchase    Purchase @relation(fields: [purchaseId], references: [id])
+  @@unique([purchaseId, quoteLineId])
+}
+model ResultEntitlement {
+  id          String @id @default(cuid())
+  purchaseId  String @unique
+  workspaceId String
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  purchase    Purchase @relation(fields: [purchaseId], references: [id])
+}
+model Receipt {
+  id          String @id @default(cuid())
+  purchaseId  String @unique
+  document    Json
+  createdAt   DateTime @default(now())
+  purchase    Purchase @relation(fields: [purchaseId], references: [id])
+}
+model LedgerEntry {
+  id          String @id @default(cuid())
+  purchaseId  String
+  groupId     String
+  account     String
+  amountCents Int
+  createdAt   DateTime @default(now())
+  @@unique([groupId, account])
+}
+model SellerPayable {
+  id          String @id @default(cuid())
+  purchaseId  String
+  sellerId    String
+  amountCents Int
+  state       String @default("owed")
+  error       String?
+  createdAt   DateTime @default(now())
+  purchase    Purchase @relation(fields: [purchaseId], references: [id])
+  seller      Seller @relation(fields: [sellerId], references: [id])
+  payout      PayoutAttempt?
+  @@unique([purchaseId, sellerId])
+}
+model PayoutAttempt {
+  id           String @id @default(cuid())
+  payableId    String @unique
+  requestId    String @unique
+  batchId      String? @unique
+  itemId       String? @unique
+  state        String @default("created")
+  error        String?
+  processorFeeCents Int?
+  payable      SellerPayable @relation(fields: [payableId], references: [id])
+}
+model Refund {
+  id          String @id @default(cuid())
+  purchaseId  String @unique
+  requestId   String @unique
+  externalId  String? @unique
+  reason      String
+  state       String @default("pending")
+  createdAt   DateTime @default(now())
+  purchase    Purchase @relation(fields: [purchaseId], references: [id])
+}
+model WebhookEvent {
+  id          String @id
+  eventType   String
+  resourceId  String?
+  payload     Json
+  processedAt DateTime?
+  createdAt   DateTime @default(now())
+}
+model Job {
+  id          String @id @default(cuid())
+  key         String @unique
+  type        String
+  resourceId  String
+  state       String @default("pending")
+  attempts    Int @default(0)
+  runAt       DateTime @default(now())
+  lockedAt    DateTime?
+  error       String?
+  createdAt   DateTime @default(now())
+  @@index([state, runAt])
+}
+model AuditEvent {
+  id          String @id @default(cuid())
+  actor       String
+  resourceId  String
+  action      String
+  reason      String?
+  createdAt   DateTime @default(now())
+}
