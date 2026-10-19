@@ -4,6 +4,8 @@ Trove runs on one Render Free web service and Neon Free PostgreSQL. PostgreSQL s
 
 Current service: https://trove-mohit24.onrender.com, Render `srv-dbaq5t3bc2fs73cc3qk0`, Singapore. Source: https://github.com/mohitagarwal24/Trove. Neon project: `lucky-wildflower-32427743`. Auto-deploy is off; deploy an explicitly validated commit.
 
+Application release `977a2c0` is deployed and the [acceptance record](AUDIT.md) includes genuine Sandbox order creation and SDK eligibility. Buyer approval/capture, signed webhook delivery, refund and payout remain manual acceptance steps. Password recovery is implemented but awaits sender credentials.
+
 ## Deployment
 
 `render.yaml` defines the Free service. Build runs `npm ci --include=dev && npm run build`; startup validates the encryption key, applies migrations, imports source data if needed and starts Next.js. Migration history disables the retired shared accounts and removes their active sessions/tokens while preserving financial history. Never reset the hosted database to apply this revision.

@@ -28,13 +28,23 @@ Migration history remains append-only. Historic disabled-account records and fin
 
 Backend coverage includes source integrity/licensing boundaries, non-first-row filtered delivery, no-match rejection, immutable terms, tenant isolation, concurrent budgets/idempotence, staged encryption, capture uncertainty, exact refund validation, entitlement expiry/revocation, payout identity/recipient pinning/returned-item accounting, webhook replay, cron credentials, source outages and cross-process rate limits.
 
+## Hosted release acceptance
+
+Application commit `977a2c0` is deployed at [trove-mohit24.onrender.com](https://trove-mohit24.onrender.com), Render deploy `dep-dbb09t4s728c739ud4r0`. Startup applied the four forward migrations and successfully imported 200 approval products, 100 drug recalls and 100 device recalls. Existing hosted keys were preserved; retired demo flags were removed from the private hosted configuration.
+
+Hosted checks passed private registration/profile update/export/closure, immutable two-record quoting, cancellation before payment, locked paid payloads, unlisted provider publication, seven MCP tools and revoked-token rejection. Validation accounts were closed afterward. The three laptop/search/mobile-navigation regression checks also passed against the hosted service, with no page errors in the functional walkthrough.
+
+A **genuine PayPal Sandbox order** was created through the configured REST application and the v6 SDK rendered an eligible PayPal button. The order was never approved or captured; its Trove purchase was cancelled. This verifies order creation and SDK initialization, not the remaining authorization/capture/refund/payout chain. No real funds moved and no Gemini request was made.
+
+[GitHub CI passed](https://github.com/mohitagarwal24/Trove/actions/runs/39248268003) after correcting Docker health-command quoting: fresh database migrations/import, 45 backend checks, production build, zero-vulnerability dependency audit and all 10 browser checks. The CI-only correction is commit `6666660`; it does not change the deployed application.
+
 ## External acceptance still required
 
 The existing hosted PayPal/Gemini keys are preserved. Configuration checks do not prove successful provider calls. Complete [manual testing](MANUAL_TESTING.md) with actual Sandbox buyer approval, signed webhook delivery, captured data retrieval, refund and (only when enabled) successful seller payout. No new actual financial transaction or AI request was performed during this revision.
 
 Password recovery needs four free sender credentials: `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`, `MAIL_FROM`. See [operations](OPERATIONS.md). No mail is silently simulated. Payouts remain disabled until approved API access, fictitious Sandbox funds and verified recipient accounts exist.
 
-Before actual customers: supply the operator's legal identity/private support channel; validate email delivery, provider rights/contracts, merchant/platform approval, backup/restore and incident handling. Prices/commission are illustrative and must be checked against processor/payout costs, tax treatment and refund economics before live operation. Public source availability does not establish demand or exclusive resale rights. Free hosting may sleep and delay durable work.
+Before actual customers: supply the operator's legal identity/private support channel; validate email delivery, provider rights/contracts, merchant/platform approval, backup/restore and incident handling. Signup does not automatically verify email ownership; provider identity and distribution rights are reviewed by the operator. Prices/commission are illustrative and must be checked against processor/payout costs, tax treatment and refund economics before live operation. Public source availability does not establish demand or exclusive resale rights. Free hosting may sleep and delay durable work.
 
 ## Removed files
 
