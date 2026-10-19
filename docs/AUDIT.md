@@ -8,6 +8,8 @@ Production build/types and all 13 browser checks passed across the final confirm
 
 Independent motion review found no material visual or interaction issue; its sole requested correction was synchronizing persisted motion records with the implementation. The documentation correction was scored resolved with **disposition: ship**, covering that fix; no further capture pass was required. No new hook suppressions were added.
 
+Motion release `20fca36` is live at [Trove](https://trove-mohit24.onrender.com), Render deploy `dep-dbb2ojk9v7es73ag3cqg`. [Fresh-database CI passed](https://github.com/mohitagarwal24/Trove/actions/runs/39271330367) with 53 backend and 13 browser checks. All six hosted navigation/motion checks passed, including normal/reduced-motion selection, dialog focus restoration, persistent sidebar, laptop bounds and mobile focus containment. No credentials changed, no paid resources were added, and no payment/model operation was performed.
+
 ---
 
 # Follow-up review — 19 October 2026
