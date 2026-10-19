@@ -1,7 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
-import { hash, verifyPassword } from "@/lib/crypto";
+import { hash, verifyPassword, passwordHash } from "@/lib/crypto";
 import { assert } from "@/lib/errors";
+import { rateLimit } from "./rate-limit";
+import { sendResetEmail, emailConfigured } from "./mail";
 import { appUrl } from "@/lib/config";
 export type Actor = {
   id: string;
@@ -12,6 +14,7 @@ export type Actor = {
   workspaceId: string;
   scopes: string[];
   viaToken: boolean;
+  tokenId?: string;
 };
 export const sessionCookie = "trove_session";
 export async function authenticate(
@@ -25,7 +28,10 @@ export async function authenticate(
       include: { user: true },
     });
     assert(
-      token && !token.revokedAt && token.expiresAt > new Date(),
+      token &&
+        !token.user.disabledAt &&
+        !token.revokedAt &&
+        token.expiresAt > new Date(),
       "UNAUTHORIZED",
       "This agent token is invalid or expired.",
       401,
@@ -50,6 +56,7 @@ export async function authenticate(
       workspaceId: token.workspaceId,
       scopes: token.scopes,
       viaToken: true,
+      tokenId: token.id,
     };
   }
   const cookie = request.headers
@@ -66,6 +73,7 @@ export async function authenticate(
     : null;
   assert(
     session &&
+      !session.user.disabledAt &&
       session.expiresAt > new Date() &&
       session.user.memberships.length,
     "UNAUTHORIZED",
@@ -101,11 +109,14 @@ export function checkOrigin(request: Request) {
     );
 }
 export async function login(email: string, password: string) {
+  await rateLimit(email.trim().toLowerCase(), "login", 10, 15 * 60000);
   const user = await db.user.findUnique({
-    where: { email: email.toLowerCase() },
+    where: { email: email.trim().toLowerCase() },
   });
   assert(
-    user && verifyPassword(password, user.passwordHash),
+    user &&
+      !user.disabledAt &&
+      (await verifyPassword(password, user.passwordHash)),
     "INVALID_CREDENTIALS",
     "Email or password is incorrect.",
     401,
@@ -164,4 +175,184 @@ export async function issueToken(actor: Actor, name: string, scopes: string[]) {
     expiresAt: token.expiresAt,
     value,
   };
+}
+
+export async function register(input: {
+  name: string;
+  email: string;
+  password: string;
+}) {
+  const email = input.email.trim().toLowerCase();
+  assert(
+    !email.endsWith("@trove.test"),
+    "INVALID_EMAIL",
+    "Use your own email address.",
+  );
+  await rateLimit(email, "register", 3, 3600000);
+  const digest = await passwordHash(input.password);
+  try {
+    await db.user.create({
+      data: {
+        email,
+        name: input.name.trim(),
+        passwordHash: digest,
+        memberships: {
+          create: {
+            role: "owner",
+            workspace: { create: { name: `${input.name.trim()}'s workspace` } },
+          },
+        },
+      },
+    });
+  } catch (error) {
+    if ((error as { code?: string }).code === "P2002")
+      assert(
+        false,
+        "ACCOUNT_EXISTS",
+        "An account with this email already exists. Sign in instead.",
+        409,
+      );
+    throw error;
+  }
+  return login(email, input.password);
+}
+export async function requestPasswordReset(email: string) {
+  await rateLimit(email.toLowerCase(), "password-reset", 3, 3600000);
+  assert(
+    emailConfigured(),
+    "EMAIL_UNAVAILABLE",
+    "Password recovery is temporarily unavailable. Please contact support.",
+    503,
+  );
+  const user = await db.user.findUnique({
+    where: { email: email.trim().toLowerCase() },
+  });
+  if (user && !user.disabledAt) {
+    const token = randomBytes(32).toString("base64url");
+    await db.passwordReset.create({
+      data: {
+        id: hash(token),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 30 * 60000),
+      },
+    });
+    try {
+      await sendResetEmail(
+        user.email,
+        `${appUrl()}/reset-password?token=${token}`,
+      );
+    } catch {
+      await db.passwordReset.delete({ where: { id: hash(token) } });
+      assert(
+        false,
+        "EMAIL_UNAVAILABLE",
+        "Password recovery is temporarily unavailable. Please try again later.",
+        503,
+      );
+    }
+  }
+}
+export async function resetPassword(token: string, password: string) {
+  const digest = await passwordHash(password);
+  await db.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<
+      { userId: string }[]
+    >`UPDATE "PasswordReset" SET "usedAt" = NOW() WHERE id = ${hash(token)} AND "usedAt" IS NULL AND "expiresAt" > NOW() RETURNING "userId"`;
+    assert(
+      rows[0],
+      "RESET_EXPIRED",
+      "This link has expired or was already used. Request another reset link.",
+      400,
+    );
+    await tx.user.update({
+      where: { id: rows[0].userId },
+      data: { passwordHash: digest },
+    });
+    await tx.session.deleteMany({ where: { userId: rows[0].userId } });
+    await tx.agentToken.updateMany({
+      where: { userId: rows[0].userId },
+      data: { revokedAt: new Date() },
+    });
+    await tx.passwordReset.updateMany({
+      where: { userId: rows[0].userId, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+  });
+}
+export async function updateProfile(actor: Actor, name: string) {
+  requireBrowser(actor);
+  await db.user.update({ where: { id: actor.id }, data: { name } });
+}
+export async function changePassword(
+  actor: Actor,
+  currentPassword: string,
+  password: string,
+) {
+  requireBrowser(actor);
+  await rateLimit(actor.id, "password-change", 5, 3600000);
+  const user = await db.user.findUniqueOrThrow({ where: { id: actor.id } });
+  assert(
+    await verifyPassword(currentPassword, user.passwordHash),
+    "INVALID_CREDENTIALS",
+    "Current password is incorrect.",
+    401,
+  );
+  const digest = await passwordHash(password);
+  await db.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: actor.id },
+      data: { passwordHash: digest },
+    });
+    await tx.session.deleteMany({ where: { userId: actor.id } });
+    await tx.agentToken.updateMany({
+      where: { userId: actor.id },
+      data: { revokedAt: new Date() },
+    });
+    await tx.passwordReset.deleteMany({ where: { userId: actor.id } });
+  });
+}
+export async function closeAccount(actor: Actor, password: string) {
+  requireBrowser(actor);
+  await rateLimit(actor.id, "account-close", 5, 3600000);
+  const user = await db.user.findUniqueOrThrow({ where: { id: actor.id } });
+  assert(
+    await verifyPassword(password, user.passwordHash),
+    "INVALID_CREDENTIALS",
+    "Password is incorrect.",
+    401,
+  );
+  await db.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: actor.id },
+      data: {
+        name: "Closed account",
+        email: `${actor.id}@closed.invalid`,
+        disabledAt: new Date(),
+        passwordHash: "disabled",
+      },
+    });
+    await tx.session.deleteMany({ where: { userId: actor.id } });
+    await tx.agentToken.updateMany({
+      where: { userId: actor.id },
+      data: { revokedAt: new Date() },
+    });
+    await tx.passwordReset.deleteMany({ where: { userId: actor.id } });
+    await tx.workspace.update({
+      where: { id: actor.workspaceId },
+      data: { name: "Closed workspace" },
+    });
+    if (actor.sellerId)
+      await tx.seller.update({
+        where: { id: actor.sellerId },
+        data: { status: "suspended" },
+      });
+    await tx.auditEvent.create({
+      data: {
+        actor: actor.id,
+        resourceId: actor.workspaceId,
+        action: "account_closed",
+        reason: "Personal profile redacted; financial records retained",
+      },
+    });
+  });
 }

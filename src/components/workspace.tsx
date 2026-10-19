@@ -4,12 +4,8 @@ import Link from "next/link";
 import {
   ArrowRight,
   Check,
-  CheckCheck,
-  Clock3,
   FileCheck2,
   ListFilter,
-  Play,
-  Plus,
   ShieldCheck,
   Sparkles,
   X,
@@ -19,15 +15,12 @@ import { examplePrompts } from "@/lib/examples";
 import type { QuoteView, Task, PurchaseView } from "@/lib/types";
 import { money } from "@/lib/types";
 import { useTrove } from "./trove-app";
-import { Badge, EmptyState, Notice, Status } from "./ui";
+import { Badge, Notice, Status } from "./ui";
 import { QuoteReview } from "./quote-review";
 export function Workspace() {
   const { user, capabilities, ensureAuth, notify, offers } = useTrove();
   const [prompt, setPrompt] = useState(examplePrompts[0]);
   const [budget, setBudget] = useState("10.00");
-  const [mode, setMode] = useState<"demo" | "live">(
-    capabilities.ai ? "live" : "demo",
-  );
   const [running, setRunning] = useState(false);
   const [task, setTask] = useState<Task | null>(null);
   const [quote, setQuote] = useState<QuoteView | null>(null);
@@ -41,27 +34,44 @@ export function Workspace() {
     }
   }, []);
   useEffect(() => {
+    let active = true;
+    setTask(null);
+    setQuote(null);
+    setReview(false);
+    setPurchases([]);
     if (!user) return;
+    const key = `trove-task:${user.workspaceId}`;
     api<PurchaseView[]>("/purchases")
-      .then(setPurchases)
+      .then((items) => {
+        if (active) setPurchases(items);
+      })
       .catch(() => {});
-    const id = sessionStorage.getItem("trove-task-id");
-    if (id && !task)
+    const id = sessionStorage.getItem(key);
+    if (id)
       api<Task>(`/tasks/${id}`)
-        .then(setTask)
-        .catch(() => sessionStorage.removeItem("trove-task-id"));
-  }, [user]);
+        .then((item) => {
+          if (active) setTask(item);
+        })
+        .catch(() => sessionStorage.removeItem(key));
+    return () => {
+      active = false;
+    };
+  }, [user?.workspaceId]);
   async function run() {
     try {
       if (!(await ensureAuth())) return;
       setRunning(true);
       const result = await post<{ task: Task; quote: QuoteView | null }>(
         "/tasks",
-        { prompt, budgetCents: Math.round(Number(budget) * 100), mode },
+        { prompt, budgetCents: Math.round(Number(budget) * 100) },
       );
       setTask(result.task);
       setQuote(result.quote);
-      sessionStorage.setItem("trove-task-id", result.task.id);
+      if (user)
+        sessionStorage.setItem(
+          `trove-task:${user.workspaceId}`,
+          result.task.id,
+        );
       if (!result.quote)
         notify(
           "No permitted offer meets these requirements within budget. Nothing was purchased.",
@@ -93,18 +103,9 @@ export function Workspace() {
     <div className="page-enter">
       <section className="page-heading compact-heading">
         <div>
-          <h1>
-            From a question
-            <br />
-            <span className="heading-soft">to a better answer.</span>
-          </h1>
-          <p>
-            A focused task, the right sources, and a spending limit you control.
-          </p>
+          <h1>Research workspace</h1>
+          <p>Describe your research. Set a budget. Review the sources.</p>
         </div>
-        <Badge tone={mode === "live" ? "green" : "amber"}>
-          {mode === "live" ? "Live AI planner" : "Deterministic guided demo"}
-        </Badge>
       </section>
       <div className="workspace-layout">
         <section className="task-composer panel">
@@ -146,25 +147,10 @@ export function Workspace() {
                 <span>USD</span>
               </div>
             </label>
-            <label>
-              Research mode
-              <select
-                value={mode}
-                onChange={(e) => setMode(e.target.value as "demo" | "live")}
-              >
-                <option value="demo">Guided demo</option>
-                <option value="live" disabled={!capabilities.ai}>
-                  Live AI {capabilities.ai ? "" : "(not connected)"}
-                </option>
-              </select>
-            </label>
           </div>
           <div className="policy-note">
             <ShieldCheck size={16} />
-            <p>
-              This is a task allowance, not a payment. You approve each exact
-              purchase separately.
-            </p>
+            <p>You approve each purchase before payment.</p>
           </div>
           <button
             className="button button-primary research-submit"
@@ -172,7 +158,10 @@ export function Workspace() {
             disabled={
               running ||
               prompt.trim().length < 10 ||
-              !Number.isFinite(Number(budget))
+              !capabilities.ai ||
+              !Number.isFinite(Number(budget)) ||
+              Number(budget) < 0.5 ||
+              Number(budget) > 1000
             }
           >
             {running ? (
@@ -180,48 +169,21 @@ export function Workspace() {
             ) : (
               <Sparkles size={16} />
             )}{" "}
-            {running
-              ? "Comparing permitted sources…"
-              : mode === "live"
-                ? "Find sources with the agent"
-                : "Run guided research"}
+            {running ? "Comparing permitted sources…" : "Find sources"}
             <ArrowRight size={16} />
           </button>
-          {mode === "demo" && (
+          {!capabilities.ai && (
             <p className="caption">
-              A reproducible, rules-based walkthrough. This mode does not call
-              an AI model.
+              Research is currently unavailable. You can still{" "}
+              <Link href="/">browse and compare sources</Link>.
             </p>
           )}
         </section>
         <section className="task-output">
           {!task && !running ? (
             <div className="workspace-welcome">
-              <div className="orbit-illustration" aria-hidden="true">
-                <div className="orbit-ring orbit-one" />
-                <div className="orbit-ring orbit-two" />
-                <div className="orbit-center">
-                  <LayersMark />
-                </div>
-                <span className="orbit-node node-one">
-                  <ListFilter size={18} />
-                </span>
-                <span className="orbit-node node-two">
-                  <ShieldCheck size={18} />
-                </span>
-                <span className="orbit-node node-three">
-                  <FileCheck2 size={18} />
-                </span>
-              </div>
-              <h2>
-                Good research starts
-                <br />
-                with the right questions.
-              </h2>
-              <p>
-                Describe your task. Trove will compare eligible offers, explain
-                the trade-offs, and prepare an exact purchase plan.
-              </p>
+              <h2>Your next research task starts here.</h2>
+              <p>Find relevant data and review the price before you buy.</p>
               <div className="welcome-steps">
                 <span>
                   <b>01</b>Discover
@@ -249,7 +211,7 @@ export function Workspace() {
                 "Interpreting the research brief",
                 "Checking permitted sources",
                 "Calculating a bounded quote",
-              ].map((t, i) => (
+              ].map((t) => (
                 <div className="planning-step" key={t}>
                   <span className="button-spinner" />
                   {t}
@@ -261,10 +223,8 @@ export function Workspace() {
               <>
                 <div className="task-budget panel">
                   <div className="task-budget-header">
-                    <span className="section-eyebrow">TASK ALLOWANCE</span>
-                    <Badge>
-                      {task.planner === "gemini" ? "Live AI" : "Guided demo"}
-                    </Badge>
+                    <h2>Task allowance</h2>
+                    <Badge>AI research</Badge>
                   </div>
                   <div className="budget-figures">
                     <div>
@@ -384,9 +344,7 @@ export function Workspace() {
                           </strong>
                           <span>
                             {money(p.quote.totalCents)} ·{" "}
-                            {p.mode === "simulation"
-                              ? "Simulation"
-                              : "PayPal Sandbox"}
+                            {p.mode === "live" ? "PayPal" : "Sandbox"}
                           </span>
                         </div>
                         <Status value={p.paymentState} />
@@ -405,17 +363,5 @@ export function Workspace() {
         onClose={() => setReview(false)}
       />
     </div>
-  );
-}
-function LayersMark() {
-  return (
-    <svg width="35" height="38" viewBox="0 0 32 32" fill="none">
-      <path d="m16 2 13 7.5L16 17 3 9.5 13-7.5Z" fill="currentColor" />
-      <path
-        d="m3 15 13 7.5L29 15v7.5L16 30 3 22.5V15Z"
-        fill="currentColor"
-        opacity=".7"
-      />
-    </svg>
   );
 }

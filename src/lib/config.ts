@@ -1,3 +1,5 @@
+export const paymentEnvironment = (): "sandbox" | "live" =>
+  process.env.PAYPAL_ENVIRONMENT === "live" ? "live" : "sandbox";
 export function capabilities() {
   return {
     paypal: !!(
@@ -6,11 +8,16 @@ export function capabilities() {
       process.env.PAYPAL_MERCHANT_ID
     ),
     paypalClientId: process.env.PAYPAL_CLIENT_ID || null,
+    paymentEnvironment: paymentEnvironment(),
     payouts: process.env.PAYPAL_PAYOUTS_ENABLED === "true",
     ai: !!process.env.GEMINI_API_KEY,
-    elastic: !!process.env.ELASTICSEARCH_URL,
-    demo: process.env.TROVE_DEMO_ENABLED === "true",
-    simulation: process.env.TROVE_SIMULATION_ENABLED === "true",
   };
 }
 export const appUrl = () => process.env.APP_URL || "http://localhost:3000";
+
+export function resultRetentionHours() {
+  const hours = Number(process.env.RESULT_RETENTION_HOURS || 24);
+  if (!Number.isInteger(hours) || hours < 1 || hours > 168)
+    throw new Error("RESULT_RETENTION_HOURS must be between 1 and 168.");
+  return hours;
+}

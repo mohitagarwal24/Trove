@@ -36,7 +36,7 @@ async function reserveQuota(actor: Actor) {
     assert(
       daily < limit && minute < 5,
       "AI_QUOTA_LIMIT",
-      "The demo AI request allowance has been reached. Try later or use the guided demo; no paid fallback is used.",
+      "Research is temporarily rate-limited. Please try again later.",
       429,
     );
     await tx.auditEvent.create({
@@ -57,7 +57,7 @@ export async function generateText(
   assert(
     aiConfigured(),
     "AI_NOT_CONFIGURED",
-    "Add GEMINI_API_KEY from a Free Tier project to enable live AI. The guided demo is available separately.",
+    "AI research is temporarily unavailable. You can still browse and compare sources.",
     503,
   );
   const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
@@ -97,7 +97,7 @@ export async function generateText(
   } catch {
     throw new AppError(
       "AI_UNAVAILABLE",
-      "The free AI service did not respond. No purchase or payment was started; retry later or use the guided demo.",
+      "Research timed out. No purchase was started. Please try again.",
       503,
     );
   }
@@ -106,8 +106,8 @@ export async function generateText(
     throw new AppError(
       response.status === 429 ? "AI_QUOTA_LIMIT" : "AI_UNAVAILABLE",
       response.status === 429
-        ? "The Gemini free quota is temporarily exhausted. Try later or use the guided demo."
-        : "Gemini could not complete the request. Check the key, model access and Free Tier status.",
+        ? "Research is temporarily rate-limited. Please try again later."
+        : "Research could not be completed. Please try again later.",
       response.status === 429 ? 429 : 503,
     );
   }

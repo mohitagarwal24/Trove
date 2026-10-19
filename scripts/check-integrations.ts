@@ -1,24 +1,34 @@
+import { emailConfigured } from "../src/server/mail";
 import { db } from "../src/lib/db";
-import { capabilities } from "../src/lib/config";
+import { capabilities, paymentEnvironment } from "../src/lib/config";
 import { searchOffers } from "../src/server/catalog";
 async function main() {
   await db.$queryRaw`SELECT 1`;
   const caps = capabilities();
-  const search = await searchOffers({ query: "current retail" });
+  const search = await searchOffers({ query: "recall" });
   console.log(
     JSON.stringify(
       {
         database: "connected",
-        offers: await db.offerVersion.count({ where: { current: true } }),
+        offers: await db.offerVersion.count({
+          where: {
+            current: true,
+            seller: { status: "active" },
+            datasetId: { not: null },
+          },
+        }),
+        passwordRecovery: emailConfigured()
+          ? "configured_requires_delivery_test"
+          : "not_configured",
         searchEngine: search.engine,
-        paymentEnvironment: "sandbox_only",
+        paymentEnvironment: paymentEnvironment(),
         paypal: caps.paypal
           ? "configured_not_transaction_verified"
           : "missing_client_id_secret_or_merchant_id",
         payouts: caps.payouts
           ? "enabled_requires_approved_access_funds_and_recipients"
           : "not_enabled",
-        ai: caps.ai ? "configured_not_model_call_verified" : "guided_demo_only",
+        ai: caps.ai ? "configured_not_model_call_verified" : "not_configured",
         webhook: process.env.PAYPAL_WEBHOOK_ID
           ? "configured_requires_public_endpoint_test"
           : "not_configured",
@@ -27,8 +37,7 @@ async function main() {
         )
           ? "configured"
           : "missing_32_byte_hex_key",
-        simulation: caps.simulation,
-        note: "This check never creates charges or payouts. Complete the documented sandbox runbook to verify financial operations.",
+        note: "This check never creates charges or payouts. Complete docs/OPERATIONS.md to verify financial operations.",
       },
       null,
       2,

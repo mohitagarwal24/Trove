@@ -14,6 +14,7 @@ model User {
   role         String @default("buyer")
   sellerId     String?
   createdAt    DateTime @default(now())
+  disabledAt   DateTime?
   sessions     Session[]
   memberships  Membership[]
   tokens       AgentToken[]
@@ -61,7 +62,9 @@ model Seller {
   color       String
   description String
   connectorId String
-  synthetic   Boolean @default(true)
+  payoutEmail String?
+  status      String @default("pending")
+  datasets    DatasetSnapshot[]
   offers      OfferVersion[]
   payables    SellerPayable[]
 }
@@ -87,6 +90,12 @@ model OfferVersion {
   available    Boolean @default(true)
   current      Boolean @default(true)
   accessClass  String @default("paid_result")
+  datasetId    String?
+  dataset      DatasetSnapshot? @relation(fields: [datasetId], references: [id])
+  sourceUrl    String?
+  sourceLicenseUrl String?
+  sourceAttribution String?
+  retrievedAt  DateTime?
   createdAt    DateTime @default(now())
   seller       Seller @relation(fields: [sellerId], references: [id])
   quoteLines   QuoteLine[]
@@ -238,6 +247,7 @@ model SellerPayable {
   @@unique([purchaseId, sellerId])
 }
 model PayoutAttempt {
+  recipient String?
   id           String @id @default(cuid())
   payableId    String @unique
   requestId    String @unique
@@ -286,4 +296,34 @@ model AuditEvent {
   action      String
   reason      String?
   createdAt   DateTime @default(now())
+}
+
+model DatasetSnapshot {
+  id String @id @default(cuid())
+  sellerId String
+  sourceKey String
+  sourceUrl String
+  licenseUrl String
+  attribution String
+  retrievedAt DateTime
+  sourceUpdatedAt DateTime
+  contentHash String
+  rowCount Int
+  encryptedData String
+  seller Seller @relation(fields: [sellerId], references: [id])
+  offers OfferVersion[]
+  @@unique([sellerId, sourceKey, contentHash])
+  @@index([sourceKey, retrievedAt])
+}
+model RateLimit {
+  key String @id
+  count Int @default(0)
+  resetAt DateTime
+}
+model PasswordReset {
+  id String @id
+  userId String
+  expiresAt DateTime
+  usedAt DateTime?
+  @@index([userId])
 }

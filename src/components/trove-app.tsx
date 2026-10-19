@@ -11,15 +11,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowUpRight,
-  BookOpen,
   Cable,
   ChevronDown,
   Compass,
-  FlaskConical,
   LayoutDashboard,
   LogOut,
   Menu,
-  Plus,
   ReceiptText,
   Settings2,
   ShieldCheck,
@@ -30,11 +27,14 @@ import {
 } from "lucide-react";
 import type { Capabilities, Offer, UserView } from "@/lib/types";
 import { api, post } from "@/lib/client";
-import { Logo, Modal, Loading, Notice } from "./ui";
+import { Logo, Loading, Notice } from "./ui";
 import { Discover } from "./discover";
 import { Workspace } from "./workspace";
 import { Purchases, PurchaseDetail } from "./purchases";
 import { SellerStudio } from "./seller-studio";
+import { Account } from "./account";
+import { Legal } from "./legal";
+import { AuthDialog, PasswordRecovery } from "./auth";
 import { Connect } from "./connect";
 type AppState = {
   offers: Offer[];
@@ -43,7 +43,6 @@ type AppState = {
   refresh: () => Promise<void>;
   notify: (message: string, error?: boolean) => void;
   ensureAuth: () => Promise<boolean>;
-  switchAccount: (account: string) => Promise<void>;
 };
 const AppContext = createContext<AppState | null>(null);
 export const useTrove = () => useContext(AppContext)!;
@@ -61,9 +60,7 @@ const defaults: Capabilities = {
   paypalClientId: null,
   payouts: false,
   ai: false,
-  elastic: false,
-  demo: false,
-  simulation: false,
+  paymentEnvironment: "sandbox",
 };
 export function TroveApp() {
   const pathname = usePathname();
@@ -84,9 +81,7 @@ export function TroveApp() {
     message: string;
     error: boolean;
   } | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [signingIn, setSigningIn] = useState(false);
+  const authResolver = useRef<((ok: boolean) => void) | null>(null);
   const refresh = async () => {
     const data = await api<{
       offers: Offer[];
@@ -181,25 +176,21 @@ export function TroveApp() {
       document.removeEventListener("keydown", escape);
     };
   }, [accountMenu]);
-  async function switchAccount(account: string) {
-    await post("/auth/demo", { account });
-    await refresh();
-    setAuth(false);
-    setAccountMenu(false);
-    notify(
-      account === "buyer"
-        ? "You’re in the buyer demo workspace."
-        : "You’re signed in to a separate seller workspace.",
-    );
-  }
   async function ensureAuth() {
     if (user) return true;
-    if (caps.demo) {
-      await switchAccount("buyer");
-      return true;
-    }
+    setMobile(false);
     setAuth(true);
-    return false;
+    return new Promise<boolean>((resolve) => {
+      authResolver.current?.(false);
+      authResolver.current = resolve;
+    });
+  }
+  function changeAuth(open: boolean) {
+    setAuth(open);
+    if (!open) {
+      authResolver.current?.(false);
+      authResolver.current = null;
+    }
   }
   const selectedNav = [...nav, ...tools].find(
     (n) =>
@@ -207,6 +198,12 @@ export function TroveApp() {
   );
   const title =
     selectedNav?.label ||
+    {
+      "/account": "Account",
+      "/privacy": "Privacy",
+      "/terms": "Terms",
+      "/reset-password": "Password recovery",
+    }[pathname] ||
     (pathname.startsWith("/purchases/") ? "Purchase detail" : "Discover");
   const context: AppState = {
     offers,
@@ -215,7 +212,6 @@ export function TroveApp() {
     refresh,
     notify,
     ensureAuth,
-    switchAccount,
   };
   let page: ReactNode = <Discover />;
   if (pathname === "/workspace") page = <Workspace />;
@@ -224,6 +220,10 @@ export function TroveApp() {
     page = <PurchaseDetail id={pathname.split("/")[2]} />;
   else if (pathname === "/seller") page = <SellerStudio />;
   else if (pathname === "/connect") page = <Connect />;
+  else if (pathname === "/reset-password") page = <PasswordRecovery />;
+  else if (pathname === "/account") page = <Account />;
+  else if (pathname === "/privacy" || pathname === "/terms")
+    page = <Legal page={pathname.slice(1) as "privacy" | "terms"} />;
   return (
     <AppContext.Provider value={context}>
       <div className="app-shell">
@@ -257,7 +257,7 @@ export function TroveApp() {
             <Logo />
           </Link>
           <div className="sidebar-scroll">
-            <button className="workspace-switch" onClick={() => setAuth(true)}>
+            <div className="workspace-switch">
               <span className="workspace-icon">
                 <span>T</span>
               </span>
@@ -267,10 +267,9 @@ export function TroveApp() {
                     ? "Seller workspace"
                     : "Personal workspace"}
                 </strong>
-                <small>{user ? "Sandbox account" : "Explore Trove"}</small>
+                <small>{user?.email || "Sign in or create an account"}</small>
               </span>
-              <ChevronDown size={14} />
-            </button>
+            </div>
             <div className="nav-label">WORKSPACE</div>
             <nav aria-label="Main navigation">
               {nav.map((n) => (
@@ -326,16 +325,6 @@ export function TroveApp() {
                   Connect an agent <ArrowUpRight size={14} />
                 </Link>
               </div>
-              <a
-                className="sidebar-help"
-                href="https://github.com/paypaldev/getting-started-with-paypal-sandbox"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <BookOpen size={16} />
-                Sandbox setup guide
-                <ArrowUpRight size={13} />
-              </a>
             </div>
           </div>
           <div className="profile-container" ref={profileRef}>
@@ -363,36 +352,15 @@ export function TroveApp() {
             </button>
             {accountMenu && (
               <div className="account-menu">
-                {caps.demo && (
-                  <>
-                    <button
-                      onClick={() =>
-                        switchAccount("buyer").catch((e) =>
-                          notify(e.message, true),
-                        )
-                      }
-                    >
-                      Buyer demo account
-                    </button>
-                    <button
-                      onClick={() =>
-                        switchAccount("pricing").catch((e) =>
-                          notify(e.message, true),
-                        )
-                      }
-                    >
-                      Northstar seller demo
-                    </button>
-                  </>
-                )}
                 <button
                   onClick={() => {
-                    setAuth(true);
+                    if (user) router.push("/account");
+                    else setAuth(true);
                     setAccountMenu(false);
                   }}
                 >
                   <Settings2 size={14} />
-                  Sign in / switch account
+                  {user ? "Account" : "Sign in"}
                 </button>
                 {user && (
                   <button
@@ -429,10 +397,12 @@ export function TroveApp() {
               <strong>{title}</strong>
             </div>
             <div className="topbar-actions">
-              <span className="environment">
-                <span />
-                Sandbox environment
-              </span>
+              {caps.paymentEnvironment === "sandbox" && (
+                <span className="environment">
+                  <span />
+                  Sandbox
+                </span>
+              )}
               <span className="topbar-divider" />
               <Link
                 href="/connect"
@@ -443,7 +413,10 @@ export function TroveApp() {
               </Link>
               <button
                 className="top-avatar"
-                onClick={() => setAuth(true)}
+                onClick={() => {
+                  if (user) router.push("/account");
+                  else setAuth(true);
+                }}
                 aria-label="Account settings"
               >
                 {user?.name[0] || "T"}
@@ -470,96 +443,27 @@ export function TroveApp() {
           <footer className="app-footer">
             <span>
               <Logo small />
-              Thoughtful access to better information.
             </span>
             <span>
               <ShieldCheck size={14} />
-              Human-approved purchases<span className="footer-dot">·</span>USD
-              sandbox
+              <Link href="/privacy">Privacy</Link>
+              <span className="footer-dot">·</span>
+              <Link href="/terms">Terms</Link>
+              <span className="footer-dot">·</span>USD
             </span>
           </footer>
         </div>
-        <Modal
+        <AuthDialog
           open={auth}
-          onOpenChange={setAuth}
-          title="Your Trove workspace"
-          description="Sign in to manage research, purchases, and agent access."
-        >
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setSigningIn(true);
-              try {
-                await post("/auth/login", { email, password });
-                await refresh();
-                setAuth(false);
-                notify("Welcome to your workspace.");
-              } catch (e) {
-                notify((e as Error).message, true);
-              } finally {
-                setSigningIn(false);
-              }
-            }}
-            className="form-stack"
-          >
-            <label>
-              Email address
-              <input
-                type="email"
-                autoComplete="username"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@company.com"
-              />
-            </label>
-            <label>
-              Password
-              <input
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Your password"
-              />
-            </label>
-            <button className="button button-primary" disabled={signingIn}>
-              {signingIn ? "Signing in…" : "Sign in"}
-            </button>
-          </form>
-          {caps.demo && (
-            <div className="demo-accounts">
-              <span className="section-eyebrow">
-                OR EXPLORE WITH FIXTURE ACCOUNTS
-              </span>
-              <button
-                className="button button-secondary"
-                onClick={() =>
-                  switchAccount("buyer").catch((e) => notify(e.message, true))
-                }
-              >
-                <LayoutDashboard size={16} />
-                Open buyer demo
-                <ArrowUpRight size={15} />
-              </button>
-              <button
-                className="button button-secondary"
-                onClick={() =>
-                  switchAccount("pricing").catch((e) => notify(e.message, true))
-                }
-              >
-                <Store size={16} />
-                Open seller demo
-                <ArrowUpRight size={15} />
-              </button>
-              <p>
-                Shared demo accounts contain synthetic data. No real-money
-                payments.
-              </p>
-            </div>
-          )}
-        </Modal>
+          onOpenChange={changeAuth}
+          onAuthenticated={async () => {
+            await refresh();
+            setAuth(false);
+            authResolver.current?.(true);
+            authResolver.current = null;
+            notify("Signed in.");
+          }}
+        />
         {toast && (
           <div
             className={`toast ${toast.error ? "toast-error" : ""}`}

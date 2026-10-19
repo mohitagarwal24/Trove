@@ -3,20 +3,26 @@ import {
   createDecipheriv,
   createHash,
   randomBytes,
-  scryptSync,
+  scrypt,
   timingSafeEqual,
 } from "node:crypto";
 export const hash = (input: string) =>
   createHash("sha256").update(input).digest("hex");
-export function passwordHash(password: string) {
+const derive = (password: string, salt: string) =>
+  new Promise<Buffer>((resolve, reject) =>
+    scrypt(password, salt, 64, (error, key) =>
+      error ? reject(error) : resolve(key),
+    ),
+  );
+export async function passwordHash(password: string) {
   const salt = randomBytes(16).toString("hex");
-  return salt + ":" + scryptSync(password, salt, 64).toString("hex");
+  return salt + ":" + (await derive(password, salt)).toString("hex");
 }
-export function verifyPassword(password: string, stored: string) {
+export async function verifyPassword(password: string, stored: string) {
   const [salt, digest] = stored.split(":");
-  if (!salt || !digest) return false;
-  const candidate = scryptSync(password, salt, 64);
-  const expected = Buffer.from(digest, "hex");
+  if (!salt || !digest || !/^[a-f0-9]{128}$/i.test(digest)) return false;
+  const candidate = await derive(password, salt),
+    expected = Buffer.from(digest, "hex");
   return (
     candidate.length === expected.length && timingSafeEqual(candidate, expected)
   );

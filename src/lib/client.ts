@@ -12,7 +12,11 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
     headers: { "Content-Type": "application/json", ...options?.headers },
   });
-  const data = await result.json();
+  const data = await result.json().catch(() => ({
+    error: {
+      message: "The service is temporarily unavailable. Please try again.",
+    },
+  }));
   if (!result.ok)
     throw new ApiError(
       data.error?.message || "The request could not be completed.",

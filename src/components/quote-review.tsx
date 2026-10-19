@@ -1,14 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  Check,
-  Clock3,
-  FlaskConical,
-  LockKeyhole,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowRight, Clock3, LockKeyhole, ShieldCheck } from "lucide-react";
 import type { PurchaseView, QuoteView } from "@/lib/types";
 import { money } from "@/lib/types";
 import { post } from "@/lib/client";
@@ -38,13 +31,13 @@ export function QuoteReview({
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
   }, [quote]);
-  async function checkout(mode: "sandbox" | "simulation") {
+  async function checkout() {
     if (!quote) return;
     try {
       setBusy(true);
       const { purchase } = await post<{ purchase: PurchaseView }>(
         "/purchases",
-        { quoteId: quote.id, mode, idempotencyKey: `${mode}:${quote.id}` },
+        { quoteId: quote.id, idempotencyKey: `paypal:${quote.id}` },
       );
       onClose();
       router.push(`/purchases/${purchase.id}`);
@@ -59,7 +52,7 @@ export function QuoteReview({
       open={!!quote}
       onOpenChange={(open) => !open && onClose()}
       title="Review your purchase plan"
-      description="A fixed scope. An exact amount. Your explicit approval."
+      description="Confirm the data, price and access terms."
       wide
     >
       {quote && (
@@ -67,7 +60,7 @@ export function QuoteReview({
           <div className="quote-meta">
             <Badge tone="green">
               <LockKeyhole size={11} />
-              Immutable quote
+              Price reserved
             </Badge>
             <span className={seconds === 0 ? "error-text" : "muted"}>
               <Clock3 size={13} />
@@ -91,6 +84,16 @@ export function QuoteReview({
                     · {line.quantity} records
                   </span>
                   <small>{line.fields.join(" · ")}</small>
+                  {!!line.snapshot.filters?.length && (
+                    <small>
+                      {line.snapshot.filters
+                        .map(
+                          (f) =>
+                            `${f.field.replaceAll("_", " ")} ${f.operator} ${f.value}`,
+                        )
+                        .join(" · ")}
+                    </small>
+                  )}
                   <span className="quote-license">
                     <ShieldCheck size={12} />
                     {quote.purpose.replaceAll("_", " ")}
@@ -102,75 +105,52 @@ export function QuoteReview({
           </div>
           <div className="quote-breakdown">
             <div>
-              <span>Seller earnings</span>
+              <span>Data preparation</span>
               <span>{money(quote.totalCents - quote.commissionCents)}</span>
             </div>
             <div>
               <span>
-                Trove commission <small>(included, illustrative)</small>
+                Trove fee <small>(included)</small>
               </span>
               <span>{money(quote.commissionCents)}</span>
             </div>
             <div className="quote-total">
-              <span>Total approval amount</span>
+              <span>Total</span>
               <span>
                 {money(quote.totalCents)} <small>USD</small>
               </span>
             </div>
           </div>
-          <div className="approval-promises">
-            <span>
-              <Check size={14} />
-              All results checked before capture
-            </span>
-            <span>
-              <Check size={14} />
-              No substitutions without a new approval
-            </span>
-            <span>
-              <Check size={14} />A source-linked, itemised receipt
-            </span>
-          </div>
-          <p className="caption">
-            All selected providers and datasets are synthetic. Checks confirm
-            the delivery contract, not the truth of the information. The task
-            budget is a Trove limit; this approval covers only{" "}
-            {money(quote.totalCents)}.
-          </p>
+          <details className="purchase-terms">
+            <summary>Source licences and access</summary>
+            {quote.lines.map((line) => (
+              <p key={line.id}>
+                <strong>{line.snapshot.title}</strong> — {line.snapshot.license}
+              </p>
+            ))}
+            <p>
+              Results are available for{" "}
+              {quote.lines[0]?.snapshot.accessHours || 24} hours after delivery.
+              You can download them during that period.
+            </p>
+          </details>
+          {capabilities.paymentEnvironment === "sandbox" && (
+            <p className="caption">PayPal Sandbox — no real money moves.</p>
+          )}
           {!capabilities.paypal && (
             <Notice>
-              PayPal Sandbox is not connected yet. Real sandbox checkout becomes
-              available after the collection account credentials are configured.
+              Checkout is temporarily unavailable. Please try again later.
             </Notice>
           )}
           <button
             className="button button-paypal"
             disabled={!capabilities.paypal || busy || seconds === 0}
-            onClick={() => checkout("sandbox")}
+            onClick={checkout}
           >
             <span className="paypal-wordmark">PayPal</span>
-            <span>Continue to sandbox checkout</span>
+            <span>Continue with PayPal</span>
             <ArrowRight size={17} />
           </button>
-          {capabilities.simulation && (
-            <div className="simulation-option">
-              <div>
-                <FlaskConical size={16} />
-                <span>Explore the complete flow without credentials.</span>
-              </div>
-              <button
-                className="button button-secondary"
-                disabled={busy || seconds === 0}
-                onClick={() => checkout("simulation")}
-              >
-                {busy ? "Preparing…" : "Continue in simulation"}
-                <ArrowRight size={15} />
-              </button>
-              <small>
-                No PayPal transaction. Simulated references and earnings only.
-              </small>
-            </div>
-          )}
         </div>
       )}
     </Modal>

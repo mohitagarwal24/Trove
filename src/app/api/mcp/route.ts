@@ -2,6 +2,7 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { authenticate } from "@/server/auth";
 import { createMcpServer } from "@/server/mcp";
 import { AppError } from "@/lib/errors";
+import { rateLimit } from "@/server/rate-limit";
 import { appUrl } from "@/lib/config";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
     if (origin && origin !== new URL(appUrl()).origin)
       throw new AppError("INVALID_ORIGIN", "MCP origin not permitted.", 403);
     const actor = await authenticate(request);
+    await rateLimit(actor.id, "mcp", 120, 60_000);
     const server = createMcpServer(actor);
     const transport = new WebStandardStreamableHTTPServerTransport({
       enableJsonResponse: true,

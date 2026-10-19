@@ -1,0 +1,55 @@
+name: Application checks
+on:
+  push:
+    branches: [main]
+    paths:
+      [
+        "src/**",
+        "prisma/**",
+        "scripts/**",
+        "tests/**",
+        "package*.json",
+        "*config*",
+        ".github/workflows/ci.yml",
+      ]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: trove-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: trove
+          POSTGRES_PASSWORD: trove_local
+          POSTGRES_DB: trove
+        ports: ["5434:5432"]
+        options: --health-cmd 'pg_isready -U trove -d trove' --health-interval 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Configure isolated local database and encryption
+        run: |
+          cp .env.example .env
+          node -e 'const fs=require("node:fs"),crypto=require("node:crypto");fs.appendFileSync(".env", "\nRESULT_ENCRYPTION_KEY="+crypto.randomBytes(32).toString("hex")+"\n");'
+      - run: npm run db:generate && npm run db:migrate && npm run db:seed
+      - run: npm run typecheck && npm test && npm run build && npm audit
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-report
+          path: playwright-report/
+          retention-days: 5

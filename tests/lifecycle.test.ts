@@ -1,96 +1,265 @@
 import { after, before, test } from "node:test";
-import nodeAssert from "node:assert/strict";
+import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { db } from "../src/lib/db";
-import { encrypt, decrypt } from "../src/lib/crypto";
-import type { Actor } from "../src/server/auth";
-import { createQuote } from "../src/server/quotes";
-import { planTask } from "../src/server/planner";
+import { encrypt, decrypt, hash } from "../src/lib/crypto";
+import { type Actor } from "../src/server/auth";
+import { createQuote, getQuote } from "../src/server/quotes";
 import {
   createPurchase,
-  simulateApproval,
+  createPayPalOrder,
+  approvePurchase,
   getResult,
   getPurchase,
   fulfilPurchase,
-  internalPurchase,
   cancelPurchase,
 } from "../src/server/purchases";
-import { requestRefund, processRefund } from "../src/server/settlement";
-import { paymentApi, PayPalError, verifyWebhook } from "../src/server/paypal";
+import {
+  requestRefund,
+  processRefund,
+  settlePurchase,
+} from "../src/server/settlement";
+import {
+  paymentApi,
+  PayPalError,
+  verifyWebhook,
+  type PaymentResource,
+} from "../src/server/paypal";
 import { prepareConnector } from "../src/server/connectors";
-import { capabilities } from "../src/lib/config";
-import { persistVerifiedWebhook } from "../src/server/webhooks";
+import { eligibility, searchOffers } from "../src/server/catalog";
 import { editOffer } from "../src/server/sellers";
 import { generateText } from "../src/server/ai";
+import { planTask } from "../src/server/planner";
 import { requireCron } from "../src/server/cron-auth";
-import { refreshDemoFixtures } from "../src/server/demo-fixtures";
-const suffix = randomUUID();
-const workspaceId = "test-" + suffix;
-const otherWorkspaceId = "test-other-" + suffix;
+import { persistVerifiedWebhook } from "../src/server/webhooks";
+import { syncSources, normalizeSource } from "../src/server/datasets";
+import { rateLimit } from "../src/server/rate-limit";
+const suffix = randomUUID(),
+  workspaceId = `test-${suffix}`,
+  otherWorkspaceId = `test-other-${suffix}`,
+  sellerId = `test-seller-${suffix}`;
 const actor: Actor = {
-  id: "test-user-" + suffix,
-  name: "Test buyer",
-  email: "test@trove.test",
+  id: `test-user-${suffix}`,
+  name: "Integration buyer",
+  email: `${suffix}@example.com`,
   role: "buyer",
   sellerId: null,
   workspaceId,
   scopes: ["read", "purchase"],
   viaToken: false,
 };
-const other: Actor = {
+const other = {
   ...actor,
-  id: "test-other",
+  id: `test-other-${suffix}`,
   workspaceId: otherWorkspaceId,
 };
-let offerId: string;
+let offerId: string,
+  sourceRows: Record<string, string | number>[],
+  datasetId: string;
+const originals = { ...paymentApi },
+  originalFetch = globalThis.fetch,
+  envKeys = [
+    "PAYPAL_CLIENT_ID",
+    "PAYPAL_CLIENT_SECRET",
+    "PAYPAL_MERCHANT_ID",
+    "PAYPAL_ENVIRONMENT",
+    "GEMINI_API_KEY",
+    "GEMINI_MODEL",
+    "PAYPAL_PAYOUTS_ENABLED",
+  ];
+const oldEnv = Object.fromEntries(envKeys.map((k) => [k, process.env[k]]));
+const orders = new Map<string, PaymentResource>(),
+  owners = new Map<string, string>();
+let captureCalls = 0;
 before(async () => {
+  assert(
+    ["localhost", "127.0.0.1"].includes(
+      new URL(process.env.DATABASE_URL!).hostname,
+    ),
+    "Lifecycle tests require a local database",
+  );
+  Object.assign(process.env, {
+    PAYPAL_CLIENT_ID: "TEST_ONLY",
+    PAYPAL_CLIENT_SECRET: "TEST_ONLY",
+    PAYPAL_MERCHANT_ID: "TEST_MERCHANT",
+    PAYPAL_ENVIRONMENT: "sandbox",
+    PAYPAL_PAYOUTS_ENABLED: "false",
+  });
+  delete process.env.GEMINI_API_KEY;
+  globalThis.fetch = async () => {
+    throw new Error("External requests are forbidden in lifecycle tests");
+  };
   await db.workspace.createMany({
     data: [
       { id: workspaceId, name: "Integration test" },
       { id: otherWorkspaceId, name: "Isolation test" },
     ],
   });
-  offerId = (
-    await db.offerVersion.findFirstOrThrow({
-      where: { offerId: "northstar-current", current: true },
-    })
-  ).id;
+  const source = await db.offerVersion.findFirstOrThrow({
+    where: { offerId: "drug-approvals-full", current: true },
+    include: { dataset: true },
+  });
+  assert(source.dataset);
+  sourceRows = decrypt(source.dataset.encryptedData);
+  await db.seller.create({
+    data: {
+      id: sellerId,
+      name: "Integration provider",
+      initials: "I",
+      color: "blue",
+      description: "Test-isolated data provider",
+      connectorId: "uploaded-dataset",
+      status: "active",
+    },
+  });
+  const dataset = await db.datasetSnapshot.create({
+    data: {
+      sellerId,
+      sourceKey: suffix,
+      sourceUrl: source.dataset.sourceUrl,
+      licenseUrl: source.dataset.licenseUrl,
+      attribution: source.dataset.attribution,
+      retrievedAt: source.dataset.retrievedAt,
+      sourceUpdatedAt: source.dataset.sourceUpdatedAt,
+      contentHash: source.dataset.contentHash,
+      rowCount: sourceRows.length,
+      encryptedData: source.dataset.encryptedData,
+    },
+  });
+  datasetId = dataset.id;
+  const {
+    id: _id,
+    sellerId: _seller,
+    dataset: _dataset,
+    createdAt: _at,
+    datasetId: _data,
+    ...data
+  } = source;
+  const offer = await db.offerVersion.create({
+    data: {
+      ...data,
+      schema: data.schema as Prisma.InputJsonValue,
+      preview: data.preview as Prisma.InputJsonValue,
+      offerId: `test-${suffix}`,
+      version: 1,
+      sellerId,
+      datasetId,
+    },
+  });
+  offerId = offer.id;
+  paymentApi.create = async (id, q) => {
+    const orderId = `TEST-ORDER-${id}`;
+    owners.set(`TEST-AUTH-${id}`, orderId);
+    orders.set(orderId, {
+      id: orderId,
+      status: "APPROVED",
+      purchase_units: [
+        {
+          custom_id: q.planHash,
+          invoice_id: id,
+          amount: {
+            currency_code: "USD",
+            value: (q.totalCents / 100).toFixed(2),
+          },
+          payee: { merchant_id: "TEST_MERCHANT" },
+          payments: {},
+        },
+      ],
+    });
+    return { id: orderId, status: "CREATED" };
+  };
+  paymentApi.order = async (id) => structuredClone(orders.get(id)!);
+  paymentApi.authorize = async (id) => {
+    const o = orders.get(id)!;
+    o.purchase_units![0].payments = {
+      authorizations: [
+        {
+          id: `TEST-AUTH-${o.purchase_units![0].invoice_id}`,
+          status: "CREATED",
+          amount: o.purchase_units![0].amount,
+        },
+      ],
+    };
+    return structuredClone(o);
+  };
+  paymentApi.capture = async (id, cents) => {
+    captureCalls++;
+    const o = orders.get(owners.get(id)!)!;
+    const capture = {
+      id: `TEST-CAPTURE-${o.purchase_units![0].invoice_id}`,
+      status: "COMPLETED",
+      amount: { currency_code: "USD", value: (cents / 100).toFixed(2) },
+    };
+    o.purchase_units![0].payments!.captures = [capture];
+    return capture;
+  };
+  paymentApi.void = async (id) => ({ id, status: "VOIDED" });
+  paymentApi.refund = async (id) => {
+    const p = await db.purchase.findFirstOrThrow({
+      where: { captureId: id },
+      include: { quote: true },
+    });
+    return {
+      id: `TEST-REFUND-${p.id}`,
+      status: "COMPLETED",
+      amount: {
+        currency_code: "USD",
+        value: (p.quote.totalCents / 100).toFixed(2),
+      },
+    };
+  };
 });
 after(async () => {
+  Object.assign(paymentApi, originals);
+  globalThis.fetch = originalFetch;
+  for (const k of envKeys)
+    if (oldEnv[k] === undefined) delete process.env[k];
+    else process.env[k] = oldEnv[k];
   const purchases = await db.purchase.findMany({
-    where: { workspaceId },
-    select: { id: true },
-  });
-  const ids = purchases.map((p) => p.id);
+      where: { workspaceId },
+      select: { id: true },
+    }),
+    ids = purchases.map((p) => p.id);
   await db.$transaction(async (tx) => {
     await tx.job.deleteMany({
-      where: { resourceId: { in: [...ids, `test-event-${suffix}`] } },
+      where: {
+        OR: [
+          { resourceId: { in: ids } },
+          { resourceId: { startsWith: `test-${suffix}` } },
+        ],
+      },
     });
-    await tx.webhookEvent.deleteMany({ where: { id: `test-event-${suffix}` } });
+    await tx.webhookEvent.deleteMany({ where: { id: `test-${suffix}` } });
     await tx.auditEvent.deleteMany({
-      where: { OR: [{ resourceId: { in: ids } }, { actor: actor.id }] },
+      where: {
+        OR: [
+          { actor: actor.id },
+          { resourceId: { in: [...ids, datasetId, offerId] } },
+        ],
+      },
     });
     await tx.payoutAttempt.deleteMany({
       where: { payable: { purchaseId: { in: ids } } },
     });
-    await tx.sellerPayable.deleteMany({ where: { purchaseId: { in: ids } } });
-    await tx.ledgerEntry.deleteMany({ where: { purchaseId: { in: ids } } });
-    await tx.refund.deleteMany({ where: { purchaseId: { in: ids } } });
-    await tx.receipt.deleteMany({ where: { purchaseId: { in: ids } } });
-    await tx.resultEntitlement.deleteMany({
-      where: { purchaseId: { in: ids } },
-    });
-    await tx.providerExecution.deleteMany({
-      where: { purchaseId: { in: ids } },
-    });
-    await tx.paymentAttempt.deleteMany({ where: { purchaseId: { in: ids } } });
-    await tx.budgetReservation.deleteMany({
-      where: { purchaseId: { in: ids } },
-    });
+    for (const model of [
+      tx.sellerPayable,
+      tx.ledgerEntry,
+      tx.refund,
+      tx.receipt,
+      tx.resultEntitlement,
+      tx.providerExecution,
+      tx.paymentAttempt,
+      tx.budgetReservation,
+    ] as any[])
+      await model.deleteMany({ where: { purchaseId: { in: ids } } });
     await tx.purchase.deleteMany({ where: { id: { in: ids } } });
     await tx.quoteLine.deleteMany({ where: { quote: { workspaceId } } });
     await tx.quote.deleteMany({ where: { workspaceId } });
     await tx.taskRun.deleteMany({ where: { workspaceId } });
+    await tx.offerVersion.deleteMany({ where: { sellerId } });
+    await tx.datasetSnapshot.deleteMany({ where: { sellerId } });
+    await tx.seller.delete({ where: { id: sellerId } });
     await tx.workspace.deleteMany({
       where: { id: { in: [workspaceId, otherWorkspaceId] } },
     });
@@ -100,72 +269,197 @@ after(async () => {
 async function quote(taskId?: string) {
   return createQuote(actor, { offerIds: [offerId], taskId });
 }
-async function purchase(mode: "simulation" | "sandbox" = "simulation") {
+async function purchase() {
   const q = await quote();
-  return (await createPurchase(actor, q.id, mode, randomUUID())).purchase;
+  return (await createPurchase(actor, q.id, randomUUID())).purchase;
 }
-test("planner rejects stale, insufficient-field and prohibited-purpose offers", async () => {
-  const result = await planTask(actor, {
-    prompt:
-      "Compare current product prices and supplier capabilities for internal business analysis.",
-    budgetCents: 1000,
-    mode: "demo",
-  });
-  nodeAssert.equal(result.task.planner, "deterministic_demo");
-  nodeAssert.equal(result.quote?.lines.length, 2);
-  const decisions = result.task.decisions as unknown as {
-    selected: boolean;
-    reason: string;
-  }[];
-  nodeAssert(decisions.some((d) => !d.selected && /freshness/.test(d.reason)));
-  nodeAssert(
-    decisions.some((d) => !d.selected && /Required fields/.test(d.reason)),
-  );
-  nodeAssert(decisions.some((d) => !d.selected && /Licence/.test(d.reason)));
+async function approve(id: string) {
+  const { orderId } = await createPayPalOrder(actor, id);
+  await approvePurchase(actor, id, orderId);
+  await fulfilPurchase(id);
+}
+async function aiOutput<T>(outputs: unknown[], call: () => Promise<T>) {
+  const prior = globalThis.fetch;
+  process.env.GEMINI_API_KEY = "TEST_ONLY";
+  process.env.GEMINI_MODEL = "gemini-3.8-flash";
+  let calls = 0;
+  globalThis.fetch = async (url, init) => {
+    assert.equal(
+      String(url),
+      "https://generativelanguage.googleapis.com/v1beta/interactions",
+    );
+    assert.equal(JSON.parse(String(init?.body)).store, false);
+    return Response.json({
+      status: "completed",
+      steps: [
+        {
+          type: "model_output",
+          content: [{ type: "text", text: JSON.stringify(outputs[calls++]) }],
+        },
+      ],
+    });
+  };
+  try {
+    return await call();
+  } finally {
+    globalThis.fetch = prior;
+    delete process.env.GEMINI_API_KEY;
+    await db.auditEvent.deleteMany({
+      where: { actor: actor.id, action: "ai_request_reserved" },
+    });
+  }
+}
+test("catalogue exposes metadata and two-row previews, never encrypted data or payout routing", async () => {
+  const result = await searchOffers();
+  assert(result.offers.length >= 6);
+  const body = JSON.stringify(result);
+  assert(!body.includes("encryptedData"));
+  assert(!body.includes("payoutEmail"));
+  assert(result.offers.every((o) => (o.preview as unknown[]).length <= 2));
 });
-test("prohibited fields cannot be unlocked with a larger budget", async () => {
-  await nodeAssert.rejects(
+test("planner uses real model responses, enforces fields and creates no payment", async () => {
+  const before = await db.purchase.count({ where: { workspaceId } });
+  const result = await aiOutput(
+    [
+      {
+        categories: ["Drug approvals"],
+        fields: ["brand_name", "active_ingredients"],
+        purpose: "internal_business_analysis",
+        maxAgeDays: 3650,
+        quantity: 6,
+      },
+      {
+        selectedOfferIds: [offerId],
+        explanations: [{ offerId, reason: "Approval fields match." }],
+      },
+    ],
+    () =>
+      planTask(actor, {
+        prompt: "Compare drug approvals and active ingredients",
+        budgetCents: 1000,
+      }),
+  );
+  assert.equal(result.task.planner, "gemini");
+  assert.equal(result.quote?.lines[0].offerVersionId, offerId);
+  assert.equal(await db.purchase.count({ where: { workspaceId } }), before);
+});
+test("stale, paused and incomplete sources are ineligible", async () => {
+  const offer = await db.offerVersion.findUniqueOrThrow({
+    where: { id: offerId },
+    include: { seller: true },
+  });
+  const r = {
+    categories: ["Drug approvals"],
+    fields: ["brand_name", "active_ingredients"],
+    purpose: "internal_business_analysis",
+    maxAgeDays: 1,
+    quantity: 2,
+  };
+  assert.match(
+    eligibility({ ...offer, freshnessAt: new Date(0) }, r)!,
+    /older/,
+  );
+  assert.match(eligibility({ ...offer, available: false }, r)!, /paused/);
+  assert.match(
+    eligibility(
+      { ...offer, fields: ["brand_name"], freshnessAt: new Date() },
+      r,
+    )!,
+    /Required fields/,
+  );
+});
+test("prohibited fields cannot be purchased at any price", async () => {
+  await assert.rejects(
     () =>
       createQuote(actor, {
         offerIds: [offerId],
-        fieldsByOffer: { [offerId]: ["private_contact"] },
+        fieldsByOffer: { [offerId]: ["patient_id"] },
       }),
     /not permitted/,
   );
 });
-test("aggregate offer succeeds, but named company records remain unavailable", async () => {
-  const summary = await db.offerVersion.findFirstOrThrow({
-    where: { offerId: "atlas-summary", current: true },
-  });
-  await nodeAssert.rejects(
-    () =>
-      createQuote(actor, {
-        offerIds: [summary.id],
-        fieldsByOffer: { [summary.id]: ["company"] },
-      }),
-    /not permitted/,
-  );
-  const q = await createQuote(actor, { offerIds: [summary.id] });
-  const p = (await createPurchase(actor, q.id, "simulation", randomUUID()))
-    .purchase;
-  await simulateApproval(actor, p.id);
-  const result = await getResult(actor, p.id);
-  nodeAssert(result.sources[0].rows.every((row) => !("company" in row)));
+test("approval binds exact fields, provenance, quantity and dataset version", async () => {
+  const q = await quote();
+  const binding = q.lines[0].snapshot as any;
+  assert.equal(binding.datasetId, datasetId);
+  assert(binding.sourceUrl);
+  assert(binding.sourceLicenseUrl);
+  const prepared = await prepareConnector(q.lines[0]);
+  assert.equal(prepared.rows.length, q.lines[0].quantity);
+  assert(prepared.checks.every((c) => c.passed));
 });
-test("row-locked reservations prevent concurrent overspending", async () => {
-  const offer = await db.offerVersion.findUniqueOrThrow({
-    where: { id: offerId },
-  });
+test("filtered quotes bind matching record indexes and reject empty batches", async () => {
+  const selected = sourceRows.find(
+    (r, i) =>
+      i > 5 && r.brand_name && r.brand_name !== sourceRows[0].brand_name,
+  )!;
+  assert(selected);
   const task = await db.taskRun.create({
     data: {
       workspaceId,
-      prompt: "Concurrent budget test",
-      budgetCents: offer.priceCents + 10,
+      prompt: "Find a specific approved product",
+      budgetCents: 1000,
       requirements: {
-        categories: [offer.category],
-        fields: ["product"],
+        categories: ["Drug approvals"],
+        fields: ["brand_name"],
         purpose: "internal_business_analysis",
-        maxAgeDays: 7,
+        maxAgeDays: 3650,
+        quantity: 2,
+        filters: [
+          {
+            category: "Drug approvals",
+            field: "brand_name",
+            operator: "equals",
+            value: selected.brand_name,
+          },
+        ],
+      },
+      decisions: [],
+      planner: "gemini",
+    },
+  });
+  const q = await createQuote(actor, { offerIds: [offerId], taskId: task.id });
+  const result = await prepareConnector(q.lines[0]);
+  assert(result.rows.every((r) => r.brand_name === selected.brand_name));
+  assert(
+    (q.lines[0].snapshot as any).rowIndexes.every(
+      (i: number) => sourceRows[i].brand_name === selected.brand_name,
+    ),
+  );
+  await db.taskRun.update({
+    where: { id: task.id },
+    data: {
+      requirements: {
+        ...(task.requirements as object),
+        filters: [
+          {
+            category: "Drug approvals",
+            field: "brand_name",
+            operator: "equals",
+            value: "NO-SUCH-PRODUCT-ACCEPTANCE",
+          },
+        ],
+      },
+    },
+  });
+  const before = await db.purchase.count({ where: { workspaceId } });
+  await assert.rejects(
+    () => createQuote(actor, { offerIds: [offerId], taskId: task.id }),
+    /No records match/,
+  );
+  assert.equal(await db.purchase.count({ where: { workspaceId } }), before);
+});
+test("row-locked budgets reject concurrent overspending", async () => {
+  const task = await db.taskRun.create({
+    data: {
+      workspaceId,
+      prompt: "Concurrent purchase",
+      budgetCents: 330,
+      requirements: {
+        categories: ["Drug approvals"],
+        fields: ["brand_name"],
+        purpose: "internal_business_analysis",
+        maxAgeDays: 3650,
         quantity: 2,
       },
       decisions: [],
@@ -174,393 +468,475 @@ test("row-locked reservations prevent concurrent overspending", async () => {
   });
   const [a, b] = await Promise.all([quote(task.id), quote(task.id)]);
   const results = await Promise.allSettled([
-    createPurchase(actor, a.id, "simulation", randomUUID()),
-    createPurchase(actor, b.id, "simulation", randomUUID()),
+    createPurchase(actor, a.id, randomUUID()),
+    createPurchase(actor, b.id, randomUUID()),
   ]);
-  nodeAssert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
-  const updated = await db.taskRun.findUniqueOrThrow({
-    where: { id: task.id },
-  });
-  nodeAssert.equal(updated.reservedCents, offer.priceCents);
-  nodeAssert(updated.reservedCents <= updated.budgetCents);
+  assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
+  const actual = await db.taskRun.findUniqueOrThrow({ where: { id: task.id } });
+  assert(actual.reservedCents <= actual.budgetCents);
 });
-test("duplicate purchase identity and repeated result retrieval do not double-charge", async () => {
-  const q = await quote();
-  const key = randomUUID();
-  const p = (await createPurchase(actor, q.id, "simulation", key)).purchase;
-  const repeated = await createPurchase(actor, q.id, "simulation", key);
-  nodeAssert.equal(repeated.purchase.id, p.id);
-  await simulateApproval(actor, p.id);
-  await simulateApproval(actor, p.id);
+test("concurrent identical requests reserve one purchase", async () => {
+  const q = await quote(),
+    key = randomUUID();
+  const results = await Promise.all([
+    createPurchase(actor, q.id, key),
+    createPurchase(actor, q.id, key),
+  ]);
+  assert.equal(results[0].purchase.id, results[1].purchase.id);
+  assert.equal(await db.purchase.count({ where: { quoteId: q.id } }), 1);
+});
+test("repeated fulfilment and retrieval cannot charge twice", async () => {
+  const p = await purchase(),
+    calls = captureCalls;
+  await approve(p.id);
+  await fulfilPurchase(p.id);
   await getResult(actor, p.id);
   await getResult(actor, p.id);
-  nodeAssert.equal(await db.receipt.count({ where: { purchaseId: p.id } }), 1);
-  const entries = await db.ledgerEntry.findMany({
+  assert.equal(captureCalls, calls + 1);
+  assert.equal(await db.receipt.count({ where: { purchaseId: p.id } }), 1);
+  const ledger = await db.ledgerEntry.findMany({
     where: { groupId: `capture:${p.id}` },
   });
-  nodeAssert.equal(
-    entries.reduce((s, e) => s + e.amountCents, 0),
+  assert.equal(
+    ledger.reduce((n, e) => n + e.amountCents, 0),
     0,
   );
-  nodeAssert.equal(entries.length, 3);
 });
-test("failed bundle validation voids the purchase and creates no seller payable", async () => {
-  const second = await db.offerVersion.findFirstOrThrow({
-    where: { offerId: "atlas-directory", current: true },
+test("source corruption stops delivery before capture and releases the reservation", async () => {
+  const source = await db.datasetSnapshot.findUniqueOrThrow({
+    where: { id: datasetId },
   });
-  const q = await createQuote(actor, { offerIds: [offerId, second.id] });
-  const p = (await createPurchase(actor, q.id, "simulation", randomUUID()))
-    .purchase;
-  await nodeAssert.rejects(
-    () => simulateApproval(actor, p.id, "missing_field"),
-    /delivery checks/,
-  );
-  const result = await getPurchase(actor, p.id);
-  nodeAssert.equal(result.paymentState, "voided");
-  nodeAssert.equal(result.captureId, null);
-  nodeAssert.equal(result.payables.length, 0);
-  await nodeAssert.rejects(() => getResult(actor, p.id), /completed purchase/);
-});
-test("connector outages never produce captures or paid access", async () => {
-  const p = await purchase();
-  await nodeAssert.rejects(
-    () => simulateApproval(actor, p.id, "outage"),
-    /unavailable/,
-  );
-  nodeAssert.equal((await getPurchase(actor, p.id)).paymentState, "voided");
-  await nodeAssert.rejects(() => getResult(actor, p.id));
-});
-test("pending approval and another buyer cannot retrieve private results", async () => {
-  const p = await purchase();
-  await nodeAssert.rejects(() => getResult(actor, p.id), /completed purchase/);
-  await simulateApproval(actor, p.id);
-  await nodeAssert.rejects(() => getResult(other, p.id), /not found/i);
-  await nodeAssert.rejects(() => getPurchase(other, p.id), /not found/i);
-});
-test("cancellation releases the reservation and blocks later approval", async () => {
-  const p = await purchase();
-  await cancelPurchase(actor, p.id);
-  await nodeAssert.rejects(
-    () => simulateApproval(actor, p.id),
-    /Only simulated purchases/,
-  );
-  const r = await db.budgetReservation.findUniqueOrThrow({
-    where: { purchaseId: p.id },
-  });
-  nodeAssert.equal(r.state, "released");
-});
-test("result staging is authenticated encryption, not readable database JSON", async () => {
-  const value = encrypt({ records: ["private-purchased-value"] });
-  nodeAssert(!value.includes("private-purchased-value"));
-  nodeAssert.deepEqual(decrypt(value), {
-    records: ["private-purchased-value"],
-  });
-  const parts = value.split(".");
-  parts[1] = Buffer.alloc(16).toString("base64");
-  nodeAssert.throws(() => decrypt(parts.join(".")));
-});
-test("expired result access is denied without a second charge", async () => {
-  const p = await purchase();
-  await simulateApproval(actor, p.id);
-  await db.resultEntitlement.update({
-    where: { purchaseId: p.id },
-    data: { expiresAt: new Date(0) },
-  });
-  await nodeAssert.rejects(() => getResult(actor, p.id), /expired/);
-  nodeAssert.equal((await getPurchase(actor, p.id)).paymentState, "captured");
-});
-test("refund is idempotent, revokes access, stops settlement, and balances", async () => {
-  const p = await purchase();
-  await simulateApproval(actor, p.id);
-  await requestRefund(actor, p.id, "Integration test refund request");
-  await processRefund(p.id);
-  await processRefund(p.id);
-  const result = await getPurchase(actor, p.id);
-  nodeAssert.equal(result.paymentState, "refunded");
-  nodeAssert(result.payables.every((x) => x.state === "cancelled"));
-  await nodeAssert.rejects(() => getResult(actor, p.id));
-  const entries = await db.ledgerEntry.findMany({
-    where: { groupId: `refund:${p.id}` },
-  });
-  nodeAssert.equal(
-    entries.reduce((s, e) => s + e.amountCents, 0),
-    0,
-  );
-  nodeAssert.equal(await db.refund.count({ where: { purchaseId: p.id } }), 1);
-});
-test("refund after seller payout explicitly requires recovery", async () => {
-  const p = await purchase();
-  await simulateApproval(actor, p.id);
-  await db.sellerPayable.updateMany({
-    where: { purchaseId: p.id },
-    data: { state: "paid" },
-  });
-  await requestRefund(actor, p.id, "Test refund after a submitted payout");
-  await processRefund(p.id);
-  nodeAssert.equal(
-    (await getPurchase(actor, p.id)).settlementState,
-    "recovery_required",
-  );
-});
-test("seller version updates cannot rewrite an existing quote snapshot", async () => {
-  const q = await quote();
-  const original = q.lines[0].snapshot;
-  const cents = q.totalCents;
-  await db.offerVersion.update({
-    where: { id: offerId },
-    data: { priceCents: cents + 20 },
+  const p = await purchase(),
+    calls = captureCalls;
+  await db.datasetSnapshot.update({
+    where: { id: datasetId },
+    data: { encryptedData: encrypt(sourceRows.slice(0, 1)) },
   });
   try {
-    const reloaded = await db.quote.findUniqueOrThrow({
-      where: { id: q.id },
-      include: { lines: true },
-    });
-    nodeAssert.equal(reloaded.totalCents, cents);
-    nodeAssert.deepEqual(reloaded.lines[0].snapshot, original);
-  } finally {
-    await db.offerVersion.update({
-      where: { id: offerId },
-      data: { priceCents: cents },
-    });
-  }
-});
-test("capture timeout reconciles a known capture without a second call or released budget", async () => {
-  const originalEnv = {
-    id: process.env.PAYPAL_CLIENT_ID,
-    secret: process.env.PAYPAL_CLIENT_SECRET,
-    merchant: process.env.PAYPAL_MERCHANT_ID,
-  };
-  process.env.PAYPAL_CLIENT_ID = "TEST_ONLY";
-  process.env.PAYPAL_CLIENT_SECRET = "TEST_ONLY";
-  process.env.PAYPAL_MERCHANT_ID = "TEST_MERCHANT";
-  const originals = { order: paymentApi.order, capture: paymentApi.capture };
-  let captures = 0;
-  let recorded = false;
-  try {
-    const p = await purchase("sandbox");
-    await db.purchase.update({
-      where: { id: p.id },
-      data: {
-        paypalOrderId: `TEST-ORDER-${p.id}`,
-        authorizationId: `TEST-AUTH-${p.id}`,
-        approvedAt: new Date(),
-        paymentState: "authorized",
-      },
-    });
-    const capture = {
-      id: `TEST-CAPTURE-${p.id}`,
-      status: "COMPLETED",
-      amount: {
-        currency_code: "USD",
-        value: (p.quote.totalCents / 100).toFixed(2),
-      },
-    };
-    paymentApi.order = async () => ({
-      id: `TEST-ORDER-${p.id}`,
-      status: "COMPLETED",
-      purchase_units: [
-        {
-          custom_id: p.quote.planHash,
-          invoice_id: p.id,
-          amount: capture.amount,
-          payee: { merchant_id: "TEST_MERCHANT" },
-          payments: { ...(recorded ? { captures: [capture] } : {}) },
-        },
-      ],
-    });
-    paymentApi.capture = async () => {
-      captures++;
-      recorded = true;
-      throw new PayPalError(
-        "Test network timeout after upstream capture",
-        true,
-      );
-    };
-    await nodeAssert.rejects(
-      () => fulfilPurchase(p.id),
-      /Test network timeout/,
-    );
-    const pending = await internalPurchase(p.id);
-    nodeAssert.equal(pending.paymentState, "reconciliation_required");
-    nodeAssert.equal(pending.entitlement, null);
-    nodeAssert.equal(
+    await assert.rejects(() => approve(p.id), /delivery checks/);
+    const actual = await getPurchase(actor, p.id);
+    assert.equal(actual.paymentState, "voided");
+    assert.equal(captureCalls, calls);
+    assert.equal(actual.payables.length, 0);
+    assert.equal(
       (
         await db.budgetReservation.findUniqueOrThrow({
           where: { purchaseId: p.id },
         })
       ).state,
-      "reserved",
+      "released",
     );
-    await fulfilPurchase(p.id);
-    const recovered = await getPurchase(actor, p.id);
-    nodeAssert.equal(recovered.paymentState, "captured");
-    nodeAssert.equal(captures, 1);
-    nodeAssert(recovered.entitlement);
-    await getResult(actor, p.id);
   } finally {
-    paymentApi.order = originals.order;
-    paymentApi.capture = originals.capture;
-    for (const [key, value] of [
-      ["PAYPAL_CLIENT_ID", originalEnv.id],
-      ["PAYPAL_CLIENT_SECRET", originalEnv.secret],
-      ["PAYPAL_MERCHANT_ID", originalEnv.merchant],
-    ]) {
-      if (value) process.env[key!] = value;
-      else delete process.env[key!];
-    }
+    await db.datasetSnapshot.update({
+      where: { id: datasetId },
+      data: { encryptedData: source.encryptedData },
+    });
   }
 });
-test("unsigned webhooks fail before any event can be trusted", async () => {
-  await nodeAssert.rejects(() =>
-    verifyWebhook(new Headers(), {
-      id: "forged",
-      event_type: "PAYMENT.CAPTURE.COMPLETED",
-    }),
+test("private data is locked before payment and isolated after payment", async () => {
+  const p = await purchase();
+  await assert.rejects(() => getResult(actor, p.id), /completed purchase/);
+  await approve(p.id);
+  await assert.rejects(() => getResult(other, p.id), /not found/);
+  await assert.rejects(() => getQuote(other, p.quoteId), /not found/);
+  assert((await getResult(actor, p.id)).sources[0].rows.length > 0);
+});
+test("cancellation releases budget and blocks late approval", async () => {
+  const p = await purchase();
+  const { orderId } = await createPayPalOrder(actor, p.id);
+  await cancelPurchase(actor, p.id);
+  await assert.rejects(
+    () => approvePurchase(actor, p.id, orderId),
+    /does not belong/,
+  );
+  assert.equal(
+    (
+      await db.budgetReservation.findUniqueOrThrow({
+        where: { purchaseId: p.id },
+      })
+    ).state,
+    "released",
   );
 });
-test("unconfigured live payments and AI fail closed", async () => {
-  if (!capabilities().paypal) {
-    const q = await quote();
-    await nodeAssert.rejects(
-      () => createPurchase(actor, q.id, "sandbox", randomUUID()),
-      /credentials|Connect PayPal/i,
-    );
-  }
-  if (!capabilities().ai)
-    await nodeAssert.rejects(
-      () =>
-        planTask(actor, {
-          prompt: "Research current product prices",
-          budgetCents: 1000,
-          mode: "live",
-        }),
-      /GEMINI_API_KEY/,
-    );
+test("source and result encryption reject tampering", () => {
+  const value = encrypt({ sensitive: "private-value" });
+  assert(!value.includes("private-value"));
+  assert.deepEqual(decrypt(value), { sensitive: "private-value" });
+  const parts = value.split(".");
+  parts[1] = Buffer.alloc(16).toString("base64");
+  assert.throws(() => decrypt(parts.join(".")));
 });
-test("Gemini structured planning is bounded and paid-provider fallback is absent", async () => {
-  const oldKey = process.env.GEMINI_API_KEY;
-  const oldModel = process.env.GEMINI_MODEL;
+test("expired result access is denied without a second charge", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  await db.resultEntitlement.update({
+    where: { purchaseId: p.id },
+    data: { expiresAt: new Date(0) },
+  });
+  await assert.rejects(() => getResult(actor, p.id), /expired/);
+  assert.equal((await getPurchase(actor, p.id)).paymentState, "captured");
+});
+test("refund is idempotent, revokes access and balances the ledger", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  await requestRefund(actor, p.id, "Refund this research purchase");
+  await processRefund(p.id);
+  await processRefund(p.id);
+  assert.equal((await getPurchase(actor, p.id)).paymentState, "refunded");
+  await assert.rejects(() => getResult(actor, p.id));
+  const entries = await db.ledgerEntry.findMany({
+    where: { groupId: `refund:${p.id}` },
+  });
+  assert.equal(
+    entries.reduce((n, e) => n + e.amountCents, 0),
+    0,
+  );
+  assert.equal(await db.refund.count({ where: { purchaseId: p.id } }), 1);
+});
+test("a mismatched refund cannot revoke access or finalize accounting", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  await requestRefund(actor, p.id, "Verify exact refund amount");
+  const original = paymentApi.refund;
+  paymentApi.refund = async () => ({
+    id: "TEST-WRONG-REFUND",
+    status: "COMPLETED",
+    amount: { currency_code: "USD", value: "0.01" },
+  });
+  try {
+    await assert.rejects(
+      () => processRefund(p.id),
+      /refund amount does not match/,
+    );
+    assert.equal(
+      await db.ledgerEntry.count({ where: { groupId: `refund:${p.id}` } }),
+      0,
+    );
+    assert.equal(
+      (
+        await db.resultEntitlement.findUniqueOrThrow({
+          where: { purchaseId: p.id },
+        })
+      ).revokedAt,
+      null,
+    );
+    assert.notEqual(
+      (await db.refund.findUniqueOrThrow({ where: { purchaseId: p.id } }))
+        .state,
+      "completed",
+    );
+  } finally {
+    paymentApi.refund = original;
+  }
+});
+test("refund after payout requires seller recovery", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  await db.sellerPayable.updateMany({
+    where: { purchaseId: p.id },
+    data: { state: "paid" },
+  });
+  await requestRefund(actor, p.id, "Refund after seller payout");
+  await processRefund(p.id);
+  assert.equal(
+    (await getPurchase(actor, p.id)).settlementState,
+    "recovery_required",
+  );
+});
+test("disabled payouts remain owed and never become paid", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  await settlePurchase(p.id);
+  assert.equal((await getPurchase(actor, p.id)).settlementState, "owed");
+  assert.equal(
+    await db.payoutAttempt.count({ where: { payable: { purchaseId: p.id } } }),
+    0,
+  );
+});
+test("payout reconciliation verifies the recipient and reuses a single batch", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  const payable = await db.sellerPayable.findFirstOrThrow({
+    where: { purchaseId: p.id },
+  });
+  await db.seller.update({
+    where: { id: sellerId },
+    data: { payoutEmail: "verified-sandbox@example.com" },
+  });
+  process.env.PAYPAL_PAYOUTS_ENABLED = "true";
   const oldFetch = globalThis.fetch;
-  process.env.GEMINI_API_KEY = "fixture-key-never-sent-to-a-provider";
-  process.env.GEMINI_MODEL = "gemini-3.8-flash";
-  let calls = 0;
-  globalThis.fetch = async (url, init) => {
-    calls++;
-    nodeAssert.equal(
-      String(url),
-      "https://generativelanguage.googleapis.com/v1beta/interactions",
-    );
-    nodeAssert.equal(
-      new Headers(init?.headers).get("x-goog-api-key"),
-      process.env.GEMINI_API_KEY,
-    );
-    const body = JSON.parse(String(init?.body));
-    nodeAssert.equal(body.store, false);
-    nodeAssert.equal(body.response_format.mime_type, "application/json");
-    const output =
-      calls === 1
-        ? {
-            categories: ["Product pricing"],
-            fields: ["product", "price_usd", "retailer", "availability"],
-            purpose: "internal_business_analysis",
-            maxAgeDays: 7,
-            quantity: 6,
-          }
-        : {
-            selectedOfferIds: [offerId],
-            explanations: [
-              { offerId, reason: "Required retail fields are present." },
-            ],
-          };
+  let matches = false,
+    returned = false,
+    submissions = 0;
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    if (url.endsWith("/v1/oauth2/token"))
+      return Response.json({ access_token: "TEST_ONLY", expires_in: 3600 });
+    if (url.endsWith("/v1/payments/payouts") && init?.method === "POST") {
+      submissions++;
+      return Response.json({
+        batch_header: {
+          payout_batch_id: "TEST-BATCH",
+          batch_status: "PENDING",
+        },
+      });
+    }
+    assert(url.includes("/v1/payments/payouts/TEST-BATCH"));
     return Response.json({
-      status: "completed",
-      steps: [
+      batch_header: { payout_batch_id: "TEST-BATCH", batch_status: "SUCCESS" },
+      items: [
         {
-          type: "model_output",
-          content: [{ type: "text", text: JSON.stringify(output) }],
+          payout_item_id: "TEST-ITEM",
+          transaction_status: returned ? "RETURNED" : "SUCCESS",
+          payout_item: {
+            sender_item_id: payable.id,
+            receiver: matches
+              ? "verified-sandbox@example.com"
+              : "wrong-recipient@example.com",
+            amount: {
+              currency: "USD",
+              value: (payable.amountCents / 100).toFixed(2),
+            },
+          },
+          payout_item_fee: { currency: "USD", value: "0.25" },
         },
       ],
     });
   };
   try {
-    const result = await planTask(actor, {
-      prompt: "Research current product prices",
-      budgetCents: 1000,
-      mode: "live",
+    await assert.rejects(() => settlePurchase(p.id), /payout does not match/);
+    assert.notEqual(
+      (await db.sellerPayable.findUniqueOrThrow({ where: { id: payable.id } }))
+        .state,
+      "paid",
+    );
+    assert.equal(
+      await db.ledgerEntry.count({
+        where: { groupId: `payout:${payable.id}` },
+      }),
+      0,
+    );
+    matches = true;
+    await settlePurchase(p.id);
+    assert.equal(
+      (await db.sellerPayable.findUniqueOrThrow({ where: { id: payable.id } }))
+        .state,
+      "paid",
+    );
+    assert.equal(submissions, 1);
+    await db.seller.update({
+      where: { id: sellerId },
+      data: { payoutEmail: "replacement@example.com" },
     });
-    nodeAssert.equal(result.task.planner, "gemini");
-    nodeAssert.equal(result.quote?.lines[0].offerVersionId, offerId);
-    nodeAssert.equal(calls, 2);
-    process.env.GEMINI_MODEL = "paid-model-not-permitted";
-    await nodeAssert.rejects(
-      () => generateText(actor, "Summary", "Fixture"),
+    returned = true;
+    process.env.PAYPAL_PAYOUTS_ENABLED = "false";
+    await settlePurchase(p.id);
+    await settlePurchase(p.id);
+    assert.equal(
+      (await db.sellerPayable.findUniqueOrThrow({ where: { id: payable.id } }))
+        .state,
+      "returned",
+    );
+    assert.equal(
+      await db.ledgerEntry.count({
+        where: { groupId: `payout-return:${payable.id}` },
+      }),
+      2,
+    );
+    assert.equal(submissions, 1);
+    const entries = await db.ledgerEntry.findMany({
+      where: { purchaseId: p.id },
+    });
+    assert.equal(
+      entries.reduce((sum, row) => sum + row.amountCents, 0),
+      0,
+    );
+  } finally {
+    globalThis.fetch = oldFetch;
+    process.env.PAYPAL_PAYOUTS_ENABLED = "false";
+    await db.seller.update({
+      where: { id: sellerId },
+      data: { payoutEmail: null },
+    });
+  }
+});
+test("immutable seller versions preserve existing quoted prices and data", async () => {
+  const q = await quote();
+  const old = await db.offerVersion.findUniqueOrThrow({
+    where: { id: offerId },
+  });
+  const next = await editOffer(
+    { ...actor, role: "seller", sellerId },
+    offerId,
+    {
+      priceCents: old.priceCents + 20,
+      available: true,
+      fields: old.fields,
+      purposes: old.purposes,
+    },
+  );
+  assert.notEqual(next.id, old.id);
+  assert.equal(next.datasetId, old.datasetId);
+  assert.deepEqual(
+    (await getQuote(actor, q.id)).lines[0].snapshot,
+    q.lines[0].snapshot,
+  );
+  offerId = next.id;
+});
+test("foreign sellers cannot edit an offer", async () => {
+  await assert.rejects(
+    () =>
+      editOffer({ ...actor, role: "seller", sellerId: "foreign" }, offerId, {
+        priceCents: 100,
+        available: true,
+        fields: ["brand_name"],
+        purposes: ["internal_business_analysis"],
+      }),
+    /not available/,
+  );
+});
+test("capture timeout reconciles the known upstream capture without a second charge", async () => {
+  const p = await purchase();
+  const { orderId } = await createPayPalOrder(actor, p.id);
+  await approvePurchase(actor, p.id, orderId);
+  const capture = paymentApi.capture;
+  let attempts = 0;
+  paymentApi.capture = async (...args) => {
+    attempts++;
+    await capture(...args);
+    throw new PayPalError("Timeout after capture", true);
+  };
+  try {
+    await assert.rejects(() => fulfilPurchase(p.id), /Timeout/);
+    assert.equal(
+      (await getPurchase(actor, p.id)).paymentState,
+      "reconciliation_required",
+    );
+    await fulfilPurchase(p.id);
+    assert.equal((await getPurchase(actor, p.id)).paymentState, "captured");
+    assert.equal(attempts, 1);
+  } finally {
+    paymentApi.capture = capture;
+  }
+});
+test("forged order identities cannot approve another quote", async () => {
+  const p = await purchase();
+  await createPayPalOrder(actor, p.id);
+  await assert.rejects(
+    () => approvePurchase(actor, p.id, "wrong-order"),
+    /does not belong/,
+  );
+});
+test("live environment creates a live purchase without making a payment", async () => {
+  process.env.PAYPAL_ENVIRONMENT = "live";
+  try {
+    const p = await purchase();
+    assert.equal(p.mode, "live");
+    assert.equal(p.paymentState, "awaiting_approval");
+    assert.equal(p.captureId, null);
+  } finally {
+    process.env.PAYPAL_ENVIRONMENT = "sandbox";
+  }
+});
+test("payment environment changes fail closed", async () => {
+  const p = await purchase();
+  process.env.PAYPAL_ENVIRONMENT = "live";
+  try {
+    await assert.rejects(
+      () => fulfilPurchase(p.id),
+      /different payment environment/,
+    );
+  } finally {
+    process.env.PAYPAL_ENVIRONMENT = "sandbox";
+  }
+});
+test("expired quote cannot reserve budget", async () => {
+  const q = await quote();
+  await db.quote.update({
+    where: { id: q.id },
+    data: { expiresAt: new Date(0) },
+  });
+  await assert.rejects(
+    () => createPurchase(actor, q.id, randomUUID()),
+    /expired/,
+  );
+  assert.equal(await db.purchase.count({ where: { quoteId: q.id } }), 0);
+});
+test("unconfigured AI fails with no fallback or purchase", async () => {
+  await assert.rejects(
+    () =>
+      planTask(actor, { prompt: "Research drug approvals", budgetCents: 1000 }),
+    /temporarily unavailable/,
+  );
+});
+test("model policy rejects paid model fallback before calling a provider", async () => {
+  process.env.GEMINI_API_KEY = "TEST_ONLY";
+  process.env.GEMINI_MODEL = "paid-model";
+  try {
+    await assert.rejects(
+      () => generateText(actor, "Test", "Data"),
       /supported free-tier/,
     );
-    nodeAssert.equal(calls, 2);
   } finally {
-    globalThis.fetch = oldFetch;
-    if (oldKey) process.env.GEMINI_API_KEY = oldKey;
-    else delete process.env.GEMINI_API_KEY;
-    if (oldModel) process.env.GEMINI_MODEL = oldModel;
-    else delete process.env.GEMINI_MODEL;
-    await db.auditEvent.deleteMany({
-      where: { actor: actor.id, action: "ai_request_reserved" },
-    });
+    delete process.env.GEMINI_API_KEY;
+    process.env.GEMINI_MODEL = "gemini-3.8-flash";
   }
 });
-test("a Gemini quota response never starts a purchase or switches providers", async () => {
-  const oldKey = process.env.GEMINI_API_KEY,
-    oldFetch = globalThis.fetch;
-  process.env.GEMINI_API_KEY = "fixture-only";
-  let calls = 0;
-  globalThis.fetch = async () => {
-    calls++;
-    return Response.json(
-      { error: { message: "private-provider-details" } },
-      { status: 429 },
-    );
-  };
+test("AI quota failures start no purchase and reveal no provider response body", async () => {
+  const prior = globalThis.fetch;
+  process.env.GEMINI_API_KEY = "TEST_ONLY";
+  globalThis.fetch = async () =>
+    Response.json({ error: "private-provider-body" }, { status: 429 });
   const before = await db.purchase.count({ where: { workspaceId } });
   try {
-    await nodeAssert.rejects(
+    await assert.rejects(
       () =>
         planTask(actor, {
-          prompt: "Research current product prices",
+          prompt: "Research drug approvals",
           budgetCents: 1000,
-          mode: "live",
         }),
-      /free quota/,
+      (e) =>
+        e instanceof Error &&
+        /rate-limited/.test(e.message) &&
+        !e.message.includes("private-provider"),
     );
-    nodeAssert.equal(calls, 1);
-    nodeAssert.equal(
-      await db.purchase.count({ where: { workspaceId } }),
-      before,
-    );
+    assert.equal(await db.purchase.count({ where: { workspaceId } }), before);
   } finally {
-    globalThis.fetch = oldFetch;
-    if (oldKey) process.env.GEMINI_API_KEY = oldKey;
-    else delete process.env.GEMINI_API_KEY;
+    globalThis.fetch = prior;
+    delete process.env.GEMINI_API_KEY;
     await db.auditEvent.deleteMany({
       where: { actor: actor.id, action: "ai_request_reserved" },
     });
   }
 });
-test("maintenance requires its own credential, not a buyer or agent bearer", () => {
+test("unsigned webhooks fail before persistence", async () => {
+  await assert.rejects(() => verifyWebhook(new Headers(), { id: "forged" }));
+});
+test("verified webhook replays persist once", async () => {
+  const event = {
+    id: `test-${suffix}`,
+    event_type: "PAYMENT.CAPTURE.COMPLETED",
+    resource: { id: "TEST_RESOURCE" },
+  };
+  await Promise.all(
+    Array.from({ length: 5 }, () => persistVerifiedWebhook(event)),
+  );
+  assert.equal(await db.webhookEvent.count({ where: { id: event.id } }), 1);
+  assert.equal(
+    await db.job.count({ where: { key: `webhook:${event.id}:` } }),
+    1,
+  );
+});
+test("maintenance credentials cannot be replaced by a buyer token", () => {
   const original = process.env.CRON_SECRET;
   process.env.CRON_SECRET = "a".repeat(64);
   try {
-    nodeAssert.throws(
-      () => requireCron(new Request("https://trove.test/api/ops/tick")),
-      /valid maintenance/,
-    );
-    nodeAssert.throws(
-      () =>
-        requireCron(
-          new Request("https://trove.test/api/ops/tick", {
-            headers: { authorization: "Bearer trv_fixture" },
-          }),
-        ),
-      /valid maintenance/,
+    assert.throws(() =>
+      requireCron(
+        new Request("https://trove.test/api/ops/tick", {
+          headers: { authorization: "Bearer trv_invalid" },
+        }),
+      ),
     );
     requireCron(
       new Request("https://trove.test/api/ops/tick", {
@@ -572,112 +948,39 @@ test("maintenance requires its own credential, not a buyer or agent bearer", () 
     else delete process.env.CRON_SECRET;
   }
 });
-test("verified webhook replays produce one durable event and one job", async () => {
-  const event = {
-    id: `test-event-${suffix}`,
-    event_type: "PAYMENT.CAPTURE.COMPLETED",
-    resource: { id: "TEST_RESOURCE" },
-  };
-  await Promise.all(
-    Array.from({ length: 5 }, () => persistVerifiedWebhook(event)),
+test("rate limits are atomic across concurrent requests", async () => {
+  const key = `test-${suffix}`;
+  const results = await Promise.allSettled(
+    Array.from({ length: 8 }, () => rateLimit(key, "test", 3, 60000)),
   );
-  nodeAssert.equal(await db.webhookEvent.count({ where: { id: event.id } }), 1);
-  nodeAssert.equal(
-    await db.job.count({ where: { key: `webhook:${event.id}:` } }),
-    1,
-  );
-  nodeAssert.equal(
-    (await db.webhookEvent.findUniqueOrThrow({ where: { id: event.id } }))
-      .processedAt,
-    null,
+  assert.equal(results.filter((r) => r.status === "fulfilled").length, 3);
+  await db.rateLimit.delete({ where: { key: hash(`test:${key}`) } });
+});
+test("source outages preserve existing snapshots and never fabricate freshness", async () => {
+  const old = await db.offerVersion.findMany({
+    where: { current: true, sellerId: { not: sellerId } },
+    select: { id: true, freshnessAt: true, datasetId: true },
+  });
+  const result = await syncSources(true);
+  assert(result.every((r) => r.error));
+  const after = await db.offerVersion.findMany({
+    where: { id: { in: old.map((o) => o.id) } },
+    select: { id: true, freshnessAt: true, datasetId: true },
+  });
+  assert.deepEqual(
+    after.sort((a, b) => a.id.localeCompare(b.id)),
+    old.sort((a, b) => a.id.localeCompare(b.id)),
   );
 });
-test("a seller cannot edit another seller's offer", async () => {
-  const offer = await db.offerVersion.findFirstOrThrow({
-    where: { offerId: "atlas-directory", current: true },
-  });
-  const pricingSeller = {
-    ...actor,
-    role: "seller",
-    sellerId: "seller-pricing",
-  };
-  await nodeAssert.rejects(
-    () =>
-      editOffer(pricingSeller, offer.id, {
-        priceCents: 100,
-        available: true,
-        fields: ["company"],
-        purposes: ["internal_business_analysis"],
-      }),
-    /not available in this seller account/,
-  );
-  nodeAssert.equal(
-    (await db.offerVersion.findUniqueOrThrow({ where: { id: offer.id } }))
-      .priceCents,
-    offer.priceCents,
-  );
-});
-test("an expired quote cannot reserve budget or begin checkout", async () => {
-  const q = await quote();
-  await db.quote.update({
-    where: { id: q.id },
-    data: { expiresAt: new Date(0) },
-  });
-  await nodeAssert.rejects(
-    () => createPurchase(actor, q.id, "simulation", randomUUID()),
-    /expired/,
-  );
-  nodeAssert.equal(await db.purchase.count({ where: { quoteId: q.id } }), 0);
-});
-test("synthetic refresh preserves seller terms and old quote snapshots while archives remain old", async () => {
-  const originals = await db.offerVersion.findMany({
-    where: { current: true },
-  });
-  const current = originals.find((o) => o.offerId === "northstar-current")!;
-  const approved = await createQuote(actor, { offerIds: [current.id] });
-  const future = new Date(Date.now() + 3 * 86400000);
-  let nextIds: string[] = [];
-  try {
-    nodeAssert.equal(await refreshDemoFixtures(future), 8);
-    const next = await db.offerVersion.findMany({ where: { current: true } });
-    nextIds = next.map((o) => o.id);
-    const updated = next.find((o) => o.offerId === current.offerId)!;
-    nodeAssert.notEqual(updated.id, current.id);
-    nodeAssert.equal(updated.priceCents, current.priceCents);
-    nodeAssert.deepEqual(updated.fields, current.fields);
-    nodeAssert.equal(
-      (
-        await db.offerVersion.findUniqueOrThrow({ where: { id: current.id } })
-      ).freshnessAt.toISOString(),
-      current.freshnessAt.toISOString(),
-    );
-    const line = await db.quoteLine.findFirstOrThrow({
-      where: { quoteId: approved.id },
-    });
-    nodeAssert.deepEqual(line.snapshot, approved.lines[0].snapshot);
-    const archive = next.find((o) => o.offerId === "northstar-archive")!;
-    nodeAssert(future.getTime() - archive.freshnessAt.getTime() > 7 * 86400000);
-  } finally {
-    if (nextIds.length)
-      await db.$transaction(async (tx) => {
-        await tx.offerVersion.updateMany({
-          where: { id: { in: nextIds } },
-          data: { current: false },
-        });
-        await tx.offerVersion.updateMany({
-          where: { id: { in: originals.map((o) => o.id) } },
-          data: { current: true },
-        });
-        await tx.auditEvent.deleteMany({
-          where: {
-            resourceId: { in: nextIds },
-            action: "synthetic_scenario_reissued",
-          },
-        });
-        await tx.job.deleteMany({
-          where: { type: "index", resourceId: { in: nextIds } },
-        });
-        await tx.offerVersion.deleteMany({ where: { id: { in: nextIds } } });
-      });
-  }
+test("normalization preserves actual dates and excludes third-party device taxonomy", () => {
+  const rows = normalizeSource("device-recalls", [
+    {
+      res_event_number: "123",
+      product_description: "Device",
+      event_date_initiated: "20250101",
+      gmdn_name: "Excluded",
+    },
+  ]);
+  assert.equal(rows[0].event_date_initiated, "2025-01-01");
+  assert(!("gmdn_name" in rows[0]));
 });

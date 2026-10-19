@@ -1,132 +1,143 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-async function buyer(page: import("@playwright/test").Page) {
-  await page.request.post("/api/auth/demo", { data: { account: "buyer" } });
+import { randomUUID } from "node:crypto";
+const password = "Browser acceptance password 42";
+async function buyer(page: Page) {
+  const email = `browser-${randomUUID()}@example.com`;
+  const response = await page.request.post("/api/auth/register", {
+    data: { name: "Acceptance Buyer", email, password },
+  });
+  expect(response.ok()).toBeTruthy();
+  return email;
 }
-test("catalogue filtering, offer previews and immutable comparison", async ({
+test("catalogue filtering, public preview and authenticated purchase review", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.locator(".offer-card")).toHaveCount(8);
-  await page.getByRole("tab", { name: /Suppliers/ }).click();
-  await expect(page.locator(".offer-card")).toHaveCount(3);
+  await expect(page.locator(".offer-card")).toHaveCount(6);
+  await page.getByRole("tab", { name: /Drug recalls/ }).click();
+  await expect(page.locator(".offer-card")).toHaveCount(2);
   await page.getByRole("tab", { name: /All data/ }).click();
   await page
     .getByRole("textbox", { name: "Search data offers" })
-    .fill("Current retail price intelligence");
+    .fill("Drug approval dossiers");
   await expect(page.locator(".offer-card")).toHaveCount(1);
   await page
-    .getByRole("button", {
-      name: "View Current retail price intelligence",
-      exact: true,
-    })
+    .locator(".offer-card")
+    .getByRole("button", { name: /^View / })
     .click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(page.getByText("Approved public preview")).toBeVisible();
   await expect(page.getByRole("dialog").locator("tbody tr")).toHaveCount(2);
+  await expect(page.getByRole("dialog")).toContainText("openFDA");
   await page.getByRole("button", { name: "Add to comparison" }).click();
   await page.getByRole("button", { name: "Back to catalogue" }).click();
   await page.getByRole("button", { name: "Compare & review" }).click();
-  await expect(page.getByRole("dialog")).toContainText("$2.40");
+  await expect(page.getByRole("dialog")).toContainText("Welcome back");
+  await page
+    .getByRole("button", { name: "Create an account", exact: true })
+    .click();
+  await page.getByLabel("Name", { exact: true }).fill("Acceptance Buyer");
+  await page
+    .getByLabel("Email", { exact: true })
+    .fill(`browser-${randomUUID()}@example.com`);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page
+    .getByRole("button", { name: "Create account", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "Review your purchase plan",
+  );
+  await expect(page.getByRole("dialog")).toContainText("$3.20");
   const { capabilities } = await (
     await page.request.get("/api/bootstrap")
   ).json();
-  // Configuration controls availability; this test never starts PayPal checkout.
-  const checkout = page.getByRole("button", {
-    name: /Continue to sandbox checkout/,
-  });
+  const checkout = page.getByRole("button", { name: /Continue with PayPal/ });
   if (capabilities.paypal) await expect(checkout).toBeEnabled();
   else await expect(checkout).toBeDisabled();
+  // Buyer approval is intentionally manual; this test never moves money.
 });
-test("research task completes a labelled simulation and preserves results on reload", async ({
+test("account profile persists and private purchases start empty", async ({
   page,
 }) => {
-  await buyer(page);
-  await page.goto("/workspace");
-  await page
-    .getByRole("combobox", { name: /^Research mode/ })
-    .selectOption("demo");
-  await page.getByRole("button", { name: "Run guided research" }).click();
-  await page.getByRole("button", { name: "Review purchase plan" }).click();
-  await page.getByRole("button", { name: "Continue in simulation" }).click();
-  await page.getByRole("button", { name: "Run simulated purchase" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Your evidence is ready." }),
-  ).toBeVisible();
-  await expect(page.getByText("Simulation — no money moved")).toBeVisible();
-  await expect(page.locator(".source-result")).toHaveCount(2);
+  const email = await buyer(page);
+  await page.goto("/account");
+  await expect(page.getByText(email, { exact: true }).first()).toBeVisible();
+  await page.getByLabel("Name", { exact: true }).fill("Updated Buyer");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  await expect(page.getByRole("status")).toContainText("Profile updated");
   await page.reload();
-  await expect(page.locator(".source-result")).toHaveCount(2);
-  const { capabilities } = await (
-    await page.request.get("/api/bootstrap")
-  ).json();
-  if (!capabilities.ai) {
-    await page.getByRole("button", { name: "Summarise demo data" }).click();
-    await expect(page.locator(".answer-text")).toContainText(
-      "without an AI model call",
-    );
-    await expect(page.locator(".answer-text")).toContainText("Atlas Supply");
-  }
-  await page.getByRole("button", { name: "Receipt & provenance" }).click();
-  await expect(page.locator(".receipt-sheet")).toContainText("SIM-CAPTURE-");
-  await page.getByRole("button", { name: "Delivery checks" }).click();
-  await expect(page.locator(".execution-checks")).toHaveCount(2);
-  await page.getByRole("button", { name: "Request a refund" }).click();
-  await page
-    .getByLabel("Reason", { exact: true })
-    .fill(
-      "Browser acceptance test of the simulated refund and access revocation.",
-    );
-  await page.getByRole("button", { name: "Confirm refund request" }).click();
-  await expect(page.locator(".independent-states")).toContainText("refunded");
-  await page
-    .getByRole("button", { name: "Purchased data", exact: true })
-    .click();
-  await expect(page.getByText("Access revoked after refund")).toBeVisible();
-  await expect(page.locator(".source-result")).toHaveCount(0);
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
+    "Updated Buyer",
+  );
+  await page.goto("/purchases");
+  await expect(
+    page.getByRole("heading", { name: "A clean slate" }),
+  ).toBeVisible();
 });
-test("failed connector checks stop a bundle without a charge", async ({
+test("provider onboarding and encrypted upload remain pending review", async ({
   page,
 }) => {
   await buyer(page);
-  await page.goto("/workspace");
-  await page
-    .getByRole("combobox", { name: /^Research mode/ })
-    .selectOption("demo");
-  await page.getByRole("button", { name: "Run guided research" }).click();
-  await page.getByRole("button", { name: "Review purchase plan" }).click();
-  await page.getByRole("button", { name: "Continue in simulation" }).click();
-  await page.getByLabel("Demonstration scenario").selectOption("missing_field");
-  await page.getByRole("button", { name: "Run simulated purchase" }).click();
-  await expect(
-    page.getByRole("heading", { name: "This purchase was stopped." }),
-  ).toBeVisible();
-  await expect(page.locator(".independent-states")).toContainText("voided");
-  await expect(page.locator(".source-result")).toHaveCount(0);
-});
-test("seller edits create a new version in an isolated seller account", async ({
-  page,
-}) => {
-  await page.request.post("/api/auth/demo", { data: { account: "pricing" } });
   await page.goto("/seller");
-  const row = page.locator(".seller-offers-table tbody tr").first();
-  const oldVersion = await row.locator(".badge").first().innerText();
-  await row.getByRole("button", { name: "Edit offer" }).click();
-  await page.getByRole("button", { name: /Publish version/ }).click();
-  await expect(page.getByRole("dialog")).not.toBeVisible();
-  const offers = await (await page.request.get("/api/offers")).json();
+  await page
+    .getByLabel("Provider name")
+    .fill(`Acceptance Provider ${randomUUID().slice(0, 8)}`);
+  await page
+    .getByLabel("What data do you provide?")
+    .fill("Regulatory data prepared for independent research teams.");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Create provider profile" }).click();
+  await expect(page.getByText(/Your profile is under review/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Publish dataset", exact: true })
+    .first()
+    .click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Publish dataset", exact: true }).last(),
+  ).toBeDisabled();
+  await expect(page.getByRole("dialog").getByRole("checkbox")).toHaveCount(2);
+  const source = (
+    await (await page.request.get("/api/offers")).json()
+  ).offers.find(
+    (o: { offerId: string }) => o.offerId === "drug-approvals-full",
+  );
+  const title = `Acceptance data ${randomUUID().slice(0, 8)}`;
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Title", { exact: true }).fill(title);
+  await dialog
+    .getByLabel("Description", { exact: true })
+    .fill("Source-linked regulatory records prepared for acceptance testing.");
+  await dialog.getByLabel("Source URL", { exact: true }).fill(source.sourceUrl);
+  await dialog
+    .getByLabel("Licence URL", { exact: true })
+    .fill(source.sourceLicenseUrl);
+  await dialog
+    .getByLabel("Attribution", { exact: true })
+    .fill(source.sourceAttribution);
+  await dialog
+    .getByLabel("Source last updated", { exact: true })
+    .fill(source.freshnessAt.slice(0, 10));
+  await dialog
+    .getByLabel("Data file (JSON)")
+    .setInputFiles({
+      name: "fda-records.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(source.preview)),
+    });
+  await dialog
+    .getByRole("checkbox", { name: /I have distribution rights/ })
+    .check();
+  await dialog
+    .getByRole("button", { name: "Publish dataset", exact: true })
+    .click();
+  await expect(dialog).not.toBeVisible();
+  await expect(page.locator(".seller-offers-table")).toContainText(title);
+  const catalogue = await (await page.request.get("/api/offers")).json();
   expect(
-    offers.offers.filter(
-      (o: { offerId: string }) => o.offerId === "northstar-current",
-    ),
-  ).toHaveLength(1);
-  expect(
-    offers.offers.find(
-      (o: { offerId: string }) => o.offerId === "northstar-current",
-    ).version,
-  ).toBeGreaterThan(Number(oldVersion.replace("v", "")));
+    catalogue.offers.some((o: { title: string }) => o.title === title),
+  ).toBeFalsy();
 });
-test("MCP uses a scoped revocable token and never delegates approval", async ({
+test("MCP uses a scoped revocable token and never delegates payment approval", async ({
   page,
 }) => {
   await buyer(page);
@@ -139,98 +150,91 @@ test("MCP uses a scoped revocable token and never delegates approval", async ({
     Accept: "application/json, text/event-stream",
     "Content-Type": "application/json",
   };
-  const initialized = await page.request.post("/api/mcp", {
-    headers,
-    data: {
-      jsonrpc: "2.0",
-      id: 1,
-      method: "initialize",
-      params: {
+  const call = (id: number, method: string, params: object) =>
+    page.request.post("/api/mcp", {
+      headers,
+      data: { jsonrpc: "2.0", id, method, params },
+    });
+  expect(
+    (
+      await call(1, "initialize", {
         protocolVersion: "2025-03-26",
         capabilities: {},
-        clientInfo: { name: "playwright-external-client", version: "1.0" },
-      },
-    },
-  });
-  expect(initialized.ok()).toBeTruthy();
-  const listing = await page.request.post("/api/mcp", {
-    headers,
-    data: { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} },
-  });
-  const tools = await listing.json();
-  expect(tools.result.tools).toHaveLength(7);
-  expect(tools.result.tools.map((t: { name: string }) => t.name)).not.toContain(
-    "capture_payment",
-  );
-  const search = await page.request.post("/api/mcp", {
-    headers,
-    data: {
-      jsonrpc: "2.0",
-      id: 3,
-      method: "tools/call",
-      params: { name: "search_offers", arguments: { query: "current retail" } },
-    },
-  });
-  expect((await search.json()).result.content[0].text).toContain(
-    "Current retail price intelligence",
-  );
+        clientInfo: { name: "acceptance-client", version: "1" },
+      })
+    ).ok(),
+  ).toBeTruthy();
+  const listing = await (await call(2, "tools/list", {})).json();
+  expect(listing.result.tools).toHaveLength(7);
+  expect(
+    listing.result.tools.map((t: { name: string }) => t.name),
+  ).not.toContain("capture_payment");
+  const search = await (
+    await call(3, "tools/call", {
+      name: "search_offers",
+      arguments: { query: "Drug approval" },
+    })
+  ).json();
+  expect(search.result.content[0].text).toContain("Drug approval");
   await page.getByRole("button", { name: "I’ve saved my token" }).click();
-  const tokenRow = page
-    .locator(".token-row")
-    .filter({ hasText: token.slice(0, 12) });
-  await tokenRow
+  await page
     .getByRole("button", { name: "Revoke Codex research agent" })
     .click();
-  await expect(tokenRow.getByText("Revoked", { exact: true })).toBeVisible();
-  const revoked = await page.request.post("/api/mcp", {
-    headers,
-    data: { jsonrpc: "2.0", id: 4, method: "tools/list", params: {} },
-  });
-  expect(revoked.status()).toBe(401);
+  await expect(page.getByText("Revoked", { exact: true })).toBeVisible();
+  expect((await call(4, "tools/list", {})).status()).toBe(401);
 });
-test("mobile layout stays within the viewport and navigation remains usable", async ({
-  page,
-}) => {
+test("research availability follows real configuration", async ({ page }) => {
+  await buyer(page);
+  const { capabilities } = await (
+    await page.request.get("/api/bootstrap")
+  ).json();
+  await page.goto("/workspace");
+  const run = page.getByRole("button", { name: "Find sources", exact: true });
+  if (capabilities.ai) await expect(run).toBeEnabled();
+  else {
+    await expect(run).toBeDisabled();
+    await expect(
+      page.getByText(/Research is currently unavailable/),
+    ).toBeVisible();
+  }
+  await expect(
+    page.getByRole("combobox", { name: /Research mode/ }),
+  ).toHaveCount(0);
+});
+test("mobile navigation stays within the viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(page.locator(".offer-card")).toHaveCount(8);
+  await expect(page.locator(".offer-card")).toHaveCount(6);
   expect(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
+      () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBeTruthy();
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page
     .getByRole("link", { name: "Research workspace", exact: true })
     .click();
-  await page
-    .getByRole("combobox", { name: /^Research mode/ })
-    .selectOption("demo");
   await expect(
-    page.getByRole("button", { name: "Run guided research" }),
+    page.getByRole("button", { name: "Find sources", exact: true }),
   ).toBeVisible();
   expect(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
+      () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBeTruthy();
 });
-test("catalogue accessibility has no serious or critical violations", async ({
+test("catalogue and account have no serious accessibility violations", async ({
   page,
 }) => {
-  await page.goto("/");
-  await expect(page.locator(".offer-card")).toHaveCount(8);
-  const result = await new AxeBuilder({ page }).analyze();
-  const failures = result.violations.filter(
-    (v) => v.impact === "serious" || v.impact === "critical",
-  );
-  expect(
-    failures.map((v) => ({
-      id: v.id,
-      nodes: v.nodes.map((n) => ({
-        target: n.target,
-        summary: n.failureSummary,
-      })),
-    })),
-  ).toEqual([]);
+  await buyer(page);
+  for (const route of ["/", "/account", "/seller", "/connect"]) {
+    await page.goto(route);
+    await expect(page.locator("h1")).toBeVisible();
+    const result = await new AxeBuilder({ page }).analyze();
+    expect(
+      result.violations
+        .filter((v) => v.impact === "serious" || v.impact === "critical")
+        .map((v) => ({ id: v.id, targets: v.nodes.map((n) => n.target) })),
+    ).toEqual([]);
+  }
 });

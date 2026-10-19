@@ -7,11 +7,8 @@ import {
   Check,
   CheckCheck,
   ChevronRight,
-  Clock3,
-  CreditCard,
   Download,
   FileCheck2,
-  FlaskConical,
   LockKeyhole,
   PackageCheck,
   ReceiptText,
@@ -42,6 +39,7 @@ export function Purchases() {
   const [filter, setFilter] = useState("all");
   useEffect(() => {
     if (!user) {
+      setItems([]);
       setLoading(false);
       return;
     }
@@ -51,19 +49,16 @@ export function Purchases() {
       .finally(() => setLoading(false));
   }, [user]);
   const captured = items.filter((p) => p.paymentState === "captured");
-  const simulated = captured.filter((p) => p.mode === "simulation");
-  const real = captured.filter((p) => p.mode === "sandbox");
-  const visible = items.filter((p) => filter === "all" || p.mode === filter);
+  const real = captured;
+  const visible = items.filter(
+    (p) => filter === "all" || p.paymentState === filter,
+  );
   return (
     <div className="page-enter">
       <section className="page-heading compact-heading">
         <div>
-          <h1>
-            Every purchase.
-            <br />
-            <span className="heading-soft">Accounted for.</span>
-          </h1>
-          <p>Follow the money, access your results, and keep the source.</p>
+          <h1>Purchases</h1>
+          <p>Your data, downloads and receipts.</p>
         </div>
         <Link href="/" className="button button-secondary">
           Explore data
@@ -72,16 +67,23 @@ export function Purchases() {
       </section>
       <div className="metric-grid">
         <Metric
-          label="Sandbox captured"
+          label="Total purchased"
           value={money(real.reduce((s, p) => s + p.quote.totalCents, 0))}
-          detail={`${real.length} actual sandbox captures`}
+          detail={`${real.length} completed purchases`}
           icon={Wallet}
         />
         <Metric
-          label="Simulation total"
-          value={money(simulated.reduce((s, p) => s + p.quote.totalCents, 0))}
-          detail="No money moved"
-          icon={FlaskConical}
+          label="Ready to download"
+          value={String(
+            real.filter(
+              (p) =>
+                p.entitlement &&
+                !p.entitlement.revokedAt &&
+                new Date(p.entitlement.expiresAt) > new Date(),
+            ).length,
+          )}
+          detail="Within the access period"
+          icon={PackageCheck}
         />
         <Metric
           label="Purchase plans"
@@ -94,16 +96,17 @@ export function Purchases() {
         <div className="table-panel-heading">
           <div>
             <h2>Purchase history</h2>
-            <p>Payment, delivery, and settlement are tracked independently.</p>
+            <p>Open a purchase to access its data or receipt.</p>
           </div>
           <select
-            aria-label="Filter payment mode"
+            aria-label="Filter purchases"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           >
-            <option value="all">All purchase modes</option>
-            <option value="sandbox">PayPal Sandbox</option>
-            <option value="simulation">Simulation only</option>
+            <option value="all">All purchases</option>
+            <option value="captured">Completed</option>
+            <option value="awaiting_approval">Awaiting payment</option>
+            <option value="refunded">Refunded</option>
           </select>
         </div>
         {loading ? (
@@ -111,13 +114,13 @@ export function Purchases() {
         ) : !user ? (
           <EmptyState
             title="Your purchases live here"
-            description="Open a demo workspace or sign in to see your purchase history."
+            description="Sign in to access your purchases."
             action={
               <button
                 className="button button-primary"
                 onClick={() => ensureAuth()}
               >
-                Open workspace
+                Sign in
                 <ArrowRight size={16} />
               </button>
             }
@@ -142,7 +145,7 @@ export function Purchases() {
                   <th>Amount</th>
                   <th>Payment</th>
                   <th>Delivery</th>
-                  <th>Settlement</th>
+
                   <th>
                     <span className="sr-only">Open purchase</span>
                   </th>
@@ -166,10 +169,7 @@ export function Purchases() {
                               : `${p.quote.lines.length}-source research bundle`}
                           </strong>
                           <small>
-                            {p.mode === "simulation"
-                              ? "SIMULATION"
-                              : "PAYPAL SANDBOX"}{" "}
-                            ·{" "}
+                            {p.mode === "live" ? "PayPal" : "Sandbox"} ·{" "}
                             {new Date(p.createdAt).toLocaleDateString("en-GB", {
                               day: "numeric",
                               month: "short",
@@ -189,9 +189,7 @@ export function Purchases() {
                     <td>
                       <Status value={p.fulfilmentState} />
                     </td>
-                    <td>
-                      <Status value={p.settlementState} />
-                    </td>
+
                     <td>
                       <Link
                         href={`/purchases/${p.id}`}
@@ -254,7 +252,6 @@ export function PurchaseDetail({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [scenario, setScenario] = useState("success");
   const [tab, setTab] = useState("result");
   const [answer, setAnswer] = useState<{ mode: string; text: string } | null>(
     null,
@@ -280,13 +277,18 @@ export function PurchaseDetail({ id }: { id: string }) {
   }
   useEffect(() => {
     if (!user) {
+      setPurchase(null);
+      setResult(null);
+      setAnswer(null);
       setLoading(false);
       return;
     }
     refresh()
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-    const timer = setInterval(() => refresh().catch(() => {}), 2500);
+    const timer = setInterval(() => {
+      if (!document.hidden) refresh().catch(() => {});
+    }, 10000);
     return () => clearInterval(timer);
   }, [id, user]);
   async function action(type: string, body = {}) {
@@ -294,13 +296,7 @@ export function PurchaseDetail({ id }: { id: string }) {
     try {
       await post(`/purchases/${id}/${type}`, body);
       await refresh();
-      notify(
-        type === "simulate"
-          ? "Simulation completed. No PayPal transaction occurred."
-          : type === "refund"
-            ? "Refund requested. Completion is tracked separately."
-            : "Purchase status updated.",
-      );
+      notify(type === "refund" ? "Refund requested." : "Purchase updated.");
       setRefund(false);
     } catch (e) {
       notify((e as Error).message, true);
@@ -320,7 +316,7 @@ export function PurchaseDetail({ id }: { id: string }) {
             className="button button-primary"
             onClick={() => ensureAuth()}
           >
-            Open workspace
+            Sign in
           </button>
         }
       />
@@ -342,7 +338,6 @@ export function PurchaseDetail({ id }: { id: string }) {
       </Link>
       <section className="purchase-detail-heading">
         <div>
-          <div className="section-eyebrow">PURCHASE {shortId(p.id)}</div>
           <h1>
             {completed
               ? "Your evidence is ready."
@@ -358,24 +353,8 @@ export function PurchaseDetail({ id }: { id: string }) {
             {new Date(p.createdAt).toLocaleString()}
           </p>
         </div>
-        <Badge tone={p.mode === "simulation" ? "amber" : "blue"}>
-          {p.mode === "simulation" ? (
-            <FlaskConical size={12} />
-          ) : (
-            <CreditCard size={12} />
-          )}{" "}
-          {p.mode === "simulation"
-            ? "Simulation — no money moved"
-            : "PayPal Sandbox"}
-        </Badge>
+        {p.mode === "sandbox" && <Badge tone="amber">PayPal Sandbox</Badge>}
       </section>
-      {p.mode === "simulation" && (
-        <Notice>
-          This is a simulated purchase using synthetic data. Payment references,
-          charges, and seller earnings below are simulated. No PayPal call or
-          real payout is made.
-        </Notice>
-      )}
       {p.error && <Notice kind={failed ? "error" : "info"}>{p.error}</Notice>}
       <div className="purchase-detail-layout">
         <div className="purchase-detail-main">
@@ -436,60 +415,20 @@ export function PurchaseDetail({ id }: { id: string }) {
               <span>
                 Delivery <Status value={p.fulfilmentState} />
               </span>
-              <span>
-                Settlement <Status value={p.settlementState} />
-              </span>
             </div>
           </div>
           {p.paymentState === "awaiting_approval" && (
             <section className="panel checkout-panel">
               <div className="panel-title">
                 <LockKeyhole size={18} />
-                <h2>
-                  {p.mode === "simulation"
-                    ? "Confirm the simulation"
-                    : "Approve the exact purchase"}
-                </h2>
+                <h2>Approve purchase</h2>
               </div>
-              <p>
-                Only the {money(p.quote.totalCents)} purchase plan below can be
-                fulfilled. Your task allowance does not authorise other charges.
-              </p>
+              <p>Approve {money(p.quote.totalCents)} to receive your data.</p>
               {new Date(p.quote.expiresAt) < new Date() ? (
                 <Notice kind="error">
                   This quote expired. Cancel this purchase and create a new
                   quote from the catalogue or workspace.
                 </Notice>
-              ) : p.mode === "simulation" ? (
-                <>
-                  <label className="scenario-label">
-                    Demonstration scenario
-                    <select
-                      value={scenario}
-                      onChange={(e) => setScenario(e.target.value)}
-                    >
-                      <option value="success">
-                        Successful delivery checks
-                      </option>
-                      <option value="outage">
-                        Seller connector unavailable
-                      </option>
-                      <option value="missing_field">
-                        Required field missing
-                      </option>
-                      <option value="stale">Source timestamp mismatch</option>
-                    </select>
-                  </label>
-                  <button
-                    className="button button-primary"
-                    disabled={busy}
-                    onClick={() => action("simulate", { scenario })}
-                  >
-                    <FlaskConical size={16} />
-                    {busy ? "Running simulation…" : "Run simulated purchase"}
-                    <ArrowRight size={16} />
-                  </button>
-                </>
               ) : (
                 <PayPalCheckout purchase={p} onApproved={refresh} />
               )}
@@ -543,7 +482,13 @@ export function PurchaseDetail({ id }: { id: string }) {
                     </div>
                     <button
                       className="button button-small button-secondary"
-                      disabled={drafting}
+                      disabled={
+                        drafting ||
+                        !capabilities.ai ||
+                        !p.quote.lines.every((line) =>
+                          line.offer.purposes.includes("ai_inference"),
+                        )
+                      }
                       onClick={async () => {
                         setDrafting(true);
                         try {
@@ -555,11 +500,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                         }
                       }}
                     >
-                      {drafting
-                        ? "Drafting…"
-                        : capabilities.ai
-                          ? "Draft with AI"
-                          : "Summarise demo data"}
+                      {drafting ? "Drafting…" : "Summarise with AI"}
                       <ArrowRight size={13} />
                     </button>
                     {answer && (
@@ -567,9 +508,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                         <Badge
                           tone={answer.mode === "gemini" ? "blue" : "amber"}
                         >
-                          {answer.mode === "gemini"
-                            ? "AI draft · synthetic evidence"
-                            : "Deterministic demo summary"}
+                          AI research summary
                         </Badge>
                         <p>{answer.text}</p>
                       </div>
@@ -598,8 +537,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                         <div>
                           <h3>{source.title}</h3>
                           <p>
-                            {source.sellerName} · v{source.version} · Synthetic
-                            data
+                            {source.sellerName} · v{source.version}
                           </p>
                         </div>
                         <Badge>{source.rows.length} records</Badge>
@@ -630,12 +568,10 @@ export function PurchaseDetail({ id }: { id: string }) {
                 <div className="receipt-sheet">
                   <div className="receipt-sheet-head">
                     <ReceiptText size={22} />
-                    <span className="section-eyebrow">
-                      TROVE PURCHASE RECORD
-                    </span>
-                    <Badge tone={p.mode === "simulation" ? "amber" : "blue"}>
-                      {p.mode === "simulation" ? "Simulation" : "Sandbox"}
-                    </Badge>
+                    <span>Purchase record</span>
+                    {p.mode === "sandbox" && (
+                      <Badge tone="amber">Sandbox</Badge>
+                    )}
                   </div>
                   <h3>
                     {money(p.quote.totalCents)} <span>USD</span>
@@ -662,18 +598,10 @@ export function PurchaseDetail({ id }: { id: string }) {
                       <dd>{p.captureId || "Not captured"}</dd>
                     </div>
                     <div>
-                      <dt>Included commission</dt>
-                      <dd>{money(p.quote.commissionCents)} · Illustrative</dd>
+                      <dt>Trove fee (included)</dt>
+                      <dd>{money(p.quote.commissionCents)}</dd>
                     </div>
                   </dl>
-                  <p className="caption">
-                    A receipt is issued only after confirmed capture. These
-                    references describe{" "}
-                    {p.mode === "simulation"
-                      ? "a simulation, not a PayPal transaction"
-                      : "a PayPal sandbox transaction"}
-                    .
-                  </p>
                   {p.receipt && (
                     <button
                       className="button button-secondary"
@@ -732,7 +660,6 @@ export function PurchaseDetail({ id }: { id: string }) {
           </section>
         </div>
         <aside className="purchase-summary panel">
-          <div className="section-eyebrow">YOUR PURCHASE PLAN</div>
           <h2>
             {p.quote.lines.length === 1
               ? "A focused data purchase."
@@ -757,19 +684,17 @@ export function PurchaseDetail({ id }: { id: string }) {
             ))}
           </div>
           <div className="summary-price-row">
-            <span>Seller earnings</span>
+            <span>Data preparation</span>
             <strong>
               {money(p.quote.totalCents - p.quote.commissionCents)}
             </strong>
           </div>
           <div className="summary-price-row">
-            <span>Included commission</span>
+            <span>Trove fee (included)</span>
             <strong>{money(p.quote.commissionCents)}</strong>
           </div>
           <div className="summary-total">
-            <span>
-              {p.mode === "simulation" ? "Simulated total" : "Exact approval"}
-            </span>
+            <span>Total</span>
             <strong>
               {money(p.quote.totalCents)}
               <small> USD</small>
@@ -780,25 +705,8 @@ export function PurchaseDetail({ id }: { id: string }) {
             <p>
               {p.quote.purpose.replaceAll("_", " ")}
               <br />
-              No training or redistribution.
+              See source licence for usage rights.
             </p>
-          </div>
-          <div className="settlement-explainer">
-            <strong>Seller settlement</strong>
-            <Status value={p.settlementState} />
-            <p>
-              {p.mode === "simulation"
-                ? "Simulated earnings only. No payout has been submitted."
-                : "Seller earnings become payable after confirmed capture and durable result access. Payout status is tracked separately."}
-            </p>
-            {p.payables.map(
-              (payable) =>
-                payable.error && (
-                  <p className="settlement-error" key={payable.id}>
-                    {payable.error}
-                  </p>
-                ),
-            )}
           </div>
           {p.paymentState === "captured" && (
             <button
@@ -828,11 +736,7 @@ export function PurchaseDetail({ id }: { id: string }) {
         open={refund}
         onOpenChange={setRefund}
         title={`Refund ${money(p.quote.totalCents)}?`}
-        description={
-          p.mode === "simulation"
-            ? "This will simulate a full refund and revoke result access. No money moves."
-            : "Request a full sandbox refund for this captured purchase. Result access will be revoked on completion."
-        }
+        description="A full refund revokes access to the purchased data."
       >
         <div className="form-stack">
           <label>
@@ -844,10 +748,7 @@ export function PurchaseDetail({ id }: { id: string }) {
               placeholder="Describe why this purchase should be refunded…"
             />
           </label>
-          <Notice>
-            Unpaid seller settlement will stop. A payout already submitted or
-            completed may require separate seller recovery.
-          </Notice>
+
           <button
             className="button button-primary"
             disabled={reason.trim().length < 10 || busy}
@@ -886,6 +787,7 @@ declare global {
     };
   }
 }
+let paypalScriptPromise: Promise<void> | undefined;
 function PayPalCheckout({
   purchase,
   onApproved,
@@ -896,30 +798,39 @@ function PayPalCheckout({
   const { capabilities, notify } = useTrove();
   const container = useRef<HTMLDivElement>(null);
   const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    setError("");
     if (!capabilities.paypal || !capabilities.paypalClientId) return;
     let disposed = false;
     async function setup() {
       try {
-        if (!window.paypal)
-          await new Promise<void>((resolve, reject) => {
-            let script = document.querySelector<HTMLScriptElement>(
-              "script[data-trove-paypal]",
-            );
-            if (!script) {
-              script = document.createElement("script");
-              script.src = "https://www.sandbox.paypal.com/web-sdk/v6/core";
+        if (!window.paypal) {
+          if (!paypalScriptPromise)
+            paypalScriptPromise = new Promise<void>((resolve, reject) => {
+              const script = document.createElement("script");
+              const timeout = setTimeout(() => fail(), 20000);
+              const fail = () => {
+                clearTimeout(timeout);
+                script.remove();
+                paypalScriptPromise = undefined;
+                reject(new Error("PayPal could not load. Try again."));
+              };
+              script.src =
+                capabilities.paymentEnvironment === "live"
+                  ? "https://www.paypal.com/web-sdk/v6/core"
+                  : "https://www.sandbox.paypal.com/web-sdk/v6/core";
               script.async = true;
-              script.dataset.trovePaypal = "true";
+              script.onload = () => {
+                clearTimeout(timeout);
+                if (window.paypal) resolve();
+                else fail();
+              };
+              script.onerror = fail;
               document.head.appendChild(script);
-            }
-            script.addEventListener("load", () => resolve(), { once: true });
-            script.addEventListener(
-              "error",
-              () => reject(new Error("PayPal Sandbox SDK could not load.")),
-              { once: true },
-            );
-          });
+            });
+          await paypalScriptPromise;
+        }
         const sdk = await window.paypal!.createInstance({
           clientId: capabilities.paypalClientId!,
           components: ["paypal-payments"],
@@ -930,24 +841,21 @@ function PayPalCheckout({
         });
         if (!methods.isEligible("paypal"))
           throw new Error(
-            "PayPal is not eligible for this sandbox buyer or merchant configuration.",
+            "PayPal is unavailable for this account. Try another PayPal account.",
           );
         const session = sdk.createPayPalOneTimePaymentSession({
           onApprove: async ({ orderId }) => {
             await post(`/purchases/${purchase.id}/approve`, { orderId });
-            notify(
-              "PayPal approval received. The worker will authorise, validate and capture the exact purchase.",
-            );
+            notify("Approved. Preparing your data.");
             await onApproved();
           },
-          onCancel: () =>
-            notify("PayPal checkout closed. Nothing is assumed paid."),
+          onCancel: () => notify("Checkout closed. You have not been charged."),
           onError: (error) => setError(error.message),
         });
         const button = document.createElement("paypal-button");
         button.setAttribute("type", "pay");
         button.className = "paypal-gold";
-        button.setAttribute("aria-label", "Approve with PayPal Sandbox");
+        button.setAttribute("aria-label", "Approve with PayPal");
         button.addEventListener("click", () => {
           session
             .start(
@@ -967,24 +875,35 @@ function PayPalCheckout({
       disposed = true;
       if (container.current) container.current.replaceChildren();
     };
-  }, [purchase.id, capabilities.paypalClientId]);
+  }, [
+    purchase.id,
+    attempt,
+    capabilities.paypalClientId,
+    capabilities.paymentEnvironment,
+  ]);
   if (!capabilities.paypal)
     return (
       <Notice>
-        PayPal Sandbox credentials are not configured. Checkout is unavailable
-        until the collection account is connected.
+        Checkout is temporarily unavailable. Please try again later.
       </Notice>
     );
   return (
     <div className="paypal-checkout">
       {error ? (
-        <Notice kind="error">{error}</Notice>
+        <Notice kind="error">
+          {error}{" "}
+          <button
+            className="text-button"
+            onClick={() => setAttempt((n) => n + 1)}
+          >
+            Try again
+          </button>
+        </Notice>
       ) : (
         <>
           <div ref={container} />
           <p className="caption">
-            PayPal Sandbox · An explicit approval for{" "}
-            {money(purchase.quote.totalCents)} USD
+            PayPal · Total {money(purchase.quote.totalCents)} USD
           </p>
         </>
       )}

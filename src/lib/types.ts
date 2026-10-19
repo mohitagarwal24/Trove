@@ -1,5 +1,4 @@
-export type Category =
-  "Product pricing" | "Supplier intelligence" | "Market indicators";
+export type Category = "Drug approvals" | "Drug recalls" | "Device recalls";
 export type Offer = {
   id: string;
   offerId: string;
@@ -21,16 +20,26 @@ export type Offer = {
   preview: unknown;
   available: boolean;
   accessClass: string;
+  sourceUrl: string | null;
+  sourceLicenseUrl: string | null;
+  sourceAttribution: string | null;
+  retrievedAt: string | null;
   seller: {
     id: string;
     name: string;
     initials: string;
     color: string;
     description: string;
-    synthetic: boolean;
   };
 };
+export type DataFilter = {
+  category: string;
+  field: string;
+  operator: "contains" | "equals" | "after" | "before";
+  value: string;
+};
 export type Requirements = {
+  filters?: DataFilter[];
   categories: string[];
   fields: string[];
   purpose: string;
@@ -68,6 +77,8 @@ export type QuoteLineView = {
     license: string;
     freshnessAt: string;
     coverage: string;
+    filters?: DataFilter[];
+    accessHours?: number;
   };
   offer: Offer;
 };
@@ -127,9 +138,7 @@ export type Capabilities = {
   paypalClientId: string | null;
   payouts: boolean;
   ai: boolean;
-  elastic: boolean;
-  demo: boolean;
-  simulation: boolean;
+  paymentEnvironment: "sandbox" | "live";
 };
 export const money = (cents: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(

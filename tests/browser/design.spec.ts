@@ -10,7 +10,7 @@ test("laptop sidebar keeps the agent panel and account within the viewport", asy
   ]) {
     await page.setViewportSize(viewport);
     await page.goto("/");
-    await expect(page.locator(".offer-card")).toHaveCount(8);
+    await expect(page.locator(".offer-card")).toHaveCount(6);
     for (const selector of [".agent-callout", ".profile"]) {
       const box = await page.locator(selector).boundingBox();
       expect(box).not.toBeNull();
@@ -34,14 +34,14 @@ test("search shortcut works without interrupting text entry", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.locator(".offer-card")).toHaveCount(8);
+  await expect(page.locator(".offer-card")).toHaveCount(6);
   await page.keyboard.press("/");
   const search = page.getByRole("textbox", { name: "Search data offers" });
   await expect(search).toBeFocused();
   await page.keyboard.type("retail/");
   await expect(search).toHaveValue("retail/");
   await search.fill("");
-  await expect(page.locator(".offer-card")).toHaveCount(8);
+  await expect(page.locator(".offer-card")).toHaveCount(6);
   await page.locator(".select-offer").first().click();
   await expect(page.locator(".comparison-tray")).toContainText(
     "1 offer selected",
@@ -56,7 +56,7 @@ test("mobile drawer contains keyboard focus and restores it on Escape", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(page.locator(".offer-card")).toHaveCount(8);
+  await expect(page.locator(".offer-card")).toHaveCount(6);
   const trigger = page.getByRole("button", { name: "Open navigation" });
   await trigger.click();
   await expect(

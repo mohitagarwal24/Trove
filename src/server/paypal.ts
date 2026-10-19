@@ -1,5 +1,5 @@
 import { AppError, assert } from "@/lib/errors";
-import { capabilities, appUrl } from "@/lib/config";
+import { capabilities, appUrl, paymentEnvironment } from "@/lib/config";
 import type { FullQuote } from "./quotes";
 export type PaymentResource = {
   id: string;
@@ -24,8 +24,12 @@ export type PaymentResource = {
   items?: {
     payout_item_id: string;
     transaction_status: string;
-    payout_item?: { sender_item_id?: string };
-    payout_item_fee?: { value: string };
+    payout_item?: {
+      sender_item_id?: string;
+      receiver?: string;
+      amount?: { currency: string; value: string };
+    };
+    payout_item_fee?: { value: string; currency?: string };
     errors?: { name: string; message: string };
   }[];
   verification_status?: string;
@@ -39,17 +43,26 @@ export class PayPalError extends AppError {
     super("PAYPAL_ERROR", message, 502);
   }
 }
-let cachedToken: { value: string; until: number } | undefined;
-const base = "https://api-m.sandbox.paypal.com";
+let cachedToken:
+  { value: string; until: number; environment: string } | undefined;
+const base = () =>
+  paymentEnvironment() === "live"
+    ? "https://api-m.paypal.com"
+    : "https://api-m.sandbox.paypal.com";
 async function accessToken() {
   assert(
     capabilities().paypal,
     "PAYPAL_NOT_CONFIGURED",
-    "PayPal Sandbox is not configured. Add the collection account client ID, secret, and merchant ID.",
+    "Checkout is temporarily unavailable. Please try again later.",
     503,
   );
-  if (cachedToken && cachedToken.until > Date.now()) return cachedToken.value;
-  const result = await fetch(base + "/v1/oauth2/token", {
+  if (
+    cachedToken &&
+    cachedToken.environment === paymentEnvironment() &&
+    cachedToken.until > Date.now()
+  )
+    return cachedToken.value;
+  const result = await fetch(base() + "/v1/oauth2/token", {
     method: "POST",
     headers: {
       Authorization:
@@ -65,12 +78,13 @@ async function accessToken() {
   const data = await result.json();
   if (!result.ok || !data.access_token)
     throw new PayPalError(
-      "PayPal Sandbox authentication failed. Check the collection account credentials.",
+      "PayPal could not connect. Please try again later.",
       false,
       data.debug_id,
     );
   cachedToken = {
     value: data.access_token,
+    environment: paymentEnvironment(),
     until: Date.now() + (data.expires_in - 60) * 1000,
   };
   return cachedToken.value;
@@ -84,7 +98,7 @@ export async function paypalRequest(
   const token = await accessToken();
   let response: Response;
   try {
-    response = await fetch(base + path, {
+    response = await fetch(base() + path, {
       method,
       headers: {
         Authorization: "Bearer " + token,
@@ -106,7 +120,7 @@ export async function paypalRequest(
   if (!response.ok) {
     const issue = data.details?.[0]?.issue || data.name || response.status;
     throw new PayPalError(
-      `PayPal Sandbox: ${issue}. ${data.message || "The operation could not be completed."}`,
+      `PayPal: ${issue}. ${data.message || "The operation could not be completed."}`,
       response.status >= 500 || response.status === 429,
       data.debug_id,
     );

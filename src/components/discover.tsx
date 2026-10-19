@@ -11,15 +11,15 @@ import {
   Clock3,
   Database,
   Filter,
-  Globe2,
   Layers3,
+  Pill,
   Package,
   Plus,
   Search,
   ShieldCheck,
   Sparkles,
   TrendingUp,
-  UsersRound,
+  Stethoscope,
   X,
 } from "lucide-react";
 import type { Offer, QuoteView } from "@/lib/types";
@@ -42,12 +42,12 @@ export function ageLabel(timestamp: string) {
 }
 const categoryIcons: Record<string, typeof Database> = {
   "All data": Layers3,
-  "Product pricing": Package,
-  "Supplier intelligence": UsersRound,
-  "Market indicators": TrendingUp,
+  "Drug approvals": Pill,
+  "Drug recalls": ShieldCheck,
+  "Device recalls": Stethoscope,
 };
 export function Discover() {
-  const { offers, ensureAuth, notify, capabilities } = useTrove();
+  const { offers, ensureAuth, notify } = useTrove();
   const router = useRouter();
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -78,6 +78,7 @@ export function Discover() {
   const [quoting, setQuoting] = useState(false);
   const [prompt, setPrompt] = useState("");
   useEffect(() => {
+    const controller = new AbortController();
     const timer = setTimeout(() => {
       if (!query && category === "All data") {
         setFound(offers);
@@ -85,17 +86,23 @@ export function Discover() {
       }
       api<{ offers: Offer[] }>(
         `/offers?q=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`,
+        { signal: controller.signal },
       )
         .then((d) => setFound(d.offers))
-        .catch((e) => notify(e.message, true));
+        .catch((e) => {
+          if (!controller.signal.aborted) notify(e.message, true);
+        });
     }, 200);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [query, category, offers]);
   const visible = found
     .filter(
       (o) =>
         !freshOnly ||
-        Date.now() - new Date(o.freshnessAt).getTime() <= 7 * 86400000,
+        Date.now() - new Date(o.freshnessAt).getTime() <= 30 * 86400000,
     )
     .sort((a, b) =>
       sort === "price"
@@ -137,11 +144,7 @@ export function Discover() {
             <br />
             <span className="heading-soft">Clearer answers.</span>
           </h1>
-          <p>
-            Find precisely what your research needs.
-            <br className="desktop-br" /> Compare sources, understand the terms,
-            and buy with confidence.
-          </p>
+          <p>Regulatory intelligence, ready for your research.</p>
         </div>
         <Link
           className="button button-secondary heading-action"
@@ -181,7 +184,7 @@ export function Discover() {
               aria-pressed={freshOnly}
             >
               <Filter size={16} />
-              {freshOnly ? "Fresh only" : "Freshness"}
+              {freshOnly ? "Fresh only" : "Updated within 30 days"}
               {freshOnly && <span className="filter-count">1</span>}
             </button>
           </div>
@@ -199,11 +202,7 @@ export function Discover() {
                 onClick={() => setCategory(name)}
               >
                 <Icon size={15} />
-                {name === "Supplier intelligence"
-                  ? "Suppliers"
-                  : name === "Market indicators"
-                    ? "Market signals"
-                    : name}
+                {name}
                 <span>
                   {name === "All data"
                     ? offers.length
@@ -266,12 +265,6 @@ export function Discover() {
               }
             />
           )}
-          <div className="catalog-footnote">
-            <FlaskLabel />
-            <span>
-              All providers and data in this catalogue are synthetic fixtures.
-            </span>
-          </div>
         </div>
         <aside className="research-aside">
           <div className="research-panel">
@@ -280,11 +273,7 @@ export function Discover() {
               <br />
               working on?
             </h2>
-            <p>
-              Let your agent find the right sources.
-              <br />
-              You stay in control of every purchase.
-            </p>
+            <p>Find the right sources. Approve an exact price.</p>
             <label className="sr-only" htmlFor="discover-prompt">
               Your research question
             </label>
@@ -292,9 +281,7 @@ export function Discover() {
               id="discover-prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={
-                "What are you researching?\n\nFind current prices and supplier details for consumer electronics…"
-              }
+              placeholder={"Find recent drug approvals and recall reasons…"}
               rows={5}
             />
             <div className="research-panel-meta">
@@ -309,11 +296,6 @@ export function Discover() {
               Start a research task
               <ArrowRight size={17} />
             </button>
-            <span className="guided-caption">
-              {capabilities.ai
-                ? "Live agent available"
-                : "Guided demo · no AI key required"}
-            </span>
             <div className="panel-divider" />
             <div className="suggestion-label">Try a starting point</div>
             <button
@@ -321,7 +303,7 @@ export function Discover() {
               onClick={() => startResearch(examplePrompts[1])}
             >
               <Package size={16} />
-              <span>Compare current product prices</span>
+              <span>Review drug recall risks</span>
               <ChevronRight size={15} />
             </button>
             <button
@@ -329,38 +311,9 @@ export function Discover() {
               onClick={() => startResearch(examplePrompts[2])}
             >
               <TrendingUp size={16} />
-              <span>Explore a market & its suppliers</span>
+              <span>Explore medical device recalls</span>
               <ChevronRight size={15} />
             </button>
-          </div>
-          <div className="trust-panel">
-            <div className="trust-panel-icon">
-              <ShieldCheck size={21} />
-            </div>
-            <div>
-              <strong>Know what you’re buying.</strong>
-              <p>
-                Exact prices. Explicit permissions.
-                <br />
-                Source-linked receipts.
-              </p>
-              <Link href="/connect">
-                How Trove works
-                <ArrowUpRight size={13} />
-              </Link>
-            </div>
-          </div>
-          <div className="catalog-summary">
-            <span>
-              <span className="status-dot" />3 participating fixture providers
-            </span>
-            <span>
-              <Database size={13} />3 specialised connector adapters
-            </span>
-            <span>
-              <Globe2 size={13} />
-              Business & product research
-            </span>
           </div>
         </aside>
       </div>
@@ -408,14 +361,6 @@ export function Discover() {
     </div>
   );
 }
-function FlaskLabel() {
-  return (
-    <span className="fixture-indicator">
-      <span />
-      Demo catalogue
-    </span>
-  );
-}
 export function OfferCard({
   offer,
   selected,
@@ -437,7 +382,7 @@ export function OfferCard({
           </span>
           <span>
             {offer.seller.name}
-            <small>Fictional provider</small>
+            <small>Data provider</small>
           </span>
         </div>
         <button
@@ -507,7 +452,7 @@ export function OfferDetail({
               </span>
               <span>
                 {offer.seller.name}
-                <small>Fictional provider · Synthetic data</small>
+                <small>Data provider</small>
               </span>
             </div>
             <div className="detail-price">
@@ -536,6 +481,19 @@ export function OfferDetail({
               <strong>{offer.accessClass.replaceAll("_", " ")}</strong>
             </div>
           </div>
+          {offer.sourceUrl && (
+            <p className="caption">
+              {offer.sourceAttribution}{" "}
+              <a
+                className="text-link"
+                href={offer.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View original source <ArrowUpRight size={12} />
+              </a>
+            </p>
+          )}
           <h4>Available fields</h4>
           <div className="field-chips">
             {offer.fields.map((f) => (
@@ -545,7 +503,7 @@ export function OfferDetail({
               </span>
             ))}
           </div>
-          <h4>Never exposed</h4>
+          <h4>Restricted fields</h4>
           <div className="field-chips prohibited">
             {offer.prohibited.map((f) => (
               <span key={f}>
@@ -567,9 +525,7 @@ export function OfferDetail({
           </h4>
           <DataTable rows={offer.preview as Record<string, unknown>[]} />
           <p className="caption">
-            This fixed preview is public. Purchased results are accessible only
-            after confirmed payment. Delivery checks do not establish objective
-            accuracy.
+            Preview only. Purchase to access the full scoped batch.
           </p>
           <div className="dialog-actions">
             <button className="button button-secondary" onClick={onClose}>

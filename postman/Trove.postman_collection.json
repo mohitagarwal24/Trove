@@ -1,13 +1,29 @@
 {
   "info": {
-    "name": "Trove — bounded research purchases",
+    "name": "Trove \u2014 private accounts and scoped purchases",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Run Guided simulation with a locally running app and worker. Simulation does not call PayPal. The Sandbox folder requires configured credentials and explicit buyer approval in the browser. No secrets are included."
+    "description": "Use your own private account values in a private environment. Cookie jar persists session. No simulation or shared passwords. Run Discovery first. Financial requests reserve an exact purchase; complete human PayPal approval in a browser signed into the same account before fetching result/receipt. Never export secrets."
   },
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:3000"
+    },
+    {
+      "key": "name",
+      "value": ""
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "offerVersionId",
+      "value": ""
     },
     {
       "key": "quoteId",
@@ -16,18 +32,14 @@
     {
       "key": "purchaseId",
       "value": ""
-    },
-    {
-      "key": "sandboxPurchaseId",
-      "value": ""
     }
   ],
   "item": [
     {
-      "name": "Guided simulation — no PayPal transaction",
+      "name": "Discovery and account",
       "item": [
         {
-          "name": "Sign into fixture buyer",
+          "name": "Register private account",
           "request": {
             "method": "POST",
             "header": [
@@ -40,10 +52,10 @@
                 "value": "{{baseUrl}}"
               }
             ],
-            "url": "{{baseUrl}}/api/auth/demo",
+            "url": "{{baseUrl}}/api/auth/register",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"account\": \"buyer\"\n}",
+              "raw": "{\n  \"name\": \"{{name}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -64,7 +76,7 @@
           ]
         },
         {
-          "name": "Search free metadata",
+          "name": "Search public offer metadata",
           "request": {
             "method": "GET",
             "header": [
@@ -77,7 +89,7 @@
                 "value": "{{baseUrl}}"
               }
             ],
-            "url": "{{baseUrl}}/api/offers?q=current%20retail"
+            "url": "{{baseUrl}}/api/offers?q=Drug%20approval"
           },
           "event": [
             {
@@ -85,14 +97,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));"
+                  "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));",
+                  "const offers = pm.response.json().offers; if (offers.length) pm.collectionVariables.set('offerVersionId', offers[0].id);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Plan scoped research",
+          "name": "Create exact quote",
           "request": {
             "method": "POST",
             "header": [
@@ -105,10 +118,10 @@
                 "value": "{{baseUrl}}"
               }
             ],
-            "url": "{{baseUrl}}/api/tasks",
+            "url": "{{baseUrl}}/api/quotes",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"prompt\": \"Compare current product prices and supplier capabilities for internal business analysis.\",\n  \"budgetCents\": 1000,\n  \"mode\": \"demo\"\n}",
+              "raw": "{\n  \"offerIds\": [\n    \"{{offerVersionId}}\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -123,14 +136,47 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));",
-                  "pm.collectionVariables.set('quoteId',pm.response.json().quote.id);"
+                  "pm.collectionVariables.set('quoteId', pm.response.json().id);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Create simulated purchase",
+          "name": "Read approved quote scope",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/quotes/{{quoteId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "PayPal \u2014 manual buyer approval required",
+      "item": [
+        {
+          "name": "Create purchase for browser approval",
           "request": {
             "method": "POST",
             "header": [
@@ -146,7 +192,7 @@
             "url": "{{baseUrl}}/api/purchases",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"quoteId\": \"{{quoteId}}\",\n  \"mode\": \"simulation\",\n  \"idempotencyKey\": \"postman-sim-{{quoteId}}\"\n}",
+              "raw": "{\n  \"quoteId\": \"{{quoteId}}\",\n  \"idempotencyKey\": \"postman:{{quoteId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -161,51 +207,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));",
-                  "pm.collectionVariables.set('purchaseId',pm.response.json().purchase.id);"
+                  "const p = pm.response.json().purchase; pm.collectionVariables.set('purchaseId', p.id);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Explicit simulated approval",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{baseUrl}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/purchases/{{purchaseId}}/simulate",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"scenario\": \"success\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Read independent states",
+          "name": "Read purchase after manual approval",
           "request": {
             "method": "GET",
             "header": [
@@ -233,7 +242,7 @@
           ]
         },
         {
-          "name": "Retrieve entitled data",
+          "name": "Read entitled result",
           "request": {
             "method": "GET",
             "header": [
@@ -261,238 +270,7 @@
           ]
         },
         {
-          "name": "Download receipt",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{baseUrl}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/purchases/{{purchaseId}}/receipt"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Sandbox — requires credentials and manual browser approval",
-      "item": [
-        {
-          "name": "Find current supplier offer version",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Origin",
-                "value": "{{baseUrl}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/offers"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const offer = pm.response.json().offers.find(o => o.offerId === 'atlas-directory'); pm.expect(offer).to.exist; pm.collectionVariables.set('supplierOfferVersionId',offer.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Create fresh exact quote",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{baseUrl}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/quotes",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"offerIds\": [\n    \"{{supplierOfferVersionId}}\"\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));",
-                  "pm.collectionVariables.set('quoteId',pm.response.json().id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Reserve sandbox purchase",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{baseUrl}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/purchases",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"quoteId\": \"{{quoteId}}\",\n  \"mode\": \"sandbox\",\n  \"idempotencyKey\": \"postman-sandbox-{{quoteId}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));",
-                  "pm.collectionVariables.set('sandboxPurchaseId',pm.response.json().purchase.id); console.log('Open the returned approvalUrl and approve using a sandbox buyer.');"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Check after browser approval and worker fulfilment",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{baseUrl}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/purchases/{{sandboxPurchaseId}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Retrieve purchased sandbox result",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{baseUrl}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/purchases/{{sandboxPurchaseId}}/result"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Refund a concrete simulated purchase",
-      "item": [
-        {
-          "name": "Request full refund",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{baseUrl}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/purchases/{{purchaseId}}/refund",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"reason\": \"Postman simulation refund verification\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Successful response', () => pm.expect(pm.response.code).to.be.within(200,299));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Inspect asynchronous refund status",
+          "name": "Read receipt",
           "request": {
             "method": "GET",
             "header": [

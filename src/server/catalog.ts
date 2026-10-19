@@ -1,11 +1,21 @@
 import { Client } from "@elastic/elasticsearch";
 import { db } from "@/lib/db";
 import { assert } from "@/lib/errors";
+import { sourceDefinitions } from "@/lib/catalogue";
 import type { Requirements } from "@/lib/types";
+export const publicSeller = {
+  id: true,
+  name: true,
+  initials: true,
+  color: true,
+  description: true,
+} as const;
 const elastic = () =>
   process.env.ELASTICSEARCH_URL
     ? new Client({
         node: process.env.ELASTICSEARCH_URL,
+        requestTimeout: 1200,
+        maxRetries: 0,
         ...(process.env.ELASTICSEARCH_API_KEY
           ? { auth: { apiKey: process.env.ELASTICSEARCH_API_KEY } }
           : {}),
@@ -31,8 +41,10 @@ export async function searchOffers(
           },
         },
       });
-      ids = result.hits.hits.map((hit) => hit._id!);
-      engine = "elasticsearch";
+      if (result.hits.hits.length) {
+        ids = result.hits.hits.map((hit) => hit._id!);
+        engine = "elasticsearch";
+      } else engine = "postgres_fallback";
     } catch {
       engine = "postgres_fallback";
     }
@@ -40,6 +52,8 @@ export async function searchOffers(
   const offers = await db.offerVersion.findMany({
     where: {
       current: true,
+      seller: { status: "active" },
+      datasetId: { not: null },
       ...(input.category && input.category !== "All data"
         ? { category: input.category }
         : {}),
@@ -60,51 +74,32 @@ export async function searchOffers(
             }
           : {}),
     },
-    include: { seller: true },
+    include: { seller: { select: publicSeller } },
     orderBy: { createdAt: "asc" },
   });
   return { offers, engine };
 }
 export const getOffer = async (id: string) => {
-  const offer = await db.offerVersion.findUnique({
-    where: { id },
-    include: { seller: true },
+  const offer = await db.offerVersion.findFirst({
+    where: {
+      id,
+      current: true,
+      seller: { status: "active" },
+      datasetId: { not: null },
+    },
+    include: { seller: { select: publicSeller } },
   });
   assert(offer, "NOT_FOUND", "This offer does not exist.", 404);
   return offer;
 };
-const categoryFields: Record<string, string[]> = {
-  "Product pricing": [
-    "sku",
-    "product",
-    "price_usd",
-    "retailer",
-    "currency",
-    "availability",
-    "region",
-  ],
-  "Supplier intelligence": [
-    "supplier_id",
-    "company",
-    "category",
-    "country",
-    "minimum_order",
-    "lead_time_days",
-    "certifications",
-    "supplier_count",
-  ],
-  "Market indicators": [
-    "period",
-    "category",
-    "region",
-    "demand_index",
-    "median_price_usd",
-    "sample_size",
-  ],
-};
+const categoryFields: Record<string, readonly string[]> = Object.fromEntries(
+  sourceDefinitions.map((s) => [s.category, s.fields]),
+);
 export function requiredFields(category: string, requirements: Requirements) {
-  return requirements.fields.filter((f) =>
-    categoryFields[category]?.includes(f),
+  return requirements.fields.filter(
+    (f) =>
+      categoryFields[category]?.includes(f) ||
+      !Object.values(categoryFields).some((fields) => fields.includes(f)),
   );
 }
 export function eligibility(
@@ -117,6 +112,11 @@ export function eligibility(
     return "Licence does not permit the requested business use.";
   if (now - offer.freshnessAt.getTime() > requirements.maxAgeDays * 86400000)
     return `Declared snapshot is older than the ${requirements.maxAgeDays}-day freshness requirement.`;
+  const filterFields = (requirements.filters || [])
+    .filter((f) => f.category === offer.category)
+    .map((f) => f.field);
+  if (filterFields.some((f) => !offer.fields.includes(f)))
+    return "Required filter fields are not included in this offer.";
   const missing = requiredFields(offer.category, requirements).filter(
     (f) => !offer.fields.includes(f),
   );
@@ -152,7 +152,13 @@ export async function indexCatalog() {
         },
       },
     });
-  const offers = await db.offerVersion.findMany({ where: { current: true } });
+  const offers = await db.offerVersion.findMany({
+    where: {
+      current: true,
+      seller: { status: "active" },
+      datasetId: { not: null },
+    },
+  });
   const result = await client.bulk({
     refresh: true,
     operations: offers.flatMap((o) => [

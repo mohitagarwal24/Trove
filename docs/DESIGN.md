@@ -131,7 +131,7 @@ components:
 
 Trove is a working research marketplace: an ink navigation rail establishes orientation, chalk surfaces hold the source inventory, cobalt marks selection and action, and amber gives the research question its own place. The result is compact, orderly, and specific to a tool for investigating data.
 
-The approved replacement of the former green identity retains the existing application, local fonts, and product disclosures. Source scope, permissions, exact USD prices, and human approval must remain legible alongside the synthetic-fixture and sandbox context. The system uses functional line icons and CSS geometry; it does not depend on raster imagery or invented provider relationships.
+The approved replacement of the former green identity retains the application and local fonts. Prepared regulatory datasets appear as ordinary paid products; source scope, original attribution, upstream reuse rights, exact USD prices, and human approval remain legible. The system uses functional line icons and CSS geometry, with concise copy and progressive disclosure for detailed terms. Supply assumptions belong in the hackathon pitch, while the interface identifies the actual PayPal payment environment.
 
 **Key Characteristics:**
 - Persistent ink navigation with reachable account and agent controls.
@@ -195,7 +195,7 @@ The utility bar is (64px) tall. Main content is centered with a maximum width of
 
 Discover has a flexible inventory plus a (294px) composer column, separated by (26px). At (1600px) and above, the composer becomes (320px) with a (32px) gap. Up to (1250px), it becomes (260px) with a (20px) gap. Up to (1050px), the composer group moves below the inventory and uses a (1.5fr / 1fr) internal grid; up to (460px), that group becomes one column. Offers use two equal columns and a (16px) gap, collapsing to one column up to (460px). Category tabs scroll horizontally rather than wrap.
 
-Workspace uses a (350px) composer beside flexible output, becoming (300px) up to (1250px) and one column up to (1050px). Connect uses a flexible main column and (300px) aside, then (270px), then one column at the same breakpoints. Purchase details similarly collapse their summary aside at (1050px). Data tables preserve columns inside horizontally scrollable containers.
+Workspace uses a (350px) composer beside flexible output, becoming (300px) up to (1250px) and one column up to (1050px). Connect uses a single stacked column with a maximum width of (1000px); token management, client configuration, and the example task remain in that reading order. Its tool reference is collapsed until requested. Purchase details similarly collapse their summary aside at (1050px). Data tables preserve columns inside horizontally scrollable containers.
 
 Up to (760px), the rail becomes a drawer of `min(288px, 86vw)`. It opens above a backdrop, makes the main shell inert, locks body scrolling, traps keyboard focus, closes on Escape, and restores focus. Closed mobile navigation is inert. Retain its labelled dialog and modal semantics when open. A skip link precedes the shell.
 
@@ -219,9 +219,9 @@ The comparison dock arrives with a (240ms) upward settling motion using `cubic-b
 
 ## Shapes
 
-Use softly squared forms with thin rules. Tags have the smallest radius; standard controls, search, offers, panels, the dock, and dialogs use the distinct radius roles in frontmatter. Borders are generally (1px). A selected offer adds an inset (1px) cobalt stroke rather than a hard offset shadow. Provider identities are compact rounded monograms with distinct cobalt, blue, or sand tints; they represent fictional fixture providers.
+Use softly squared forms with thin rules. Tags have the smallest radius; standard controls, search, offers, panels, the dock, and dialogs use the distinct radius roles in frontmatter. Borders are generally (1px). A selected offer adds an inset (1px) cobalt stroke rather than a hard offset shadow. Provider identities are compact rounded monograms with distinct cobalt, blue, or sand tints. Their shapes identify offers without implying verification or an upstream partnership.
 
-The Connect example brief uses a uniform (1px) border around its light inset. Do not turn it into a decorative thick quote rail. Circles belong to avatars, state dots, and the existing workspace connection illustration.
+The Connect example brief uses a uniform (1px) border around its light inset. Do not turn it into a decorative thick quote rail. Circles belong to avatars and state dots. The workspace empty state uses a short heading, explanation, and four numbered workflow steps.
 
 ## Components
 
@@ -235,7 +235,7 @@ Offer tags use a pale cool fill, thin border, small radius, and compact padding.
 
 ### Cards / Containers
 
-Offer cards pair a provider identity and selection control with title, scope copy, tags, freshness/region metadata, and a divided price footer. Standard cards use frontmatter padding and a minimum height of (285px) across the current cascade. At widths up to (1250px), padding becomes (18px 17px 0); up to (760px), it becomes (21px 20px 0). Selected cards use tinted paper plus cobalt border and inset stroke. Generic panels use the panel radius and padding roles, with (19px) padding up to (1250px). Purchase and seller tables retain their data hierarchy and scroll container.
+Offer cards pair a provider identity and selection control with title, scope copy, category tags, source freshness, record limit, and a divided scoped-batch price footer. Standard cards use frontmatter padding and a minimum height of (285px) across the current cascade. At widths up to (1250px), padding becomes (18px 17px 0); up to (760px), it becomes (21px 20px 0). Selected cards use tinted paper plus cobalt border and inset stroke. Generic panels use the panel radius and padding roles, with (19px) padding up to (1250px). Purchase and seller tables retain their data hierarchy and scroll container.
 
 ### Inputs / Fields
 
@@ -247,7 +247,7 @@ The rail uses pale text on ink. Hover lightens the inset; the active route uses 
 
 ### Research Composer
 
-The amber composer is a functional question surface with a large Manrope prompt, warm inset textarea, explicit approval reminder, cobalt submit action, capability-dependent live-agent or guided-demo label, and example prompts. Its heading leads directly without a decorative eyebrow. Suggestions remain controls with a subtle warm hover fill and a short arrow movement.
+The amber composer is a functional question surface with a large Manrope prompt, warm inset textarea, concise approval reminder, cobalt submit action, and regulatory example prompts. Its heading leads directly without a decorative eyebrow. It opens the research workspace, where a budget and genuine Gemini planning produce a source-selection task and exact-price quote. When AI is unavailable, the workspace disables research and links to browsing and comparison. Suggestions remain controls with a subtle warm hover fill and a short arrow movement.
 
 ### Comparison Dock
 
@@ -257,7 +257,17 @@ Selecting sources reveals a fixed dark-ink dock with selection count, exact comb
 
 Dialogs are centered white surfaces with (16px) corners, (26px) padding, a maximum height of (88vh), and scrolling content. Standard width is `min(480px, calc(100vw - 32px))`; wide dialogs use (710px) instead of (480px). Keep labelled dialog semantics, focus trapping, focus restoration, Escape dismissal, and explicit close controls.
 
-Loading, empty search, connection failure, expired quote, unavailable integration, and uncertain-payment states retain their recovery controls and explanatory text. Workspace distinguishes guided demonstration from live AI. Purchases show payment, fulfilment, and settlement independently; PayPal Sandbox and Simulation have separate labels and actions. Seller earnings are distinct from payouts; voids are distinct from refunds. Connect distinguishes configured capabilities from tested integrations and exposes scoped token creation/revocation. Do not remove these disclosures to simplify a screen.
+Loading, empty search, connection failure, expired quote, unavailable integration, and uncertain-payment states retain concise explanations and recovery controls. Payment approval uses PayPal; Sandbox is identified when that environment is active. Payment and fulfilment remain distinct in purchase status; seller earnings and payout status appear in the provider workspace. Voids remain distinct from refunds. Results expose purchased rows, provenance, download, receipt, and a genuine AI summary only when integration and source permissions allow it. Missing integrations fail closed. Quote scope, filtered rows, expiry, and exact total precede approval; source licences and access details use an expandable section rather than repeated explanatory blocks.
+
+### Accounts and Provider Publishing
+
+Private workspaces use a shared sign-in and registration dialog with visible field labels, inline errors, and password guidance only when needed. Profile changes, password changes, account export, and account closure live on Account; destructive closure uses a separate confirmation dialog. Password recovery uses its own focused form and reports real service availability.
+
+Provider onboarding collects profile details and distribution-rights attestation. Pending providers can prepare datasets, with a short review notice explaining why offers are not yet discoverable. Dataset publishing uses the same form vocabulary for a real JSON upload, source and licence links, attribution, declared source date, price, and explicit rights and AI-processing choices. Published offer edits create new versions. Keep review, publishing, earnings, and payout states truthful and specific to their audience.
+
+### Agent Connection
+
+Connect presents three stacked setup panels: create a scoped token, copy the client configuration, and give the agent a task. Tokens show scope and active, expired, or revoked status; a token secret is displayed once, with copy feedback. Tool descriptions sit in an expandable reference. Browser approval remains required for agent-prepared purchases. These are customer workflows and use the same shell, forms, focus treatment, and error handling as the rest of the application.
 
 ## Do's and Don'ts
 
@@ -267,7 +277,7 @@ Loading, empty search, connection failure, expired quote, unavailable integratio
 - **Do** keep the rail callout and account controls reachable at normal zoom and short laptop heights.
 - **Do** use local Manrope headings, Inter body copy, and tabular financial values.
 - **Do** pair state color with text, preserve visible keyboard focus, and honor reduced motion.
-- **Do** keep exact-price approval, synthetic fixtures, sandbox/simulation labels, permissions, and source provenance visible where relevant.
+- **Do** keep exact-price approval, the actual payment environment, permissions, and source provenance visible where relevant.
 
 ### Don't:
 

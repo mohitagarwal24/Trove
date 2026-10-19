@@ -2,8 +2,8 @@ import { Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { encrypt, decrypt, hash } from "@/lib/crypto";
-import { AppError, assert } from "@/lib/errors";
-import { capabilities, appUrl } from "@/lib/config";
+import { assert } from "@/lib/errors";
+import { capabilities, appUrl, paymentEnvironment } from "@/lib/config";
 import type { Actor } from "./auth";
 import { getQuote, quoteInclude } from "./quotes";
 import {
@@ -12,11 +12,7 @@ import {
   verifyOrder,
   type PaymentResource,
 } from "./paypal";
-import {
-  prepareConnector,
-  type ConnectorScenario,
-  type PreparedResult,
-} from "./connectors";
+import { prepareConnector, type PreparedResult } from "./connectors";
 export const purchaseInclude = {
   quote: { include: quoteInclude },
   entitlement: true,
@@ -79,22 +75,15 @@ async function recordOperation(id: string, resource: PaymentResource) {
 export async function createPurchase(
   actor: Actor,
   quoteId: string,
-  mode: "sandbox" | "simulation",
   idempotencyKey: string,
 ) {
+  const mode = paymentEnvironment();
   assert(
-    mode !== "simulation" || capabilities().simulation,
-    "SIMULATION_DISABLED",
-    "Simulation is disabled.",
-    403,
+    capabilities().paypal,
+    "PAYPAL_NOT_CONFIGURED",
+    "Checkout is temporarily unavailable. Please try again later.",
+    503,
   );
-  if (mode === "sandbox")
-    assert(
-      capabilities().paypal,
-      "PAYPAL_NOT_CONFIGURED",
-      "Connect PayPal Sandbox credentials to approve a real sandbox purchase. Simulation is available separately.",
-      503,
-    );
   const existing = await db.purchase.findUnique({
     where: {
       workspaceId_idempotencyKey: {
@@ -123,6 +112,7 @@ export async function createPurchase(
     409,
   );
   const purchase = await db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Quote" WHERE id = ${quoteId} FOR UPDATE`;
     if (quote.taskId)
       await tx.$queryRaw`SELECT id FROM "TaskRun" WHERE id = ${quote.taskId} FOR UPDATE`;
     const prior = await tx.purchase.findUnique({ where: { quoteId } });
@@ -180,7 +170,7 @@ export async function createPurchase(
 export async function createPayPalOrder(actor: Actor, id: string) {
   const p = await getPurchase(actor, id);
   assert(
-    p.mode === "sandbox" && !p.approvedAt && !p.cancelledAt,
+    p.mode === paymentEnvironment() && !p.approvedAt && !p.cancelledAt,
     "INVALID_STATE",
     "This purchase cannot start a PayPal approval.",
     409,
@@ -219,7 +209,7 @@ export async function approvePurchase(
 ) {
   const p = await getPurchase(actor, id);
   assert(
-    p.mode === "sandbox" &&
+    p.mode === paymentEnvironment() &&
       p.paypalOrderId &&
       p.paypalOrderId === orderId &&
       !p.cancelledAt,
@@ -263,57 +253,6 @@ export async function approvePurchase(
   });
   return getPurchase(actor, id);
 }
-export async function simulateApproval(
-  actor: Actor,
-  id: string,
-  scenario: ConnectorScenario = "success",
-) {
-  assert(
-    capabilities().simulation,
-    "SIMULATION_DISABLED",
-    "Simulation is disabled.",
-    403,
-  );
-  const p = await getPurchase(actor, id);
-  assert(
-    p.mode === "simulation" && !p.cancelledAt,
-    "INVALID_STATE",
-    "Only simulated purchases support this action.",
-    409,
-  );
-  assert(
-    p.quote.expiresAt > new Date() || p.approvedAt,
-    "QUOTE_EXPIRED",
-    "Create a new quote before simulation.",
-    409,
-  );
-  await db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM "Purchase" WHERE id = ${id} FOR UPDATE`;
-    const current = await tx.purchase.findUniqueOrThrow({ where: { id } });
-    assert(
-      !current.cancelledAt &&
-        !["voided", "refunded", "refund_pending"].includes(
-          current.paymentState,
-        ),
-      "CANNOT_APPROVE",
-      "This purchase can no longer be approved.",
-      409,
-    );
-    await tx.purchase.update({
-      where: { id },
-      data: {
-        approvedAt: current.approvedAt || new Date(),
-        authorizationId: current.authorizationId || `SIM-AUTH-${id}`,
-        paymentState:
-          current.paymentState === "awaiting_approval"
-            ? "authorized"
-            : current.paymentState,
-      },
-    });
-  });
-  await fulfilPurchase(id, scenario);
-  return getPurchase(actor, id);
-}
 async function releaseReservation(
   tx: Prisma.TransactionClient,
   p: FullPurchase,
@@ -354,9 +293,18 @@ export async function finalizeCapture(id: string, capture: PaymentResource) {
     "Payment requires recovery: staged results are unavailable.",
     409,
   );
-  const expiresAt = new Date(
-    Math.min(...p.executions.map((x) => x.expiresAt.getTime())),
+  const accessHours = Math.min(
+    ...p.quote.lines.map((line) =>
+      Number((line.snapshot as { accessHours: number }).accessHours),
+    ),
   );
+  assert(
+    Number.isInteger(accessHours) && accessHours >= 1 && accessHours <= 168,
+    "INVALID_ACCESS_PERIOD",
+    "The approved access period is invalid.",
+    409,
+  );
+  const expiresAt = new Date(Date.now() + accessHours * 3600000);
   await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "Purchase" WHERE id = ${id} FOR UPDATE`;
     const prior = await tx.resultEntitlement.findUnique({
@@ -375,6 +323,10 @@ export async function finalizeCapture(id: string, capture: PaymentResource) {
     });
     await tx.resultEntitlement.create({
       data: { purchaseId: id, workspaceId: p.workspaceId, expiresAt },
+    });
+    await tx.providerExecution.updateMany({
+      where: { purchaseId: id },
+      data: { expiresAt },
     });
     await releaseReservation(tx, p, true);
     const amounts = new Map<string, number>();
@@ -456,8 +408,8 @@ export async function finalizeCapture(id: string, capture: PaymentResource) {
             resultHash: x.resultHash,
             checks: x.checks,
           })),
-          accuracyNote:
-            "Delivery checks establish contract conformance, not objective data accuracy. All seeded providers and data are synthetic.",
+          sourceNote:
+            "Delivery checks confirm the approved scope and source integrity. Consult the original source for clinical or regulatory decisions.",
         },
       },
     });
@@ -476,11 +428,8 @@ export async function finalizeCapture(id: string, capture: PaymentResource) {
     });
   });
 }
-export async function fulfilPurchase(
-  id: string,
-  scenario: ConnectorScenario = "success",
-) {
-  return withPurchaseLease(id, () => fulfilLocked(id, scenario));
+export async function fulfilPurchase(id: string) {
+  return withPurchaseLease(id, () => fulfilLocked(id));
 }
 export async function withPurchaseLease<T>(
   id: string,
@@ -508,8 +457,14 @@ export async function withPurchaseLease<T>(
     });
   }
 }
-async function fulfilLocked(id: string, scenario: ConnectorScenario) {
+async function fulfilLocked(id: string) {
   let p = await internalPurchase(id);
+  assert(
+    p.mode === paymentEnvironment(),
+    "PAYMENT_ENVIRONMENT_MISMATCH",
+    "This purchase belongs to a different payment environment.",
+    409,
+  );
   if (
     ["captured", "refunded", "voided"].includes(p.paymentState) ||
     p.cancelledAt
@@ -523,7 +478,6 @@ async function fulfilLocked(id: string, scenario: ConnectorScenario) {
   );
   try {
     if (
-      p.mode === "sandbox" &&
       ["capture_pending", "reconciliation_required"].includes(p.paymentState)
     ) {
       const existingOrder = await paymentApi.order(p.paypalOrderId!);
@@ -541,7 +495,7 @@ async function fulfilLocked(id: string, scenario: ConnectorScenario) {
         return;
       }
     }
-    if (p.mode === "sandbox" && !p.authorizationId) {
+    if (!p.authorizationId) {
       const order = await paymentApi.order(p.paypalOrderId!);
       verifyOrder(order, id, p.quote);
       let auth = order.purchase_units?.[0]?.payments?.authorizations?.[0];
@@ -585,11 +539,13 @@ async function fulfilLocked(id: string, scenario: ConnectorScenario) {
       });
       if (existing?.state === "validated" && existing.expiresAt > new Date())
         continue;
-      const prepared = await prepareConnector(line, scenario);
+      const prepared = await prepareConnector(line);
       const encrypted = encrypt(prepared);
       const resultHash = hash(JSON.stringify(prepared));
       const expiresAt = new Date(
-        Date.now() + Number(process.env.RESULT_RETENTION_HOURS || 24) * 3600000,
+        Date.now() +
+          Number((line.snapshot as { accessHours: number }).accessHours) *
+            3600000,
       );
       await db.providerExecution.upsert({
         where: {
@@ -617,16 +573,7 @@ async function fulfilLocked(id: string, scenario: ConnectorScenario) {
       where: { id },
       data: { fulfilmentState: "validated", paymentState: "capture_pending" },
     });
-    if (p.mode === "simulation")
-      await finalizeCapture(id, {
-        id: `SIM-CAPTURE-${id}`,
-        status: "COMPLETED",
-        amount: {
-          currency_code: "USD",
-          value: (p.quote.totalCents / 100).toFixed(2),
-        },
-      });
-    else {
+    {
       const order = await paymentApi.order(p.paypalOrderId!);
       verifyOrder(order, id, p.quote);
       const known = order.purchase_units?.[0]?.payments?.captures?.find(
@@ -681,12 +628,18 @@ async function fulfilLocked(id: string, scenario: ConnectorScenario) {
 export async function voidPurchase(id: string) {
   const p = await internalPurchase(id);
   assert(
+    p.mode === paymentEnvironment(),
+    "PAYMENT_ENVIRONMENT_MISMATCH",
+    "This purchase belongs to a different payment environment.",
+    409,
+  );
+  assert(
     !["captured", "refund_pending", "refunded"].includes(p.paymentState),
     "ALREADY_CAPTURED",
     "Captured payments require a refund, not a void.",
     409,
   );
-  if (p.mode === "sandbox" && p.authorizationId) {
+  if (p.authorizationId) {
     await db.purchase.update({
       where: { id },
       data: { paymentState: "void_pending" },

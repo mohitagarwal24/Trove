@@ -7,7 +7,7 @@ import {
 } from "./purchases";
 import { settlePurchase, processRefund } from "./settlement";
 import { indexCatalog } from "./catalog";
-import { refreshDemoFixtures } from "./demo-fixtures";
+import { syncSources } from "./datasets";
 export async function runJob() {
   const jobs = await db.$queryRaw<
     { id: string; type: string; resourceId: string; attempts: number }[]
@@ -25,7 +25,12 @@ export async function runJob() {
     else if (job.type === "void") await voidPurchase(job.resourceId);
     else if (job.type === "webhook") await reconcileWebhook(job.resourceId);
     else if (job.type === "index") await indexCatalog();
-    else throw new Error("Unknown job type");
+    else if (job.type === "sources") {
+      const results = await syncSources();
+      if (results.some((r) => r.error))
+        throw new Error("One or more upstream sources are unavailable.");
+      if (process.env.ELASTICSEARCH_URL) await indexCatalog();
+    } else throw new Error("Unknown job type");
     await db.job.update({
       where: { id: job.id },
       data: { state: "completed", lockedAt: null, error: null },
@@ -96,7 +101,15 @@ async function reconcileWebhook(eventId: string) {
   });
 }
 export async function maintenance() {
-  await refreshDemoFixtures();
+  const day = new Date().toISOString().slice(0, 10);
+  await enqueue("sources", day);
+  await db.session.deleteMany({ where: { expiresAt: { lt: new Date() } } });
+  await db.passwordReset.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
+  });
+  await db.rateLimit.deleteMany({
+    where: { resetAt: { lt: new Date(Date.now() - 86400000) } },
+  });
   const expired = await db.purchase.findMany({
     where: {
       paymentState: "awaiting_approval",

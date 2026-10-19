@@ -7,7 +7,7 @@ related_targets: ["src/app/globals.css","src/components/trove-app.tsx"]
 
 # Catalogue and shared application shell
 
-Mode: Operate. Replace the green identity across existing routes; preserve all product behavior. User delegated the visual direction and approved direct implementation with Chrome/Playwright inspection.
+Mode: Operate. Refine the existing ink/cobalt/amber identity across existing routes; simplify copy and implement real account and purchase flows. User delegated the visual direction and approved direct implementation with Chrome/Playwright inspection.
 
 ## Direction contract
 
@@ -15,7 +15,7 @@ THESIS: A technical atlas index for research sources: readable inventory, persis
 
 OWN-WORLD: Ink navigation, chalk content, cobalt selection and actions, amber research surface. Manrope headings, Inter controls, tabular amounts. Crisp rules and generous space between functional groups.
 
-STORY: Find a source, inspect its scope, compare an exact price, or bring a research question. Synthetic evidence and human approval remain explicit.
+STORY: Find a source, inspect its scope, compare an exact price, or bring a research question. Real source provenance and human approval remain explicit.
 
 FIRST VIEWPORT: A compact 232px ink rail, 64px utility bar, a horizontal heading, searchable two-column offer inventory, and an amber research composer. The agent connection panel and account controls fit a 768px laptop height. Selection updates a shared comparison dock; its arrival is the signature interaction, with a short upward settling motion and a reduced-motion alternative.
 

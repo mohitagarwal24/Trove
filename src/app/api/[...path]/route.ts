@@ -2,7 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { AppError, assert } from "@/lib/errors";
-import { capabilities } from "@/lib/config";
+import { capabilities, paymentEnvironment } from "@/lib/config";
 import {
   authenticate,
   checkOrigin,
@@ -11,6 +11,12 @@ import {
   requireBrowser,
   issueToken,
   logoutSession,
+  updateProfile,
+  changePassword,
+  closeAccount,
+  register,
+  requestPasswordReset,
+  resetPassword,
 } from "@/server/auth";
 import { searchOffers, getOffer } from "@/server/catalog";
 import { planTask } from "@/server/planner";
@@ -20,18 +26,24 @@ import {
   getPurchase,
   createPayPalOrder,
   approvePurchase,
-  simulateApproval,
   cancelPurchase,
   getResult,
   enqueue,
   purchaseInclude,
 } from "@/server/purchases";
 import { requestRefund } from "@/server/settlement";
-import { sellerDashboard, editOffer } from "@/server/sellers";
+import {
+  sellerDashboard,
+  editOffer,
+  onboardSeller,
+  publishDataset,
+} from "@/server/sellers";
 import { verifyWebhook } from "@/server/paypal";
 import { draftAnswer } from "@/server/answers";
 import { persistVerifiedWebhook } from "@/server/webhooks";
 import { drainJobs, wakeEmbeddedJobs } from "@/server/embedded-jobs";
+import { rateLimit } from "@/server/rate-limit";
+import { categories } from "@/lib/catalogue";
 import { requireCron } from "@/server/cron-auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,7 +62,7 @@ async function handler(
     const route = path.join("/");
     const method = request.method;
     if (route === "health" && method === "GET") {
-      return json({ status: "ok", environment: "sandbox" });
+      return json({ status: "ok", environment: paymentEnvironment() });
     }
     if (route === "ops/tick" && method === "POST") {
       requireCron(request);
@@ -64,7 +76,7 @@ async function handler(
           resource: z.object({ id: z.string().optional() }).passthrough(),
         })
         .passthrough()
-        .parse(await request.json());
+        .parse(await readJson(request));
       await verifyWebhook(request.headers, body);
       await persistVerifiedWebhook(body);
       wakeQueue = true;
@@ -74,7 +86,7 @@ async function handler(
     if (route === "auth/login" && method === "POST") {
       const input = z
         .object({ email: z.email(), password: z.string().min(1).max(200) })
-        .parse(await request.json());
+        .parse(await readJson(request));
       const token = await login(input.email, input.password);
       const response = json({ signedIn: true });
       response.cookies.set(sessionCookie, token, {
@@ -88,39 +100,59 @@ async function handler(
       });
       return response;
     }
-    if (route === "auth/demo" && method === "POST") {
-      assert(
-        capabilities().demo,
-        "DEMO_DISABLED",
-        "Demo accounts are disabled.",
-        403,
-      );
+    if (route === "auth/register" && method === "POST") {
       const input = z
         .object({
-          account: z
-            .enum(["buyer", "pricing", "suppliers", "market", "researcher"])
-            .default("buyer"),
+          name: z.string().trim().min(2).max(80),
+          email: z.email().max(254),
+          password: z.string().min(12).max(128),
         })
-        .parse(await request.json());
-      const token = await login(
-        `${input.account}@trove.test`,
-        ["buyer", "researcher"].includes(input.account)
-          ? "trove-demo-buyer"
-          : "trove-demo-seller",
+        .parse(await readJson(request));
+      await rateLimit(
+        request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ||
+          "local",
+        "signup-ip",
+        20,
+        3600000,
       );
-      const response = json({ signedIn: true });
+      const token = await register(input),
+        response = json({ signedIn: true }, 201);
       response.cookies.set(sessionCookie, token, {
         httpOnly: true,
-        secure:
-          process.env.NODE_ENV === "production" &&
-          new URL(request.url).protocol === "https:",
+        secure: new URL(request.url).protocol === "https:",
         sameSite: "lax",
         path: "/",
         maxAge: 7 * 86400,
       });
       return response;
     }
-    if (route === "bootstrap") {
+    if (route === "auth/forgot-password" && method === "POST") {
+      const input = z
+        .object({ email: z.email() })
+        .parse(await readJson(request));
+      await rateLimit(
+        request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ||
+          "local",
+        "recovery-ip",
+        10,
+        3600000,
+      );
+      await requestPasswordReset(input.email);
+      return json({
+        message: "If this account exists, a reset link has been sent.",
+      });
+    }
+    if (route === "auth/reset-password" && method === "POST") {
+      const input = z
+        .object({
+          token: z.string().min(40).max(100),
+          password: z.string().min(12).max(128),
+        })
+        .parse(await readJson(request));
+      await resetPassword(input.token, input.password);
+      return json({ reset: true });
+    }
+    if (route === "bootstrap" && method === "GET") {
       let user = null;
       try {
         const actor = await authenticate(request);
@@ -155,6 +187,49 @@ async function handler(
       purchaseScope ? "purchase" : "read",
     );
     wakeQueue = method !== "GET" || path[0] === "purchases";
+    if (route === "auth/profile" && method === "PATCH") {
+      const input = z
+        .object({ name: z.string().trim().min(2).max(80) })
+        .parse(await readJson(request));
+      await updateProfile(actor, input.name);
+      return json({ updated: true });
+    }
+    if (route === "auth/change-password" && method === "POST") {
+      const input = z
+        .object({
+          currentPassword: z.string().min(1).max(128),
+          password: z.string().min(12).max(128),
+        })
+        .parse(await readJson(request));
+      await changePassword(actor, input.currentPassword, input.password);
+      const response = json({ updated: true });
+      response.cookies.delete(sessionCookie);
+      return response;
+    }
+    if (route === "auth/close-account" && method === "POST") {
+      const input = z
+        .object({ password: z.string().min(1).max(128) })
+        .parse(await readJson(request));
+      await closeAccount(actor, input.password);
+      const response = json({ closed: true });
+      response.cookies.delete(sessionCookie);
+      return response;
+    }
+    if (route === "auth/export" && method === "GET") {
+      requireBrowser(actor);
+      const [tasks, purchases] = await Promise.all([
+        db.taskRun.findMany({ where: { workspaceId: actor.workspaceId } }),
+        db.purchase.findMany({
+          where: { workspaceId: actor.workspaceId },
+          include: { receipt: true, refunds: true },
+        }),
+      ]);
+      return json({
+        profile: { name: actor.name, email: actor.email },
+        tasks,
+        purchases,
+      });
+    }
     if (route === "auth/logout" && method === "POST") {
       requireBrowser(actor);
       await logoutSession(request);
@@ -170,7 +245,8 @@ async function handler(
           take: 30,
         }),
       );
-    if (route === "tasks" && method === "POST")
+    if (route === "tasks" && method === "POST") {
+      await rateLimit(actor.id, "research", 5, 60000);
       return json(
         await planTask(
           actor,
@@ -178,11 +254,11 @@ async function handler(
             .object({
               prompt: z.string().min(10).max(4000),
               budgetCents: z.number().int(),
-              mode: z.enum(["demo", "live"]),
             })
-            .parse(await request.json()),
+            .parse(await readJson(request)),
         ),
       );
+    }
     if (path[0] === "tasks" && path[1] && method === "GET") {
       const task = await db.taskRun.findFirst({
         where: { id: path[1], workspaceId: actor.workspaceId },
@@ -190,7 +266,8 @@ async function handler(
       assert(task, "NOT_FOUND", "Task not found.", 404);
       return json(task);
     }
-    if (route === "quotes" && method === "POST")
+    if (route === "quotes" && method === "POST") {
+      await rateLimit(actor.id, "quote", 30, 60000);
       return json(
         await createQuote(
           actor,
@@ -198,7 +275,7 @@ async function handler(
             .object({
               offerIds: z.array(z.string()).min(1).max(6),
               taskId: z.string().optional(),
-              quantity: z.number().int().min(1).max(12).optional(),
+              quantity: z.number().int().min(1).max(100).optional(),
               fieldsByOffer: z
                 .record(z.string(), z.array(z.string()))
                 .optional(),
@@ -210,9 +287,10 @@ async function handler(
                 ])
                 .optional(),
             })
-            .parse(await request.json()),
+            .parse(await readJson(request)),
         ),
       );
+    }
     if (path[0] === "quotes" && path[1] && method === "GET")
       return json(await getQuote(actor, path[1]));
     if (route === "purchases" && method === "GET")
@@ -228,17 +306,11 @@ async function handler(
       const input = z
         .object({
           quoteId: z.string(),
-          mode: z.enum(["sandbox", "simulation"]).default("sandbox"),
           idempotencyKey: z.string().min(8).max(100),
         })
-        .parse(await request.json());
+        .parse(await readJson(request));
       return json(
-        await createPurchase(
-          actor,
-          input.quoteId,
-          input.mode,
-          input.idempotencyKey,
-        ),
+        await createPurchase(actor, input.quoteId, input.idempotencyKey),
       );
     }
     if (path[0] === "purchases" && path[1]) {
@@ -270,18 +342,8 @@ async function handler(
       if (path[2] === "approve" && method === "POST") {
         const input = z
           .object({ orderId: z.string() })
-          .parse(await request.json());
+          .parse(await readJson(request));
         return json(await approvePurchase(actor, id, input.orderId));
-      }
-      if (path[2] === "simulate" && method === "POST") {
-        const input = z
-          .object({
-            scenario: z
-              .enum(["success", "outage", "missing_field", "stale"])
-              .default("success"),
-          })
-          .parse(await request.json());
-        return json(await simulateApproval(actor, id, input.scenario));
       }
       if (path[2] === "cancel" && method === "POST")
         return json(await cancelPurchase(actor, id));
@@ -303,7 +365,7 @@ async function handler(
       if (path[2] === "refund" && method === "POST") {
         const input = z
           .object({ reason: z.string().min(10).max(500) })
-          .parse(await request.json());
+          .parse(await readJson(request));
         return json(await requestRefund(actor, id, input.reason));
       }
     }
@@ -334,7 +396,7 @@ async function handler(
             .min(1)
             .default(["read", "purchase"]),
         })
-        .parse(await request.json());
+        .parse(await readJson(request));
       return json(await issueToken(actor, input.name, input.scopes));
     }
     if (path[0] === "tokens" && path[1] && method === "DELETE") {
@@ -344,6 +406,59 @@ async function handler(
         data: { revokedAt: new Date() },
       });
       return json({ revoked: true });
+    }
+    if (route === "seller/onboard" && method === "POST")
+      return json(
+        await onboardSeller(
+          actor,
+          z
+            .object({
+              name: z.string().trim().min(2).max(80),
+              description: z.string().trim().min(20).max(500),
+              rightsAttested: z.literal(true),
+            })
+            .parse(await readJson(request)),
+        ),
+        201,
+      );
+    if (route === "seller/offers" && method === "POST") {
+      await rateLimit(actor.id, "publish", 10, 3600000);
+      const httpsUrl = z
+        .url()
+        .max(2000)
+        .refine(
+          (url) => new URL(url).protocol === "https:",
+          "Use an HTTPS URL",
+        );
+      return json(
+        await publishDataset(
+          actor,
+          z
+            .object({
+              title: z.string().trim().min(3).max(100),
+              description: z.string().trim().min(20).max(600),
+              category: z.enum(categories),
+              priceCents: z.number().int().min(50).max(100000),
+              sourceUrl: httpsUrl,
+              licenseUrl: httpsUrl,
+              attribution: z.string().trim().min(3).max(500),
+              sourceUpdatedAt: z.string().max(40),
+              rightsAttested: z.literal(true),
+              aiProcessing: z.boolean().default(false),
+              rows: z
+                .array(
+                  z.record(
+                    z.string().max(50),
+                    z.union([z.string().max(5000), z.number().finite()]),
+                  ),
+                )
+                .min(2)
+                .max(1000),
+            })
+            .parse(await readJson(request)),
+        ),
+        201,
+      );
     }
     if (route === "seller" && method === "GET")
       return json(await sellerDashboard(actor));
@@ -360,7 +475,7 @@ async function handler(
           fields: z.array(z.string()).min(1),
           purposes: z.array(z.string()).min(1),
         })
-        .parse(await request.json());
+        .parse(await readJson(request));
       return json(await editOffer(actor, path[2], input));
     }
     throw new AppError("NOT_FOUND", "Endpoint not found.", 404);
@@ -390,8 +505,7 @@ async function handler(
       {
         error: {
           code: "INTERNAL_ERROR",
-          message:
-            "The operation could not be completed. Your payment status has not been assumed. Please check purchase activity.",
+          message: "The request could not be completed. Please try again.",
         },
       },
       500,
@@ -401,3 +515,32 @@ async function handler(
   }
 }
 export { handler as GET, handler as POST, handler as PATCH, handler as DELETE };
+
+async function readJson(request: Request) {
+  const reader = request.body?.getReader();
+  if (!reader)
+    throw new AppError("INVALID_INPUT", "A request body is required.");
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length;
+      assert(
+        size <= 2_000_000,
+        "BODY_TOO_LARGE",
+        "Upload a JSON file smaller than 2 MB.",
+        413,
+      );
+      chunks.push(value);
+    }
+    try {
+      return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    } catch {
+      throw new AppError("INVALID_INPUT", "The request is not valid JSON.");
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}

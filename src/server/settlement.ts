@@ -1,22 +1,11 @@
-import { Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { assert } from "@/lib/errors";
-import { capabilities } from "@/lib/config";
+import { capabilities, paymentEnvironment } from "@/lib/config";
 import type { Actor } from "./auth";
 import { requireBrowser } from "./auth";
 import { paymentApi, paypalRequest } from "./paypal";
-import {
-  enqueue,
-  getPurchase,
-  internalPurchase,
-  withPurchaseLease,
-} from "./purchases";
-const recipientKeys: Record<string, string> = {
-  "seller-pricing": "SELLER_PRICING_PAYOUT_EMAIL",
-  "seller-suppliers": "SELLER_SUPPLIERS_PAYOUT_EMAIL",
-  "seller-market": "SELLER_MARKET_PAYOUT_EMAIL",
-};
+import { getPurchase, internalPurchase, withPurchaseLease } from "./purchases";
 export async function settlePurchase(id: string) {
   return withPurchaseLease(id, async () => {
     const p = await internalPurchase(id);
@@ -26,27 +15,36 @@ export async function settlePurchase(id: string) {
       p.entitlement.revokedAt
     )
       return;
-    if (p.mode === "simulation") {
-      await db.sellerPayable.updateMany({
-        where: { purchaseId: id, state: "owed" },
-        data: {
-          error: "Simulation only. No real seller payout has been submitted.",
-        },
-      });
-      return;
-    }
+    assert(
+      p.mode === paymentEnvironment(),
+      "PAYMENT_ENVIRONMENT_MISMATCH",
+      "Purchase payment environment does not match.",
+      409,
+    );
     for (const payable of p.payables) {
-      if (["paid", "cancelled", "recovery_required"].includes(payable.state))
-        continue;
-      const recipient = process.env[recipientKeys[payable.sellerId]];
-      if (!capabilities().payouts || !recipient) {
+      if (["cancelled", "recovery_required"].includes(payable.state)) continue;
+      const seller = await db.seller.findUniqueOrThrow({
+        where: { id: payable.sellerId },
+      });
+      const previous = await db.payoutAttempt.findUnique({
+        where: { payableId: payable.id },
+      });
+      const configuredRecipient = previous?.recipient || seller.payoutEmail;
+      if (
+        (!capabilities().payouts && !previous?.batchId) ||
+        !configuredRecipient
+      ) {
+        if (
+          ["paid", "submitted", "pending", "returned"].includes(payable.state)
+        )
+          continue;
         await db.sellerPayable.update({
           where: { id: payable.id },
           data: {
             state: "owed",
             error: !capabilities().payouts
-              ? "Sandbox Payouts is not enabled. Seller earnings remain unsettled."
-              : "A sandbox payout recipient has not been configured for this seller.",
+              ? "Payouts are not enabled. Earnings remain payable."
+              : "Payout details are awaiting verification.",
           },
         });
         continue;
@@ -54,8 +52,18 @@ export async function settlePurchase(id: string) {
       const attempt = await db.payoutAttempt.upsert({
         where: { payableId: payable.id },
         update: {},
-        create: { payableId: payable.id, requestId: randomUUID() },
+        create: {
+          payableId: payable.id,
+          requestId: randomUUID(),
+          recipient: configuredRecipient,
+        },
       });
+      const recipient = attempt.recipient || configuredRecipient;
+      if (!attempt.recipient)
+        await db.payoutAttempt.update({
+          where: { id: attempt.id },
+          data: { recipient },
+        });
       try {
         let batch;
         if (attempt.batchId)
@@ -73,7 +81,7 @@ export async function settlePurchase(id: string) {
             {
               sender_batch_header: {
                 sender_batch_id: attempt.requestId,
-                email_subject: "Trove sandbox data earnings",
+                email_subject: "Trove data earnings",
               },
               items: [
                 {
@@ -84,7 +92,7 @@ export async function settlePurchase(id: string) {
                     value: (payable.amountCents / 100).toFixed(2),
                   },
                   sender_item_id: payable.id,
-                  note: `Trove sandbox purchase ${id}`,
+                  note: `Trove purchase ${id}`,
                 },
               ],
             },
@@ -118,6 +126,27 @@ export async function settlePurchase(id: string) {
               : ["RETURNED", "REFUNDED", "REVERSED"].includes(status)
                 ? "returned"
                 : "pending";
+        if (["paid", "returned"].includes(state))
+          assert(
+            item?.payout_item?.sender_item_id === payable.id &&
+              item.payout_item.receiver?.toLowerCase() ===
+                recipient.toLowerCase() &&
+              item.payout_item.amount?.currency === "USD" &&
+              Math.round(Number(item.payout_item.amount.value) * 100) ===
+                payable.amountCents,
+            "PAYOUT_MISMATCH",
+            "PayPal payout does not match the approved recipient and amount.",
+            502,
+          );
+        if (item?.payout_item_fee)
+          assert(
+            item.payout_item_fee.currency === "USD" &&
+              Number.isFinite(Number(item.payout_item_fee.value)) &&
+              Number(item.payout_item_fee.value) >= 0,
+            "PAYOUT_FEE_MISMATCH",
+            "PayPal payout fee requires reconciliation.",
+            502,
+          );
         await db.$transaction(async (tx) => {
           await tx.payoutAttempt.update({
             where: { id: attempt.id },
@@ -157,6 +186,24 @@ export async function settlePurchase(id: string) {
                   groupId: `payout:${payable.id}`,
                   account: "processor_receivable",
                   amountCents: -payable.amountCents,
+                },
+              ],
+            });
+          if (state === "returned" && payable.state === "paid")
+            await tx.ledgerEntry.createMany({
+              skipDuplicates: true,
+              data: [
+                {
+                  purchaseId: id,
+                  groupId: `payout-return:${payable.id}`,
+                  account: `seller_payable:${payable.sellerId}`,
+                  amountCents: -payable.amountCents,
+                },
+                {
+                  purchaseId: id,
+                  groupId: `payout-return:${payable.id}`,
+                  account: "processor_receivable",
+                  amountCents: payable.amountCents,
                 },
               ],
             });
@@ -221,6 +268,12 @@ export async function requestRefund(actor: Actor, id: string, reason: string) {
   requireBrowser(actor);
   const p = await getPurchase(actor, id);
   assert(
+    p.mode === paymentEnvironment(),
+    "PAYMENT_ENVIRONMENT_MISMATCH",
+    "This purchase belongs to a different payment environment.",
+    409,
+  );
+  assert(
     p.captureId &&
       ["captured", "refund_pending", "refunded"].includes(p.paymentState),
     "INVALID_STATE",
@@ -281,26 +334,37 @@ export async function processRefund(id: string) {
       where: { purchaseId: id },
     });
     if (refund.state === "completed") return;
-    const result =
-      p.mode === "simulation"
-        ? { id: `SIM-REFUND-${id}`, status: "COMPLETED" }
-        : refund.externalId
-          ? await paymentApi.getRefund(refund.externalId)
-          : await paymentApi.refund(
-              p.captureId!,
-              refund.requestId,
-              refund.reason,
-            );
+    assert(
+      p.mode === paymentEnvironment(),
+      "PAYMENT_ENVIRONMENT_MISMATCH",
+      "Purchase payment environment does not match.",
+      409,
+    );
+    const result = refund.externalId
+      ? await paymentApi.getRefund(refund.externalId)
+      : await paymentApi.refund(p.captureId!, refund.requestId, refund.reason);
+    assert(
+      result.id &&
+        result.amount?.currency_code === "USD" &&
+        Math.round(Number(result.amount.value) * 100) === p.quote.totalCents,
+      "REFUND_MISMATCH",
+      "PayPal refund amount does not match this purchase.",
+      502,
+    );
     await db.refund.update({
       where: { id: refund.id },
       data: {
         externalId: result.id,
-        state: result.status === "COMPLETED" ? "completed" : "pending",
+        state: "pending",
       },
     });
     if (result.status !== "COMPLETED")
       throw new Error("PayPal refund is pending; it has not completed.");
     await db.$transaction(async (tx) => {
+      await tx.refund.update({
+        where: { id: refund.id },
+        data: { state: "completed" },
+      });
       const prior = await tx.ledgerEntry.count({
         where: { groupId: `refund:${id}` },
       });
