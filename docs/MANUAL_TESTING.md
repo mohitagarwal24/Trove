@@ -87,7 +87,7 @@ If status is uncertain or `reconciliation_required`, use **Reconcile status** on
    ```
 
 4. After sandbox Payouts access and fictitious collection-account balance are available, set `PAYPAL_PAYOUTS_ENABLED=true` and redeploy. Never add real funds for this demonstration.
-5. Create a fresh captured sandbox purchase. Alternatively use **Reconcile status** on an existing captured purchase to queue its settlement again.
+5. Create a fresh sandbox purchase after enabling payouts and complete its capture. Use a new purchase so settlement is queued under the updated configuration.
 6. Check the seller console and recipient sandbox account. Only a successful payout item should show `paid`. A pending batch, failed attempt or owed balance is not a completed payout. With the original $5.60 two-source quote and 10% illustrative commission, Northstar earns $2.16 and Atlas $2.88. Provider fees are accounted for separately.
 
 ## Test 5: failure, access and recovery checks
