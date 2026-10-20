@@ -1,5 +1,5 @@
 import { beginGoogle, finishGoogle, googleCookie } from "@/server/google-auth";
-import { discoverySchema } from "@/lib/research";
+import { discoverySchema, taskRequirementsSchema } from "@/lib/research";
 import { discoverData } from "@/server/discovery";
 import { NextRequest, NextResponse, after } from "next/server";
 import { z } from "zod";
@@ -46,6 +46,7 @@ import { draftAnswer } from "@/server/answers";
 import { persistVerifiedWebhook } from "@/server/webhooks";
 import { drainJobs, wakeEmbeddedJobs } from "@/server/embedded-jobs";
 import { rateLimit } from "@/server/rate-limit";
+import { authorizeAgent, revokeGrant, OAuthError } from "@/server/agent-oauth";
 import { categories } from "@/lib/catalogue";
 import { requireCron } from "@/server/cron-auth";
 import { hash } from "@/lib/crypto";
@@ -263,10 +264,27 @@ async function handler(
     if (path[0] === "offers" && path[1] && method === "GET")
       return json(await getOffer(path[1]));
     if (route.startsWith("auth/verification") || route === "auth/logout") {
+      if (route === "auth/verification" && method === "GET") {
+        try {
+          return json(
+            await verificationStatus(
+              await authenticate(request, "read", true),
+              request,
+            ),
+          );
+        } catch (e) {
+          if (e instanceof AppError && e.status === 401)
+            return json({
+              email: null,
+              verified: false,
+              sent: false,
+              resendAt: null,
+            });
+          throw e;
+        }
+      }
       const actor = await authenticate(request, "read", true);
       requireBrowser(actor);
-      if (route === "auth/verification" && method === "GET")
-        return json(await verificationStatus(actor, request));
       if (route === "auth/verification/send" && method === "POST")
         return json(await requestEmailVerification(actor, request));
       if (route === "auth/verification/confirm" && method === "POST") {
@@ -353,6 +371,54 @@ async function handler(
           take: 30,
         }),
       );
+    if (route === "oauth/authorize" && method === "POST") {
+      const input = z
+        .object({
+          request: z.record(z.string(), z.string().optional()),
+          allow: z.boolean(),
+          userId: z.string(),
+        })
+        .parse(await readJson(request));
+      return json({
+        redirectTo: await authorizeAgent(
+          actor,
+          input.request,
+          input.allow,
+          input.userId,
+        ),
+      });
+    }
+    if (route === "connections" && method === "GET") {
+      requireBrowser(actor);
+      return json(
+        await db.agentGrant.findMany({
+          where: { userId: actor.id, workspaceId: actor.workspaceId },
+          select: {
+            id: true,
+            scopes: true,
+            createdAt: true,
+            expiresAt: true,
+            revokedAt: true,
+            client: { select: { name: true } },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 100,
+        }),
+      );
+    }
+    if (path[0] === "connections" && path[1] && method === "DELETE") {
+      requireBrowser(actor);
+      const grant = await db.agentGrant.findFirst({
+        where: {
+          id: path[1],
+          userId: actor.id,
+          workspaceId: actor.workspaceId,
+        },
+      });
+      assert(grant, "NOT_FOUND", "Connection not found.", 404);
+      await revokeGrant(grant.id);
+      return json({ disconnected: true });
+    }
     if (route === "tasks" && method === "POST") {
       await rateLimit(actor.id, "research", 5, 60000);
       return json(
@@ -362,6 +428,7 @@ async function handler(
             .object({
               prompt: z.string().min(10).max(4000),
               budgetCents: z.number().int(),
+              requirements: taskRequirementsSchema.optional(),
             })
             .parse(await readJson(request)),
         ),
@@ -481,7 +548,11 @@ async function handler(
       requireBrowser(actor);
       return json(
         await db.agentToken.findMany({
-          where: { userId: actor.id, workspaceId: actor.workspaceId },
+          where: {
+            userId: actor.id,
+            workspaceId: actor.workspaceId,
+            grantId: null,
+          },
           select: {
             id: true,
             name: true,
@@ -600,7 +671,7 @@ async function handler(
         },
         400,
       );
-    if (error instanceof AppError)
+    if (error instanceof AppError || error instanceof OAuthError)
       return json(
         { error: { code: error.code, message: error.message } },
         error.status,

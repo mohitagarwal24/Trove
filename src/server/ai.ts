@@ -102,12 +102,26 @@ export async function generateText(
     );
   }
   if (!response.ok) {
-    // Do not surface provider bodies: these may repeat prompts or credentials.
+    // Log only a status/code pair. Provider bodies can repeat prompts or credentials.
+    const code =
+      response.status === 429
+        ? "AI_QUOTA_LIMIT"
+        : [401, 403].includes(response.status)
+          ? "AI_PROVIDER_DENIED"
+          : response.status === 404
+            ? "AI_MODEL_UNAVAILABLE"
+            : response.status === 400
+              ? "AI_REQUEST_REJECTED"
+              : "AI_UNAVAILABLE";
+    console.warn("Brief interpretation unavailable", {
+      code,
+      providerStatus: response.status,
+    });
     throw new AppError(
-      response.status === 429 ? "AI_QUOTA_LIMIT" : "AI_UNAVAILABLE",
+      code,
       response.status === 429
         ? "Research is temporarily rate-limited. Please try again later."
-        : "Research could not be completed. Please try again later.",
+        : "Brief interpretation is unavailable. Choose requirements to search directly. No purchase was started.",
       response.status === 429 ? 429 : 503,
     );
   }

@@ -4,6 +4,7 @@ import { createMcpServer } from "@/server/mcp";
 import { AppError } from "@/lib/errors";
 import { rateLimit } from "@/server/rate-limit";
 import { appUrl } from "@/lib/config";
+import { authChallenge } from "@/server/agent-oauth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
@@ -31,11 +32,35 @@ export async function POST(request: Request) {
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : "MCP request failed" },
-      { status: error instanceof AppError ? error.status : 500 },
+      {
+        status: error instanceof AppError ? error.status : 500,
+        headers: {
+          "Cache-Control": "no-store",
+          ...(error instanceof AppError && error.status === 401
+            ? { "WWW-Authenticate": authChallenge() }
+            : {}),
+        },
+      },
     );
   }
 }
-export async function GET() {
+export async function GET(request: Request) {
+  try {
+    if (!request.headers.get("authorization")?.startsWith("Bearer "))
+      throw new AppError("UNAUTHORIZED", "Connect your Trove account.", 401);
+    await authenticate(request);
+  } catch {
+    return Response.json(
+      { error: "Connect your Trove account." },
+      {
+        status: 401,
+        headers: {
+          "WWW-Authenticate": authChallenge(),
+          "Cache-Control": "no-store",
+        },
+      },
+    );
+  }
   return new Response("Stateless MCP supports POST requests.", {
     status: 405,
     headers: { Allow: "POST" },

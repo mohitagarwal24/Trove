@@ -106,6 +106,12 @@ export async function maintenance() {
   await db.oAuthAttempt.deleteMany({
     where: { expiresAt: { lt: new Date() } },
   });
+  await db.agentAuthorizationCode.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
+  });
+  await db.agentGrant.deleteMany({
+    where: { expiresAt: { lt: new Date(Date.now() - 86400000) } },
+  });
   await db.session.deleteMany({ where: { expiresAt: { lt: new Date() } } });
   await db.passwordReset.deleteMany({
     where: { expiresAt: { lt: new Date() } },

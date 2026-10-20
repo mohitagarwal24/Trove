@@ -50,13 +50,13 @@ export function Authentication({
     const controller = new AbortController();
     setChecking(true);
     api<{
-      email: string;
+      email: string | null;
       verified: boolean;
       sent: boolean;
       resendAt: string | null;
     }>("/auth/verification", { signal: controller.signal })
       .then((status) => {
-        if (!status.verified) {
+        if (status.email && !status.verified) {
           setVerificationEmail(status.email);
           setSent(status.sent);
           setResendAt(status.resendAt);

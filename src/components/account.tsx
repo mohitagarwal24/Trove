@@ -125,6 +125,14 @@ export function Account() {
                 }
               }}
             >
+              <input
+                type="text"
+                name="username"
+                autoComplete="username"
+                value={user.email}
+                readOnly
+                hidden
+              />
               <PasswordField
                 label="Current password"
                 required
@@ -202,6 +210,14 @@ export function Account() {
             }
           }}
         >
+          <input
+            type="text"
+            name="username"
+            autoComplete="username"
+            value={user.email}
+            readOnly
+            hidden
+          />
           {user.hasPassword ? (
             <PasswordField
               label="Password"

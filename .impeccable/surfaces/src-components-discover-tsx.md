@@ -26,7 +26,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 ## Approved shared refinement
 
-The all-route refinement keeps the incumbent visual world and real service behavior. Shared controls use 44px minimum height and 13px labels; forms use 12px labels and 13px values. Fixed dialog headings stay above a scrollable body within viewport bounds. Account pairs profile/Google panels and password fields before stacking on mobile. Connect has a compact token row above configuration and example-task columns, stacked up to 1050px. The official Google G and Google Sans Medium belong only to provider sign-in; local Manrope/Inter remain Trove’s typography.
+The all-route refinement keeps the incumbent visual world and real service behavior. Shared controls use 44px minimum height and 13px labels; forms use 12px labels and 13px values. Fixed dialog headings stay above a scrollable body within viewport bounds. Account pairs profile/Google panels and password fields before stacking on mobile. Connect leads with Trove-account OAuth client setup and connected-app columns, stacked up to 1050px, with manual tokens inside an advanced disclosure. The research and connection flow extension is recorded in `src-components-workspace-tsx.md`. The official Google G and Google Sans Medium belong only to provider sign-in; local Manrope/Inter remain Trove’s typography.
 
 Long purchased values, receipt references, fingerprints, and source terms use progressive disclosure while retaining full data and download content. Owned zero-price plans lead directly to purchased data. Redundant introductions, decorative heading icons and empty-state workflow steps are removed.
 

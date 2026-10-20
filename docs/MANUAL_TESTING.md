@@ -19,7 +19,7 @@ App: https://trove-mohit24.onrender.com. Use a new private Trove account and fic
 
 ## Research and genuine checkout
 
-1. With Gemini configured, open Research workspace and try an example. Keep the $10 limit or reduce it to test insufficient budget. The output must use actual AI, permitted fields and available source coverage. Missing configuration/quota must produce an error with no purchase.
+1. Open Research workspace → Choose requirements. Select categories, fields, record counts, freshness and intended use; optionally add explicit record filters. Find sources must work without Gemini or a funded account. Keep the $10 spending cap or reduce it to test insufficient budget. It is a policy limit, not a deposited balance. With Gemini configured, try Describe a brief as well; a provider error must expose Choose requirements to continue, with no inferred fallback and no purchase.
 2. Review selected sources and any record filters. A request with no matching records must not create a payable purchase. These are bounded batches, not an exhaustive database search.
 3. Continue with PayPal. Verify Sandbox is visible, then approve the exact amount using a personal Sandbox buyer from your PayPal Developer dashboard.
 4. Returning from approval alone is not proof of payment. Wait for validated delivery and confirmed capture. Inspect actual order, authorization and capture references in the receipt and PayPal dashboard.
@@ -55,7 +55,7 @@ Once Google credentials exist, choose Continue with Google in sign-in, complete 
 
 ## Agent and recovery checks
 
-Create a scoped token in Connect your agent. Initialize `/api/mcp`, list eight tools and call `discover_data` with explicit needs, fields, filters, quantity, purpose, maxAgeDays and budgetCents. Read-only scope cannot create quotes/purchases; no tool approves or captures payment. Use the Codex/Claude configuration in Connect; the agent should choose its requirements, let Trove find data, and follow the browser approval URL before retrieving paid rows. Revoke its token and confirm HTTP 401 on the next request, including an already-running Desktop bridge.
+Follow [agent setup](AGENT_CONNECTIONS.md) using the MCP URL and OAuth. Confirm the browser signs in to the intended account, shows permissions and callback host, and returns to the client only after Allow connection. Cancel must issue no code. List nine tools and call `get_profile` and `discover_data` with explicit needs, fields, filters, quantity, purpose, maxAgeDays and budgetCents. The account must be stable across refresh; no tool approves or captures payment. Disconnect in Trove and confirm the next tool request fails. Read-only consent cannot create quotes/purchases. Advanced manual tokens remain compatible; revoke one and confirm HTTP 401, including an already-running stdio bridge.
 
 Verify genuine signed PayPal webhooks at the public endpoint and replay one: persist once, reconcile once. Controlled automated tests cover missing fields, corrupt source payloads, concurrent budget reservations, capture uncertainty, replay and encryption tampering; those test doubles are not product modes. Do not intentionally interrupt a live financial operation on the public service without a controlled test plan.
 

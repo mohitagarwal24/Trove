@@ -131,6 +131,7 @@ test("MCP uses a scoped revocable token and never delegates payment approval", a
 }) => {
   await buyer(page);
   await page.goto("/connect");
+  await page.getByText("Advanced access tokens", { exact: true }).click();
   await page.getByRole("button", { name: "Create agent token" }).click();
   await page.getByRole("button", { name: "Create token", exact: true }).click();
   const token = await page.locator(".secret-token code").innerText();
@@ -154,7 +155,7 @@ test("MCP uses a scoped revocable token and never delegates payment approval", a
     ).ok(),
   ).toBeTruthy();
   const listing = await (await call(2, "tools/list", {})).json();
-  expect(listing.result.tools).toHaveLength(8);
+  expect(listing.result.tools).toHaveLength(9);
   expect(
     listing.result.tools.map((t: { name: string }) => t.name),
   ).not.toContain("capture_payment");
@@ -195,7 +196,7 @@ test("MCP uses a scoped revocable token and never delegates payment approval", a
     stderr: "pipe",
   });
   await bridge.connect(stdio);
-  expect((await bridge.listTools()).tools).toHaveLength(8);
+  expect((await bridge.listTools()).tools).toHaveLength(9);
   const bridged = await bridge.callTool({
     name: "discover_data",
     arguments: {
@@ -224,10 +225,13 @@ test("MCP uses a scoped revocable token and never delegates payment approval", a
   await bridge.close();
   await page.getByLabel("Agent client").selectOption("claude");
   await expect(page.locator(".code-block pre")).toContainText(
-    "${TROVE_AGENT_TOKEN}",
+    "claude mcp add --transport http trove",
   );
   await page.getByLabel("Agent client").selectOption("desktop");
-  await expect(page.locator(".code-block pre")).toContainText("mcp-bridge.mjs");
+  await expect(page.locator(".code-block pre")).toContainText("/api/mcp");
+  await expect(page.locator(".code-block pre")).not.toContainText(
+    "TROVE_AGENT_TOKEN",
+  );
 });
 test("research availability follows real configuration", async ({ page }) => {
   await buyer(page);
@@ -236,13 +240,18 @@ test("research availability follows real configuration", async ({ page }) => {
   ).json();
   await page.goto("/workspace");
   const run = page.getByRole("button", { name: "Find sources", exact: true });
-  if (capabilities.ai) await expect(run).toBeEnabled();
-  else {
-    await expect(run).toBeDisabled();
-    await expect(
-      page.getByText(/Research is currently unavailable/),
-    ).toBeVisible();
-  }
+  await page
+    .getByRole("button", { name: "Choose requirements", exact: true })
+    .click();
+  await expect(run).toBeEnabled();
+  const brief = page.getByRole("button", {
+    name: "Describe a brief",
+    exact: true,
+  });
+  if (capabilities.ai) {
+    await brief.click();
+    await expect(run).toBeEnabled();
+  } else await expect(brief).toBeDisabled();
   await expect(
     page.getByRole("combobox", { name: /Research mode/ }),
   ).toHaveCount(0);
@@ -273,7 +282,13 @@ test("catalogue and account have no serious accessibility violations", async ({
   page,
 }) => {
   await buyer(page);
-  for (const route of ["/discover", "/dashboard", "/account", "/seller", "/connect"]) {
+  for (const route of [
+    "/discover",
+    "/dashboard",
+    "/account",
+    "/seller",
+    "/connect",
+  ]) {
     await page.goto(route);
     await expect(page.locator("h1")).toBeVisible();
     // Measure readable, settled content rather than an intermediate arrival frame.

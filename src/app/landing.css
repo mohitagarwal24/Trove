@@ -1031,13 +1031,16 @@
     gap: 27px;
   }
   .dashboard-agent {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
     align-items: flex-start;
-    flex-wrap: wrap;
     padding: 22px;
     gap: 15px;
   }
   .dashboard-agent .button {
-    margin-left: 39px;
+    grid-column: 2;
+    justify-self: start;
+    margin-left: 0;
   }
   .dashboard-section-heading a {
     font-size: 10px;

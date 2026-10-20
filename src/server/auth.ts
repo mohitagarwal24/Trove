@@ -31,7 +31,7 @@ export async function authenticate(
   if (authorization?.startsWith("Bearer ")) {
     const token = await db.agentToken.findUnique({
       where: { hash: hash(authorization.slice(7)) },
-      include: { user: true },
+      include: { user: true, grant: true },
     });
     assert(
       token &&
@@ -42,6 +42,18 @@ export async function authenticate(
       "This agent token is invalid or expired.",
       401,
     );
+    if (token.grantId) {
+      assert(
+        token.grant &&
+          !token.grant.revokedAt &&
+          token.grant.expiresAt > new Date() &&
+          token.grant.resource === new URL("/api/mcp", appUrl()).toString() &&
+          new URL(request.url).pathname === "/api/mcp",
+        "UNAUTHORIZED",
+        "This connection is invalid or is for a different resource.",
+        401,
+      );
+    }
     assert(
       token.scopes.includes(scope),
       "FORBIDDEN",
@@ -313,6 +325,13 @@ export async function resetPassword(token: string, password: string) {
       data: { passwordHash: digest, emailVerifiedAt: new Date() },
     });
     await tx.session.deleteMany({ where: { userId: rows[0].userId } });
+    await tx.agentAuthorizationCode.deleteMany({
+      where: { userId: rows[0].userId },
+    });
+    await tx.agentGrant.updateMany({
+      where: { userId: rows[0].userId },
+      data: { revokedAt: new Date() },
+    });
     await tx.agentToken.updateMany({
       where: { userId: rows[0].userId },
       data: { revokedAt: new Date() },
@@ -351,6 +370,11 @@ export async function changePassword(
       data: { passwordHash: digest },
     });
     await tx.session.deleteMany({ where: { userId: actor.id } });
+    await tx.agentAuthorizationCode.deleteMany({ where: { userId: actor.id } });
+    await tx.agentGrant.updateMany({
+      where: { userId: actor.id },
+      data: { revokedAt: new Date() },
+    });
     await tx.agentToken.updateMany({
       where: { userId: actor.id },
       data: { revokedAt: new Date() },
@@ -388,6 +412,11 @@ export async function closeAccount(actor: Actor, password?: string) {
       },
     });
     await tx.session.deleteMany({ where: { userId: actor.id } });
+    await tx.agentAuthorizationCode.deleteMany({ where: { userId: actor.id } });
+    await tx.agentGrant.updateMany({
+      where: { userId: actor.id },
+      data: { revokedAt: new Date() },
+    });
     await tx.agentToken.updateMany({
       where: { userId: actor.id },
       data: { revokedAt: new Date() },

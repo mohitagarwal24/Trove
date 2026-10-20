@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-20T15:14:44.138169+00:00",
+  "generatedAt": "2026-10-20T17:01:10.938819+00:00",
   "title": "Design System: Trove",
   "extensions": {
     "colorMeta": {
@@ -558,13 +558,15 @@
     "layoutBehavior": {
       "rail": "232px default; 208px at max-width 1250px; 100dvh with scrollable middle and pinned account. Height compression at 820px and 700px applies above 760px width.",
       "mobileDrawer": "At max-width 760px: min(288px, 86vw), modal dialog, main-shell inert, closed drawer inert, focus trap, Escape dismissal, body lock and focus restoration.",
-      "connect": "Maximum 1160px. Full-width token row above 1.5fr / 0.9fr configuration/example columns, 260px minimum example width, 22px gap; columns stack at 1050px, token controls stack at 760px. Collapsed tool reference spans the columns.",
+      "connect": "Maximum 1160px. Trove-account OAuth client setup and connected apps use 1.5fr / 0.9fr columns, 260px minimum on the latter, 22px gap; columns stack at 1050px. Full-width advanced-token disclosure follows, then example task and collapsed tool reference. Connected-app rows wrap at 600px.",
       "account": "Maximum 1000px. Paired profile and Google panels, full-width security/data panels; paired password fields. One column at 760px.",
       "dialog": "Fixed heading plus scrollable body; maximum calc(100dvh - 48px), or calc(100dvh - 24px) up to 760px. Heading/body padding follows docs/DESIGN.md.",
       "dataDisclosure": "Sticky table headers inside bounded scroll containers. Values over 160 characters show 140-character previews and native details with full text; expanded text scrolls within 18rem. Receipt refs and fingerprints use details; JSON download remains complete.",
       "publicStory": "Fixed 96px header with 5.5vw gutters; four native-scroll 100svh chapters with a contained sticky scene. At 760px: 76px header, 22px header gutters, full-width copy and source fragments below. Normal-flow fallback and reduced-motion chapters precede source disclosures.",
       "signIn": "44% deep-ink story / 56% white form; 400px maximum form. Up to 760px, brand strip plus form at 24px page gutters and 420px maximum.",
-      "dashboard": "Working shell, maximum 1200px; three adjacent action links followed by two equal research/data columns with 30px gap. Both groups stack at 760px; mobile heading and primary action stack."
+      "dashboard": "Working shell, maximum 1200px; three adjacent action links followed by two equal research/data columns with 30px gap. Both groups stack at 760px; mobile heading and primary action stack. Mobile agent callout uses a 24px icon column and minmax(0, 1fr) text column, with its action below the text.",
+      "workspace": "350px composer beside flexible output, 300px up to 1250px and one column up to 1050px. Explicit requirements and optional AI brief share a labelled mode control; category details disclose required fields and filters. Spending caps retain explicit USD and limit language.",
+      "authorization": "Outside the rail: home link above a consent panel in a centered 540px maximum-width column on Chalk Canvas. App name and callback host wrap; actions wrap at 600px. Account, requested permissions and separate payment approval stay visible."
     },
     "assets": {
       "google-sign-in": {

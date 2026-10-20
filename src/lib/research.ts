@@ -42,3 +42,8 @@ export const discoverySchema = z.object({
 });
 export type DataNeed = z.infer<typeof dataNeedSchema>;
 export type DiscoveryRequest = z.infer<typeof discoverySchema>;
+export const taskRequirementsSchema = discoverySchema.pick({
+  needs: true,
+  purpose: true,
+});
+export type TaskRequirements = z.infer<typeof taskRequirementsSchema>;

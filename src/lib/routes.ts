@@ -17,6 +17,7 @@ export function safeReturnPath(value: string | null | undefined) {
       "/account",
       "/purchases",
       "/seller",
+      "/oauth/authorize",
     ].includes(url.pathname) ||
       /^\/purchases\/[a-zA-Z0-9_-]+$/.test(url.pathname))
     ? url.pathname + url.search

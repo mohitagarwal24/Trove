@@ -4,6 +4,13 @@ import { Check, Copy, KeyRound, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { api, post } from "@/lib/client";
 import { useTrove } from "./trove-context";
 import { Badge, ExternalLink, Modal, Notice } from "./ui";
+type Connection = {
+  id: string;
+  client: { name: string };
+  scopes: string[];
+  expiresAt: string;
+  revokedAt: string | null;
+};
 type Token = {
   id: string;
   name: string;
@@ -13,6 +20,7 @@ type Token = {
   revokedAt: string | null;
 };
 const toolDescriptions = [
+  ["get_profile", "Identify the connected Trove account"],
   ["discover_data", "Match your agent’s exact data requirements"],
   ["search_offers", "Search free offer metadata"],
   ["get_offer", "Inspect fields, price, preview & terms"],
@@ -26,23 +34,33 @@ export function Connect() {
   const { user, ensureAuth, notify } = useTrove();
   const [tokens, setTokens] = useState<Token[]>([]);
   const [name, setName] = useState("Research agent");
-  const [client, setClient] = useState("codex");
+  const [client, setClient] = useState("chatgpt");
+  const [connections, setConnections] = useState<Connection[]>([]);
   const [creating, setCreating] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [value, setValue] = useState("");
   const [copyState, setCopyState] = useState("");
   const [scope, setScope] = useState("purchase");
   async function refresh() {
-    setTokens(await api<Token[]>("/tokens"));
+    const [tokens, connections] = await Promise.all([
+      api<Token[]>("/tokens"),
+      api<Connection[]>("/connections"),
+    ]);
+    setTokens(tokens);
+    setConnections(connections);
   }
   useEffect(() => {
     let active = true;
     setTokens([]);
+    setConnections([]);
     setValue("");
     if (user)
-      api<Token[]>("/tokens")
-        .then((items) => {
-          if (active) setTokens(items);
+      Promise.all([api<Token[]>("/tokens"), api<Connection[]>("/connections")])
+        .then(([items, apps]) => {
+          if (active) {
+            setTokens(items);
+            setConnections(apps);
+          }
         })
         .catch((e) => {
           if (active) notify(e.message, true);
@@ -59,50 +77,29 @@ export function Connect() {
     string,
     { file: string; code: string; hint: string; docs: string }
   > = {
+    chatgpt: {
+      file: "MCP server URL",
+      code: `${origin}/api/mcp`,
+      hint: "In ChatGPT, enable Developer mode in Settings → Apps, then create an app with this URL and OAuth authentication. Sign in to Trove when prompted. Availability depends on your ChatGPT plan and workspace settings.",
+      docs: "https://developers.openai.com/plugins/build/auth",
+    },
+    desktop: {
+      file: "MCP server URL",
+      code: `${origin}/api/mcp`,
+      hint: "In Claude, open Customize → Connectors → Add → Add custom connector. Paste this URL, then connect and sign in to Trove. Free accounts can add one custom connector.",
+      docs: "https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp",
+    },
     codex: {
-      file: "~/.codex/config.toml",
-      code: `[mcp_servers.trove]\nurl = "${origin}/api/mcp"\nbearer_token_env_var = "TROVE_AGENT_TOKEN"`,
-      hint: "Set TROVE_AGENT_TOKEN in the environment where you launch Codex.",
+      file: "Terminal",
+      code: `codex mcp add trove --url ${origin}/api/mcp\ncodex mcp login trove`,
+      hint: "Run these commands. Your browser opens Trove so you can sign in and approve access. No access token or config file edits are needed.",
       docs: "https://developers.openai.com/codex/mcp",
     },
     claude: {
-      file: ".mcp.json",
-      code: JSON.stringify(
-        {
-          mcpServers: {
-            trove: {
-              type: "http",
-              url: `${origin}/api/mcp`,
-              headers: { Authorization: "Bearer ${TROVE_AGENT_TOKEN}" },
-            },
-          },
-        },
-        null,
-        2,
-      ),
-      hint: "Set TROVE_AGENT_TOKEN in the environment where you launch Claude Code. This configuration contains no secret.",
+      file: "Terminal",
+      code: `claude mcp add --transport http trove ${origin}/api/mcp`,
+      hint: "Run this command, then open /mcp in Claude Code and authenticate Trove. Sign in and approve access in your browser.",
       docs: "https://code.claude.com/docs/en/mcp",
-    },
-    desktop: {
-      file: "claude_desktop_config.json",
-      code: JSON.stringify(
-        {
-          mcpServers: {
-            trove: {
-              command: "/absolute/path/to/node",
-              args: ["/absolute/path/to/Trove/scripts/mcp-bridge.mjs"],
-              env: {
-                TROVE_URL: origin,
-                TROVE_AGENT_TOKEN: "PASTE_YOUR_TOKEN_HERE",
-              },
-            },
-          },
-        },
-        null,
-        2,
-      ),
-      hint: "Clone the Trove repository and run npm ci. Replace both absolute paths and the token in your private Claude Desktop configuration, then restart Claude. No database credentials are needed.",
-      docs: "https://modelcontextprotocol.io/docs/develop/connect-local-servers",
     },
   };
   const config = configs[client];
@@ -139,14 +136,109 @@ export function Connect() {
       <section className="page-heading compact-heading">
         <div>
           <h1>Connect your agent</h1>
-          <p>Bring Trove’s data to Codex or Claude.</p>
+          <p>Bring Trove’s data to ChatGPT, Claude or Codex.</p>
         </div>
       </section>
       <div className="connect-layout">
         <div className="connect-main">
-          <section className="panel setup-card token-setup">
+          <section className="panel setup-card client-setup">
             <div className="setup-heading">
-              <span className="step-number">01</span>
+              <div>
+                <h2>Connect with your Trove account</h2>
+              </div>
+            </div>
+            <label className="client-picker">
+              Agent client
+              <select
+                value={client}
+                onChange={(event) => setClient(event.target.value)}
+              >
+                <option value="chatgpt">ChatGPT</option>
+                <option value="desktop">Claude</option>
+                <option value="codex">Codex</option>
+                <option value="claude">Claude Code</option>
+              </select>
+            </label>
+            <div className="code-block">
+              <div>
+                <span>{config.file}</span>
+                <button
+                  onClick={() => copy(config.code, "config")}
+                  aria-label="Copy connection details"
+                >
+                  {copyState === "config" ? (
+                    <Check size={14} />
+                  ) : (
+                    <Copy size={14} />
+                  )}{" "}
+                  {copyState === "config" ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <pre>{config.code}</pre>
+            </div>
+            <p className="caption">{config.hint}</p>
+            <ExternalLink href={config.docs}>Client setup guide</ExternalLink>
+          </section>
+          <section className="panel setup-card connected-apps">
+            <h2>Connected apps</h2>
+            {connections.length ? (
+              <div className="token-list">
+                {connections.map((connection) => {
+                  const active =
+                    !connection.revokedAt &&
+                    new Date(connection.expiresAt) > new Date();
+                  return (
+                    <div className="token-row" key={connection.id}>
+                      <span className="token-icon">
+                        <ShieldCheck size={17} />
+                      </span>
+                      <div>
+                        <strong>{connection.client.name}</strong>
+                        <small>
+                          {connection.scopes.includes("purchase")
+                            ? "Research and purchase requests"
+                            : "Research access"}
+                        </small>
+                      </div>
+                      <Badge tone={active ? "green" : "neutral"}>
+                        {connection.revokedAt
+                          ? "Disconnected"
+                          : active
+                            ? "Connected"
+                            : "Expired"}
+                      </Badge>
+                      {active && (
+                        <button
+                          className="button button-ghost"
+                          aria-label={`Disconnect ${connection.client.name}`}
+                          onClick={async () => {
+                            try {
+                              await api(`/connections/${connection.id}`, {
+                                method: "DELETE",
+                              });
+                              await refresh();
+                              notify("App disconnected.");
+                            } catch (e) {
+                              notify((e as Error).message, true);
+                            }
+                          }}
+                        >
+                          Disconnect
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="caption">
+                Add Trove in your client to connect your first app.
+              </p>
+            )}
+          </section>
+          <details className="panel setup-card token-setup advanced-tokens">
+            <summary>Advanced access tokens</summary>
+            <div className="setup-heading">
               <div>
                 <h2>Create an agent token</h2>
               </div>
@@ -204,48 +296,9 @@ export function Connect() {
               <Plus size={15} />
               Create agent token
             </button>
-          </section>
-          <section className="panel setup-card client-setup">
-            <div className="setup-heading">
-              <span className="step-number">02</span>
-              <div>
-                <h2>Connect your client</h2>
-              </div>
-            </div>
-            <label className="client-picker">
-              Agent client
-              <select
-                value={client}
-                onChange={(event) => setClient(event.target.value)}
-              >
-                <option value="codex">Codex</option>
-                <option value="claude">Claude Code</option>
-                <option value="desktop">Claude Desktop</option>
-              </select>
-            </label>
-            <div className="code-block">
-              <div>
-                <span>{config.file}</span>
-                <button
-                  onClick={() => copy(config.code, "config")}
-                  aria-label="Copy MCP configuration"
-                >
-                  {copyState === "config" ? (
-                    <Check size={14} />
-                  ) : (
-                    <Copy size={14} />
-                  )}{" "}
-                  {copyState === "config" ? "Copied" : "Copy"}
-                </button>
-              </div>
-              <pre>{config.code}</pre>
-            </div>
-            <p className="caption">{config.hint}</p>
-            <ExternalLink href={config.docs}>Client setup guide</ExternalLink>
-          </section>
+          </details>
           <section className="panel setup-card task-setup">
             <div className="setup-heading">
-              <span className="step-number">03</span>
               <div>
                 <h2>Give your agent a task</h2>
               </div>

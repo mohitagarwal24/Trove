@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { TokenPayload } from "google-auth-library";
 import { db } from "../src/lib/db";
 import { hash } from "../src/lib/crypto";
+import { safeReturnPath } from "../src/lib/routes";
 import {
   beginGoogle,
   finishGoogle,
@@ -21,6 +22,16 @@ const suffix = randomUUID(),
   users: string[] = [],
   workspaces: string[] = [],
   attempts: string[] = [];
+test("OAuth consent survives sign-in return validation without permitting external destinations", () => {
+  const path =
+    "/oauth/authorize?client_id=registered&state=state&resource=https%3A%2F%2Ftrove.example%2Fapi%2Fmcp";
+  assert.equal(safeReturnPath(path), path);
+  assert.equal(
+    safeReturnPath("//outside.example/oauth/authorize"),
+    "/dashboard",
+  );
+  assert.equal(safeReturnPath("/oauth/token"), "/dashboard");
+});
 const previous = {
   exchange: googleApi.exchange,
   id: process.env.GOOGLE_CLIENT_ID,

@@ -30,12 +30,15 @@ export function Dashboard() {
       api<{ revokedAt: string | null; expiresAt: string }[]>("/tokens", {
         signal: controller.signal,
       }),
+      api<{ revokedAt: string | null; expiresAt: string }[]>("/connections", {
+        signal: controller.signal,
+      }),
     ])
-      .then(([tasks, purchases, tokens]) => {
+      .then(([tasks, purchases, tokens, connections]) => {
         setTasks(tasks);
         setPurchases(purchases);
         setConnected(
-          tokens.some(
+          [...tokens, ...connections].some(
             (t) => !t.revokedAt && new Date(t.expiresAt) > new Date(),
           ),
         );
@@ -96,7 +99,7 @@ export function Dashboard() {
           <Cable size={22} />
           <span>
             <strong>Connect your agent</strong>
-            <small>Use Trove in Codex or Claude</small>
+            <small>Use Trove in ChatGPT, Claude or Codex</small>
           </span>
           <ArrowRight size={18} />
         </Link>
@@ -219,7 +222,7 @@ export function Dashboard() {
               <Cable size={24} />
               <div>
                 <h2>Bring the context to your agent.</h2>
-                <p>Connect Codex or Claude with a scoped, revocable token.</p>
+                <p>Connect ChatGPT, Claude or Codex with your Trove account.</p>
               </div>
               <Link href="/connect" className="button button-secondary">
                 Connect an agent <ArrowUpRight size={16} />

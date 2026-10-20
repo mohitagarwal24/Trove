@@ -1,4 +1,207 @@
 @import "tailwindcss";
+
+.authorization-page {
+  min-height: 100svh;
+  padding: 36px 20px;
+  background: var(--canvas);
+}
+.authorization-content {
+  width: min(100%, 540px);
+  margin: 0 auto;
+}
+.authorization-content > a {
+  display: inline-block;
+  margin-bottom: 30px;
+}
+.authorization-card {
+  padding: 32px;
+}
+.authorization-card > svg {
+  color: var(--accent);
+}
+.authorization-card h1 {
+  font-size: 27px;
+  line-height: 1.3;
+  margin: 20px 0 12px;
+  overflow-wrap: anywhere;
+}
+.authorization-card > p {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.connection-permissions {
+  list-style: none;
+  margin: 28px 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+.connection-permissions li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.7;
+}
+.connection-permissions svg {
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.connection-destination {
+  margin-top: 24px;
+}
+.authorization-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 24px 0;
+}
+.research-mode {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: #f5f6f9;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+.research-mode button {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.research-mode button[aria-pressed="true"] {
+  background: white;
+  color: var(--accent);
+}
+.research-mode button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.research-requirements {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.research-requirements label:not(.choice-label) {
+  display: grid;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 12px;
+}
+.research-requirements input:not([type="checkbox"]),
+.research-requirements select {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  background: #f8f9fc;
+}
+.authorization-card .policy-note p,
+.task-composer .policy-note p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.research-requirements fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.research-requirements legend {
+  font-size: 12px;
+  font-weight: 550;
+  margin-bottom: 12px;
+}
+.research-categories,
+.requirement-fields {
+  display: grid;
+  gap: 12px;
+}
+.research-requirements .choice-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  line-height: 1.5;
+}
+.research-requirements input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.research-quantities {
+  gap: 12px;
+}
+.research-quantities > label {
+  flex: 1;
+  min-width: 0;
+}
+.requirement-scope {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.requirement-scope summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.8;
+}
+.requirement-scope summary span {
+  display: block;
+  color: var(--muted);
+  font-weight: 400;
+  padding-left: 16px;
+}
+.requirement-scope .requirement-fields {
+  padding: 16px 0;
+}
+.requirement-filter {
+  display: grid;
+  gap: 10px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.requirement-filter > button {
+  justify-self: end;
+}
+.advanced-tokens > summary {
+  cursor: pointer;
+  font-weight: 550;
+  font-size: 14px;
+}
+.advanced-tokens .setup-heading {
+  margin-top: 24px;
+}
+.connected-apps > h2 {
+  margin-bottom: 24px;
+}
+@media (max-width: 600px) {
+  .authorization-page {
+    padding: 24px 16px;
+  }
+  .authorization-card {
+    padding: 24px;
+  }
+  .authorization-actions {
+    flex-wrap: wrap;
+  }
+  .connected-apps .token-row {
+    flex-wrap: wrap;
+  }
+  .connected-apps .token-row > div {
+    min-width: 130px;
+  }
+}
 @font-face {
   font-family: Inter;
   src: url("/fonts/inter.ttf") format("truetype");
@@ -22,6 +225,7 @@
   --surface: #fff;
   --sidebar: #171d30;
   --ink: #20283f;
+  --muted: #626c82;
   --line: #dde1eb;
   --accent: #3155d9;
   --accent-dark: #2441af;

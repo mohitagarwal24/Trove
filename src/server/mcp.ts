@@ -75,6 +75,38 @@ export function createMcpServer(actor: Actor) {
       403,
     );
   server.registerTool(
+    "get_profile",
+    {
+      description:
+        "Return the account represented by the current authenticated connection.",
+      inputSchema: {},
+      outputSchema: { id: z.string(), name: z.string(), email: z.string() },
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        openWorldHint: false,
+      },
+      _meta: { "openai/profile": true },
+    },
+    async () => {
+      const result = await response(async () => ({
+        id: actor.id,
+        name: actor.name,
+        email: actor.email,
+      }));
+      return "isError" in result
+        ? result
+        : {
+            ...result,
+            structuredContent: {
+              id: actor.id,
+              name: actor.name,
+              email: actor.email,
+            },
+          };
+    },
+  );
+  server.registerTool(
     "discover_data",
     {
       description:

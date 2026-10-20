@@ -7,6 +7,7 @@ import { requiredFields } from "./catalog";
 import { discoverData } from "./discovery";
 import { createQuote } from "./quotes";
 import type { Requirements } from "@/lib/types";
+import { taskRequirementsSchema, type TaskRequirements } from "@/lib/research";
 const reqSchema = z.object({
   categories: z.array(z.enum(categories)).min(1),
   filters: z
@@ -42,7 +43,11 @@ async function liveRequirements(
 }
 export async function planTask(
   actor: Actor,
-  input: { prompt: string; budgetCents: number },
+  input: {
+    prompt: string;
+    budgetCents: number;
+    requirements?: TaskRequirements;
+  },
 ) {
   assert(
     input.budgetCents >= 50 &&
@@ -51,6 +56,21 @@ export async function planTask(
     "INVALID_BUDGET",
     "Choose a budget between $0.50 and $1,000.",
   );
+  if (input.requirements) {
+    const request = taskRequirementsSchema.parse(input.requirements);
+    const discovery = await discoverData(actor, {
+      ...request,
+      budgetCents: input.budgetCents,
+      query: input.prompt.slice(0, 300),
+    });
+    const quote = discovery.selectedOfferIds.length
+      ? await createQuote(actor, {
+          offerIds: discovery.selectedOfferIds,
+          taskId: discovery.task.id,
+        })
+      : null;
+    return { task: discovery.task, quote, discovery };
+  }
   assert(
     aiConfigured(),
     "AI_NOT_CONFIGURED",

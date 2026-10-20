@@ -20,6 +20,7 @@ model User {
   sessions     Session[]
   memberships  Membership[]
   tokens       AgentToken[]
+  agentGrants  AgentGrant[]
   emailVerification EmailVerification?
 }
 model Session {
@@ -37,6 +38,7 @@ model Workspace {
   tasks       TaskRun[]
   quotes      Quote[]
   purchases   Purchase[]
+  agentGrants AgentGrant[]
 }
 model Membership {
   id          String @id @default(cuid())
@@ -58,7 +60,55 @@ model AgentToken {
   createdAt   DateTime @default(now())
   expiresAt   DateTime
   revokedAt   DateTime?
+  grantId     String?
+  grant       AgentGrant? @relation(fields: [grantId], references: [id], onDelete: Cascade)
   user        User @relation(fields: [userId], references: [id])
+}
+model AgentClient {
+  id            String @id
+  name          String
+  redirectUris  String[]
+  authMethod    String
+  secretHash    String?
+  createdAt     DateTime @default(now())
+  grants        AgentGrant[]
+}
+model AgentGrant {
+  id          String @id @default(cuid())
+  clientId    String
+  userId      String
+  workspaceId String
+  scopes      String[]
+  resource    String
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  client      AgentClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tokens      AgentToken[]
+  refreshes   AgentRefresh[]
+  @@index([userId, workspaceId])
+}
+model AgentAuthorizationCode {
+  id            String @id
+  clientId      String
+  userId        String
+  workspaceId   String
+  redirectUri   String
+  challenge     String
+  scopes        String[]
+  resource      String
+  expiresAt     DateTime
+  consumedAt    DateTime?
+}
+model AgentRefresh {
+  id        String @id
+  grantId   String
+  usedAt    DateTime?
+  expiresAt DateTime
+  grant     AgentGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  @@index([grantId])
 }
 model Seller {
   id          String @id

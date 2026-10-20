@@ -50,7 +50,7 @@ Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` privately on the server. Only 
 
 ## Agent clients
 
-Connect shows configuration for Codex, Claude Code and Claude Desktop. Create a scoped Trove token; no OpenAI/Anthropic key is stored by Trove. Desktop uses `scripts/mcp-bridge.mjs`, which forwards stdio MCP to the authenticated hosted HTTP endpoint and needs only `TROVE_URL` and `TROVE_AGENT_TOKEN`. It does not load `.env` or access the database. Follow the client’s existing account/plan limits; no new paid service is provisioned. Current configuration references: [Codex MCP](https://developers.openai.com/codex/mcp/), [Claude Code MCP](https://code.claude.com/docs/en/mcp).
+Connect defaults to the hosted MCP URL plus Trove-account OAuth for ChatGPT, Claude, Codex and Claude Code. No OpenAI/Anthropic key is stored by Trove and no new OAuth service account or signing key is needed. Apply the additive agent-OAuth migration through `npm run db:migrate`; startup does this on Render. Keep `APP_URL` equal to the public origin so discovery, audience checks and callbacks agree. See [agent setup and protocol](AGENT_CONNECTIONS.md). Follow the client’s account/plan limits; no new paid service is provisioned. Advanced manual tokens and `scripts/mcp-bridge.mjs` remain compatible for older stdio clients; the bridge uses `TROVE_URL` and `TROVE_AGENT_TOKEN`, without `.env` or database access.
 
 ## Email verification and recovery over free HTTPS email
 
@@ -86,3 +86,9 @@ Payouts are separate from buyer capture. Keep `PAYPAL_PAYOUTS_ENABLED=false` unt
 - Review failed jobs, payout recovery and upstream import errors. Free hosting cannot provide guaranteed settlement latency.
 
 Before real customers, supply the actual operator's legal identity and a private support channel, validate email delivery and account recovery, complete merchant/provider approvals, and perform the credentialed acceptance checks. The implementation does not invent those approvals or business details.
+
+## Research and buyer funding
+
+Choose requirements in Research workspace works without an AI credential. Optional Describe a brief uses Gemini and fails explicitly on missing configuration, provider errors, quota or timeout. It offers direct requirements entry without inventing an interpretation or purchase. Provider diagnostics log only an error code and HTTP status, never provider response bodies, prompts or credentials.
+
+A task cap is not a wallet balance or a PayPal mandate. Research and quotes need no deposit and no connected buyer funding account. A positive quote proceeds to the existing exact-price PayPal approval flow in USD. Trove has no USDC or crypto dependency. In Sandbox, use a personal buyer account from PayPal Developer → Testing Tools → Sandbox Accounts → View/Edit Account. Use that account's generated credentials and fictitious test balance; do not spend real money. The business sandbox account represents Trove's merchant. You do not connect or top up a wallet in Trove. See [PayPal sandbox accounts](https://developer.paypal.com/sandbox-testing/accounts) and [sandbox overview](https://developer.paypal.com/sandbox-testing/overview/).

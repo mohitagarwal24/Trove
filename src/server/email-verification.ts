@@ -176,6 +176,13 @@ export async function verifyEmail(
     await tx.emailVerification.delete({ where: { userId: actor.id } });
     // A pending session must never become a usable workspace session implicitly.
     await tx.session.deleteMany({ where: { userId: actor.id } });
+    await tx.agentAuthorizationCode.deleteMany({
+      where: { userId: actor.id },
+    });
+    await tx.agentGrant.updateMany({
+      where: { userId: actor.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
     await tx.agentToken.updateMany({
       where: { userId: actor.id, revokedAt: null },
       data: { revokedAt: new Date() },

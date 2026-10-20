@@ -1065,6 +1065,46 @@ test("unconfigured AI fails with no fallback or purchase", async () => {
     /temporarily unavailable/,
   );
 });
+test("explicit requirements search and quote without Gemini, funding or any payment", async () => {
+  const before = await db.purchase.count({ where: { workspaceId } });
+  const result = await planTask(actor, {
+    prompt: "Drug approvals for research",
+    budgetCents: 1000,
+    requirements: {
+      purpose: "ai_inference",
+      needs: [
+        {
+          category: "Drug approvals",
+          fields: ["brand_name", "active_ingredients"],
+          quantity: 2,
+          maxAgeDays: 3650,
+          filters: [],
+        },
+      ],
+    },
+  });
+  assert.equal(result.task.planner, "trove-search");
+  assert(result.quote && result.quote.lines.length);
+  assert.equal(await db.purchase.count({ where: { workspaceId } }), before);
+  await assert.rejects(() =>
+    planTask(actor, {
+      prompt: "Explicit invalid field",
+      budgetCents: 1000,
+      requirements: {
+        purpose: "ai_inference",
+        needs: [
+          {
+            category: "Drug approvals",
+            fields: [],
+            quantity: 2,
+            maxAgeDays: 30,
+            filters: [],
+          },
+        ],
+      },
+    }),
+  );
+});
 test("model policy rejects paid model fallback before calling a provider", async () => {
   process.env.GEMINI_API_KEY = "TEST_ONLY";
   process.env.GEMINI_MODEL = "paid-model";

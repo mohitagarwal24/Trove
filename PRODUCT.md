@@ -8,7 +8,7 @@ web
 
 ## Users
 
-Researchers and developers discover and compare scoped data offers, then approve an exact-price purchase. Sellers manage offer versions and review earnings. External agents use scoped, revocable access.
+Researchers and developers discover and compare scoped data offers, then approve an exact-price purchase. Sellers manage offer versions and review earnings. External agents use scoped, revocable access through Trove-account OAuth; manual tokens remain an advanced option.
 
 ## Product Purpose
 
@@ -18,7 +18,7 @@ Make research data discoverable, purchasable with explicit human approval, and t
 
 The public `/` route introduces Trove through Data Convergence, a native-scroll story with an immediate sign-in action and a skip route. `/sign-in` provides Google authentication when configured, email sign-in/registration, and ownership verification through the existing shared authentication flow. Safe internal return paths continue the requested action; the default signed-in destination is `/dashboard`. The dashboard is authenticated on the server and shows actual recent tasks, available purchased data, payment attention, and agent connection state. Recent research resumes the owner's task through `/workspace?task=<id>`. `/discover` remains the public catalogue inside the working application shell.
 
-Discover → compare or research brief → immutable quote → human approval → delivery checks → payment capture → purchased results and receipt. Existing workspace, purchase, seller, connection, and account flows remain available. Payment, delivery, and settlement have independent states. AI and payments use real integrations; Sandbox is explicitly identified as the payment environment. The public story illustrates the path from sources to context and never stands in for a completed research task or transaction. Reduced motion and graphics failure preserve every chapter in ordinary document flow.
+Discover → compare, choose explicit requirements, or describe an optional AI research brief → immutable quote → human approval → delivery checks → payment capture → purchased results and receipt. Explicit-requirements discovery works without Gemini or prefunding; spending caps are limits rather than stored balances. Agents connect through the MCP URL and Trove-account consent, with client-specific setup for ChatGPT, Claude, Codex, and Claude Code. Connected apps expose actual scopes and revocation; consent identifies the account, client-provided app name, callback host, and the separate payment-approval boundary. Existing workspace, purchase, seller, connection, and account flows remain available. Payment, delivery, and settlement have independent states. AI and payments use real integrations; Sandbox is explicitly identified as the payment environment. The public story illustrates the path from sources to context and never stands in for a completed research task or transaction. Reduced motion and graphics failure preserve every chapter in ordinary document flow.
 
 ## Capabilities and Constraints
 

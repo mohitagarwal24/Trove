@@ -18,12 +18,20 @@ import { money } from "@/lib/types";
 import { useTrove } from "./trove-context";
 import { Badge, Notice, Status } from "./ui";
 import { QuoteReview } from "./quote-review";
+import {
+  ResearchRequirements,
+  initialRequirements,
+} from "./research-requirements";
+import { taskRequirementsSchema } from "@/lib/research";
 export function Workspace() {
   const params = useSearchParams();
   const requestedTask = params.get("task");
   const [resumeError, setResumeError] = useState("");
   const { user, capabilities, ensureAuth, notify, offers } = useTrove();
   const [prompt, setPrompt] = useState(examplePrompts[0]);
+  const [mode, setMode] = useState<"brief" | "requirements">("requirements");
+  const [requirements, setRequirements] = useState(initialRequirements);
+  const [researchError, setResearchError] = useState("");
   const [budget, setBudget] = useState("10.00");
   const [running, setRunning] = useState(false);
   const [task, setTask] = useState<Task | null>(null);
@@ -58,6 +66,15 @@ export function Workspace() {
           if (active) {
             setTask(item);
             setPrompt(item.prompt);
+            if (item.planner !== "gemini" && item.requirements.needs) {
+              setMode("requirements");
+              setRequirements({
+                needs: item.requirements.needs,
+                purpose: item.requirements
+                  .purpose as typeof requirements.purpose,
+              });
+            }
+            setBudget((item.budgetCents / 100).toFixed(2));
             if (requestedTask) sessionStorage.setItem(key, item.id);
           }
         })
@@ -75,9 +92,17 @@ export function Workspace() {
     try {
       if (!(await ensureAuth())) return;
       setRunning(true);
+      setResearchError("");
       const result = await post<{ task: Task; quote: QuoteView | null }>(
         "/tasks",
-        { prompt, budgetCents: Math.round(Number(budget) * 100) },
+        {
+          prompt:
+            mode === "brief"
+              ? prompt
+              : `${requirements.needs.map((n) => n.category).join(" and ")} · ${requirements.needs[0]?.quantity} records per category`,
+          budgetCents: Math.round(Number(budget) * 100),
+          ...(mode === "requirements" ? { requirements } : {}),
+        },
       );
       setTask(result.task);
       setQuote(result.quote);
@@ -91,7 +116,7 @@ export function Workspace() {
           "No permitted offer meets these requirements within budget. Nothing was purchased.",
         );
     } catch (e) {
-      notify((e as Error).message, true);
+      setResearchError((e as Error).message);
     } finally {
       setRunning(false);
     }
@@ -128,24 +153,64 @@ export function Workspace() {
             <span className="sparkle-box">
               <Sparkles size={17} />
             </span>
-            <h2>Your research brief</h2>
+            <h2>
+              {mode === "brief"
+                ? "Your research brief"
+                : "Your data requirements"}
+            </h2>
           </div>
-          <label htmlFor="task-prompt">What would you like to find out?</label>
-          <textarea
-            id="task-prompt"
-            rows={7}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe the information you need…"
-          />
-          <div className="composer-examples">
-            {examplePrompts.map((p, i) => (
-              <button key={i} onClick={() => setPrompt(p)}>
-                {["Approvals", "Drug recalls", "Device recalls"][i]}
-                <ArrowRight size={11} />
-              </button>
-            ))}
+          <div
+            className="research-mode"
+            role="group"
+            aria-label="Research input"
+          >
+            <button
+              aria-pressed={mode === "requirements"}
+              onClick={() => {
+                setMode("requirements");
+                setResearchError("");
+              }}
+            >
+              Choose requirements
+            </button>
+            <button
+              aria-pressed={mode === "brief"}
+              disabled={!capabilities.ai}
+              onClick={() => {
+                setMode("brief");
+                setResearchError("");
+              }}
+            >
+              Describe a brief
+            </button>
           </div>
+          {mode === "requirements" ? (
+            <ResearchRequirements
+              value={requirements}
+              onChange={setRequirements}
+            />
+          ) : (
+            <>
+              <label htmlFor="task-prompt">
+                What would you like to find out?
+              </label>
+              <textarea
+                id="task-prompt"
+                rows={7}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe the information you need…"
+              />
+              <div className="composer-examples">
+                {examplePrompts.map((p, i) => (
+                  <button key={i} onClick={() => setPrompt(p)}>
+                    {["Approvals", "Drug recalls", "Device recalls"][i]}
+                    <ArrowRight size={11} />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           <div className="form-row">
             <label>
               Task spending limit
@@ -165,15 +230,32 @@ export function Workspace() {
           </div>
           <div className="policy-note">
             <ShieldCheck size={16} />
-            <p>You approve each purchase before payment.</p>
+            <p>
+              This is a limit, not a balance. Pay with PayPal when you approve a
+              purchase.
+            </p>
           </div>
+          {researchError && (
+            <Notice kind="error">
+              {researchError}
+              {mode === "brief" && (
+                <button
+                  className="text-link"
+                  onClick={() => setMode("requirements")}
+                >
+                  Choose requirements to continue <ArrowRight size={14} />
+                </button>
+              )}
+            </Notice>
+          )}
           <button
             className="button button-primary research-submit"
             onClick={run}
             disabled={
               running ||
-              prompt.trim().length < 10 ||
-              !capabilities.ai ||
+              (mode === "brief"
+                ? prompt.trim().length < 10 || !capabilities.ai
+                : !taskRequirementsSchema.safeParse(requirements).success) ||
               !Number.isFinite(Number(budget)) ||
               Number(budget) < 0.5 ||
               Number(budget) > 1000
@@ -187,19 +269,13 @@ export function Workspace() {
             {running ? "Comparing permitted sources…" : "Find sources"}
             <ArrowRight size={16} />
           </button>
-          {!capabilities.ai && (
-            <p className="caption">
-              Research is currently unavailable. You can still{" "}
-              <Link href="/discover">browse and compare sources</Link>.
-            </p>
-          )}
         </section>
         <section className="task-output">
           {!task && !running ? (
             <div className="workspace-welcome">
               <ListFilter size={28} aria-hidden="true" />
               <h2>Your source shortlist</h2>
-              <p>Run a brief to compare matching data and prices.</p>
+              <p>Choose requirements or describe a brief to compare sources.</p>
             </div>
           ) : running ? (
             <div className="planning-state panel">
@@ -225,12 +301,16 @@ export function Workspace() {
               <>
                 <div className="task-budget panel">
                   <div className="task-budget-header">
-                    <h2>Task allowance</h2>
-                    <Badge>AI research</Badge>
+                    <h2>Spending cap</h2>
+                    <Badge>
+                      {task.planner === "gemini"
+                        ? "AI research"
+                        : "Source search"}
+                    </Badge>
                   </div>
                   <div className="budget-figures">
                     <div>
-                      <span>Available</span>
+                      <span>Remaining cap</span>
                       <strong>
                         {money(
                           task.budgetCents -
