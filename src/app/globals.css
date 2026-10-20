@@ -365,6 +365,7 @@ kbd {
   flex-direction: column;
 }
 .topbar {
+  position: relative;
   height: 64px;
   min-height: 64px;
   border-bottom: 1px solid var(--line);
@@ -625,16 +626,6 @@ kbd {
   font-family: var(--font-heading);
   position: relative;
   overflow: hidden;
-}
-.provider-logo > span {
-  position: absolute;
-  width: 13px;
-  height: 13px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  left: 17px;
-  top: 18px;
-  opacity: 0.25;
 }
 .select-offer {
   display: grid;

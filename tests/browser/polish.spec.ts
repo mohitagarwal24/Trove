@@ -61,6 +61,15 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
           ),
       )
       .toBeGreaterThan(0.2);
+    const progressBounds = await page.locator(".scroll-progress").boundingBox();
+    const headerBounds = await page.locator(".topbar").boundingBox();
+    expect(progressBounds).not.toBeNull();
+    expect(headerBounds).not.toBeNull();
+    // Scrolling must never paint the progress line over catalogue content.
+    expect(progressBounds!.y).toBeCloseTo(
+      headerBounds!.y + headerBounds!.height - 2,
+      0,
+    );
     const count = await page.evaluate(
       () =>
         (window as typeof window & { inventoryAnimations: number })

@@ -410,7 +410,6 @@ export function OfferCard({
         <div className="provider">
           <span className={`provider-logo provider-${offer.seller.color}`}>
             {offer.seller.initials}
-            <span />
           </span>
           <span>{offer.seller.name}</span>
         </div>
