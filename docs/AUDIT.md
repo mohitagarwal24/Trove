@@ -4,6 +4,8 @@ User screenshots exposed two defects missed by the earlier checks: an empty deco
 
 Production build/types and both normal/reduced-motion scroll checks pass. Extended the existing browser regression to measure progress-line geometry against the header after scrolling. Chrome evidence at 1366px, 1000px and 390px confirms the header owns the line, all six decorative circles are gone, and no horizontal document overflow occurs. No typography, tokens, business behavior or hook exceptions changed.
 
+Fix commit `8bb792c` is live, Render deploy `dep-dbbk5h0473hc73ckr66g`. [Fresh-database CI](https://github.com/mohitagarwal24/Trove/actions/runs/39408147384) passed all 59 backend and 20 browser checks. Hosted desktop/tablet/mobile geometry checks and both hosted normal/reduced-motion regressions pass.
+
 # Shared interface refinement — 20 October 2026
 
 Reviewed forty-one desktop/mobile/short-laptop states across the existing application, then refined shared forms, authentication branding, Account, Connect, source inventory, purchase results and dialogs. Long source values now expand on demand; receipt references remain accessible without dominating the default view. Fixed stale category results, misleading approval progress on stopped purchases, mobile sign-in/drawer handoff and unnecessary checkout chrome for wholly owned data. Source licences, scoped prices, human approval, refund consequences and the actual payment environment remain visible where required.
