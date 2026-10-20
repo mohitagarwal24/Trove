@@ -273,9 +273,11 @@ test("catalogue and account have no serious accessibility violations", async ({
   page,
 }) => {
   await buyer(page);
-  for (const route of ["/", "/account", "/seller", "/connect"]) {
+  for (const route of ["/discover", "/dashboard", "/account", "/seller", "/connect"]) {
     await page.goto(route);
     await expect(page.locator("h1")).toBeVisible();
+    // Measure readable, settled content rather than an intermediate arrival frame.
+    await expect(page.locator(".page-enter").first()).toHaveCSS("opacity", "1");
     const result = await new AxeBuilder({ page }).analyze();
     expect(
       result.violations

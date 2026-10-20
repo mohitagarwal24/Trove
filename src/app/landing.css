@@ -642,6 +642,7 @@
   margin: 19px 0 10px;
 }
 .dashboard-empty p {
+  color: #626c82;
   font-size: 12px;
   line-height: 1.8;
   margin: 0 0 18px;
