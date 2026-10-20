@@ -9,7 +9,7 @@ for (const width of [1366, 390]) {
   }) => {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 768 });
     const code = await verificationDelivery(page);
-    await page.goto("/");
+    await page.goto("/discover");
     await page.locator(".select-offer").first().click();
     await page.getByRole("button", { name: "Compare & review" }).click();
     await page

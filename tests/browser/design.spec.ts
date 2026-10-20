@@ -5,7 +5,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
     page,
   }) => {
     await page.emulateMedia({ reducedMotion });
-    await page.goto("/");
+    await page.goto("/discover");
     await expect(page.locator(".offer-card")).toHaveCount(6);
     const first = page.locator(".select-offer").first();
     await first.focus();
@@ -42,7 +42,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
 test("desktop sidebar collapses, persists and becomes a full mobile drawer", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/discover");
   await expect(page.locator(".offer-card")).toHaveCount(6);
   const main = page.locator(".main-shell");
   await expect(main).toHaveCSS("margin-left", "232px");
@@ -65,7 +65,7 @@ test("desktop sidebar collapses, persists and becomes a full mobile drawer", asy
   await expect(main).toHaveCSS("margin-left", "0px");
   await page.getByRole("button", { name: "Open navigation" }).click();
   await expect(page.locator(".agent-callout")).toBeVisible();
-  await expect(page.locator(".nav-link").first()).toContainText("Discover");
+  await expect(page.locator(".nav-link").first()).toContainText("Overview");
   await page.keyboard.press("Escape");
   await page.setViewportSize({ width: 1366, height: 768 });
   await expect(main).toHaveCSS("margin-left", "76px");
@@ -82,7 +82,7 @@ test("laptop sidebar keeps the agent panel and account within the viewport", asy
     { width: 1708, height: 960 },
   ]) {
     await page.setViewportSize(viewport);
-    await page.goto("/");
+    await page.goto("/discover");
     await expect(page.locator(".offer-card")).toHaveCount(6);
     for (const selector of [".agent-callout", ".profile"]) {
       const box = await page.locator(selector).boundingBox();
@@ -106,7 +106,7 @@ test("laptop sidebar keeps the agent panel and account within the viewport", asy
 test("search shortcut works without interrupting text entry", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/discover");
   await expect(page.locator(".offer-card")).toHaveCount(6);
   await page.keyboard.press("/");
   const search = page.getByRole("textbox", { name: "Search data offers" });
@@ -128,7 +128,7 @@ test("mobile drawer contains keyboard focus and restores it on Escape", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/discover");
   await expect(page.locator(".offer-card")).toHaveCount(6);
   const trigger = page.getByRole("button", { name: "Open navigation" });
   await trigger.click();

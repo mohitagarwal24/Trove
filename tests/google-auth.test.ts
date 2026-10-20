@@ -164,6 +164,23 @@ test("Google return paths cannot redirect outside Trove", () => {
     "/api/auth/google",
     "/%2f%2fevil.example",
   ])
-    assert.equal(safeReturnTo(path), "/");
+    assert.equal(safeReturnTo(path), "/dashboard");
   assert.equal(safeReturnTo("/account?close=1"), "/account?close=1");
+});
+
+test("landing destinations use the same safe browser and OAuth return paths", () => {
+  for (const path of [
+    "/dashboard",
+    "/discover",
+    "/workspace?task=owned-task",
+    "/purchases/receipt-id",
+  ])
+    assert.equal(safeReturnTo(path), path);
+  for (const path of [
+    "/",
+    "/sign-in",
+    "//outside.example",
+    "/\\outside.example",
+  ])
+    assert.equal(safeReturnTo(path), "/dashboard");
 });

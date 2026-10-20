@@ -20,7 +20,7 @@ import {
 import type { PurchaseView } from "@/lib/types";
 import { money } from "@/lib/types";
 import { api, post } from "@/lib/client";
-import { useTrove } from "./trove-app";
+import { useTrove } from "./trove-context";
 import {
   Badge,
   DataTable,
@@ -59,7 +59,7 @@ export function Purchases() {
           <h1>Purchases</h1>
           <p>Your data, downloads and receipts.</p>
         </div>
-        <Link href="/" className="button button-secondary">
+        <Link href="/discover" className="button button-secondary">
           Explore data
           <ArrowRight size={16} />
         </Link>
@@ -138,7 +138,7 @@ export function Purchases() {
                   Show all purchases
                 </button>
               ) : (
-                <Link href="/" className="button button-secondary">
+                <Link href="/discover" className="button button-secondary">
                   Discover data
                   <ArrowRight size={15} />
                 </Link>

@@ -1,3 +1,11 @@
+# Landing, sign-in and dashboard
+
+1. Open `/` at desktop, tablet, phone and a 1366×610 laptop size. The headline and Get started should be usable before the scene loads. Scroll through all four chapters, reverse direction, and confirm the scene stops before the light closing section. How it connects jumps to the question chapter; Skip the story reaches the closing action.
+2. Hover the medical fragment for attribution and open its disclosure with mouse or keyboard for actual catalogue metadata and original source. Legal and financial fragments must say Future domains, with no purchase action. The catalogue link opens `/discover`.
+3. Enable reduced motion or disable WebGL. Every chapter remains readable in normal flow; sources and sign-in remain reachable. Changing the preference while open cancels the active scene. Check for horizontal document overflow and keyboard focus visibility.
+4. Open `/dashboard` signed out: expect `/sign-in?returnTo=%2Fdashboard`. Test Google consent separately, or sign in with a verified password account. Registration must require the real email code before dashboard access. Reloading a pending signup resumes verification. A valid existing session skips sign-in; an external return destination falls back to `/dashboard`.
+5. On the dashboard, follow Start research, Browse sources and Connect your agent. New accounts have honest empty states. Existing research opens the original prompt and shortlist through `/workspace?task=<id>`. Another workspace’s task must remain unavailable. Purchases keep their actual payment/delivery states; no dashboard link itself approves a payment.
+
 # Manual acceptance
 
 App: https://trove-mohit24.onrender.com. Use a new private Trove account and fictitious PayPal Sandbox funds. No shared passwords or simulation mode exist.

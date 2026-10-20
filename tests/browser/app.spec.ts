@@ -9,7 +9,7 @@ test("catalogue filtering, public preview and authenticated purchase review", as
   page,
 }) => {
   const email = await verifiedAccount();
-  await page.goto("/");
+  await page.goto("/discover");
   await expect(page.locator(".offer-card")).toHaveCount(6);
   await page.getByRole("tab", { name: /Drug recalls/ }).click();
   await expect(page.locator(".offer-card")).toHaveCount(2);
@@ -249,7 +249,7 @@ test("research availability follows real configuration", async ({ page }) => {
 });
 test("mobile navigation stays within the viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/discover");
   await expect(page.locator(".offer-card")).toHaveCount(6);
   expect(
     await page.evaluate(

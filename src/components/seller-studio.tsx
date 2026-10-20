@@ -14,7 +14,7 @@ import { api, post } from "@/lib/client";
 import { categories, type DataRow } from "@/lib/catalogue";
 import type { Offer } from "@/lib/types";
 import { money } from "@/lib/types";
-import { useTrove } from "./trove-app";
+import { useTrove } from "./trove-context";
 import {
   Badge,
   EmptyState,

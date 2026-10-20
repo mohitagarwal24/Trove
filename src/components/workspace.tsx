@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   Check,
@@ -14,10 +15,13 @@ import { api, post } from "@/lib/client";
 import { examplePrompts } from "@/lib/examples";
 import type { QuoteView, Task, PurchaseView } from "@/lib/types";
 import { money } from "@/lib/types";
-import { useTrove } from "./trove-app";
+import { useTrove } from "./trove-context";
 import { Badge, Notice, Status } from "./ui";
 import { QuoteReview } from "./quote-review";
 export function Workspace() {
+  const params = useSearchParams();
+  const requestedTask = params.get("task");
+  const [resumeError, setResumeError] = useState("");
   const { user, capabilities, ensureAuth, notify, offers } = useTrove();
   const [prompt, setPrompt] = useState(examplePrompts[0]);
   const [budget, setBudget] = useState("10.00");
@@ -46,17 +50,27 @@ export function Workspace() {
         if (active) setPurchases(items);
       })
       .catch(() => {});
-    const id = sessionStorage.getItem(key);
+    const id = requestedTask || sessionStorage.getItem(key);
+    setResumeError("");
     if (id)
       api<Task>(`/tasks/${id}`)
         .then((item) => {
-          if (active) setTask(item);
+          if (active) {
+            setTask(item);
+            setPrompt(item.prompt);
+            if (requestedTask) sessionStorage.setItem(key, item.id);
+          }
         })
-        .catch(() => sessionStorage.removeItem(key));
+        .catch(() => {
+          sessionStorage.removeItem(key);
+          setResumeError(
+            "This research is unavailable or belongs to another workspace.",
+          );
+        });
     return () => {
       active = false;
     };
-  }, [user?.workspaceId]);
+  }, [user?.workspaceId, requestedTask]);
   async function run() {
     try {
       if (!(await ensureAuth())) return;
@@ -107,6 +121,7 @@ export function Workspace() {
           <p>Describe your research. Set a budget. Review the sources.</p>
         </div>
       </section>
+      {resumeError && <Notice kind="error">{resumeError}</Notice>}
       <div className="workspace-layout">
         <section className="task-composer panel">
           <div className="panel-title">
@@ -175,7 +190,7 @@ export function Workspace() {
           {!capabilities.ai && (
             <p className="caption">
               Research is currently unavailable. You can still{" "}
-              <Link href="/">browse and compare sources</Link>.
+              <Link href="/discover">browse and compare sources</Link>.
             </p>
           )}
         </section>

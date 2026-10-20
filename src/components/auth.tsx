@@ -4,17 +4,30 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api, post } from "@/lib/client";
 import { GoogleLink, Modal, Notice, PasswordField } from "./ui";
-import { useTrove } from "./trove-app";
-export function AuthDialog({
-  open,
-  onOpenChange,
-  onAuthenticated,
-}: {
+import { useTrove } from "./trove-context";
+export function AuthDialog(props: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAuthenticated: () => Promise<void>;
 }) {
   const { capabilities } = useTrove();
+  return <Authentication {...props} googleAuth={capabilities.googleAuth} />;
+}
+export function Authentication({
+  open = true,
+  onOpenChange = () => {},
+  onAuthenticated,
+  googleAuth,
+  returnTo,
+  inline = false,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onAuthenticated: () => Promise<void>;
+  googleAuth: boolean;
+  returnTo?: string;
+  inline?: boolean;
+}) {
   const [mode, setMode] = useState<"login" | "register">("login"),
     [name, setName] = useState(""),
     [email, setEmail] = useState(""),
@@ -103,23 +116,16 @@ export function AuthDialog({
     setCode("");
     codeRef.current?.focus();
   }
-  return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={
-        verificationEmail
-          ? "Verify your email"
-          : mode === "register"
-            ? "Create your account"
-            : "Welcome back"
-      }
-      description={
-        verificationEmail
-          ? `${sent ? "Enter the code sent to" : "Confirm your address:"} ${verificationEmail}${sent ? ". It expires in 10 minutes." : "."}`
-          : undefined
-      }
-    >
+  const title = verificationEmail
+    ? "Verify your email"
+    : mode === "register"
+      ? "Create your account"
+      : "Welcome back";
+  const description = verificationEmail
+    ? `${sent ? "Enter the code sent to" : "Confirm your address:"} ${verificationEmail}${sent ? ". It expires in 10 minutes." : "."}`
+    : undefined;
+  const content = (
+    <>
       {verificationEmail ? (
         <form
           className="form-stack"
@@ -219,10 +225,10 @@ export function AuthDialog({
         </form>
       ) : (
         <>
-          {capabilities.googleAuth && (
+          {googleAuth && (
             <div className="google-sign-in">
               <GoogleLink
-                href={`/api/auth/google?returnTo=${encodeURIComponent(typeof window === "undefined" ? "/" : location.pathname + location.search)}`}
+                href={`/api/auth/google?returnTo=${encodeURIComponent(returnTo || (typeof window === "undefined" ? "/dashboard" : location.pathname + location.search))}`}
               >
                 Continue with Google
               </GoogleLink>
@@ -329,6 +335,24 @@ export function AuthDialog({
           </form>
         </>
       )}
+    </>
+  );
+  return inline ? (
+    <section className="sign-in-form" aria-labelledby="sign-in-title">
+      <header>
+        <h1 id="sign-in-title">{title}</h1>
+        <p>{description || "A clearer place to begin your research."}</p>
+      </header>
+      {content}
+    </section>
+  ) : (
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={description}
+    >
+      {content}
     </Modal>
   );
 }
@@ -415,7 +439,7 @@ export function PasswordRecovery() {
           </button>
         </form>
       )}
-      <Link className="text-link" href="/">
+      <Link className="text-link" href="/discover">
         Back to catalogue
       </Link>
     </section>

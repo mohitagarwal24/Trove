@@ -1,6 +1,6 @@
 ---
 name: Trove
-description: A technical atlas for discovering research sources and approving exact-price access.
+description: A technical atlas with a cinematic public introduction and a precise research workspace.
 colors:
   canvas: "#f5f6f9"
   surface: "#fff"
@@ -18,7 +18,24 @@ colors:
   success: "#23694d"
   success-surface: "#eaf5ee"
   error: "#9c4539"
+  night: "#101626"
+  porcelain: "#f3f4f8"
+  landing-muted: "#aeb9d0"
 typography:
+  landing-display:
+    fontFamily: "Manrope, Inter, Arial, sans-serif"
+    fontSize: "clamp(48px, 5.7vw, 84px)"
+    fontWeight: 550
+    lineHeight: 1.1
+    letterSpacing: "-0.04em"
+  landing-body:
+    fontFamily: "Inter, Arial, sans-serif"
+    fontSize: "16px"
+    lineHeight: 1.8
+  landing-action:
+    fontFamily: "Inter, Arial, sans-serif"
+    fontSize: "13px"
+    fontWeight: 650
   display:
     fontFamily: "Manrope, Inter, Arial, sans-serif"
     fontSize: "44px"
@@ -75,6 +92,21 @@ spacing:
   page-top: "32px"
   desktop-gutter: "38px"
 components:
+  landing-action:
+    backgroundColor: "{colors.highlight}"
+    textColor: "{colors.night}"
+    typography: "{typography.landing-action}"
+    rounded: "{rounded.control}"
+    padding: "13px 20px"
+    height: "48px"
+  landing-action-hover:
+    backgroundColor: "#ffe5a7"
+  source-fragment:
+    backgroundColor: "#182239"
+    textColor: "#e4eafb"
+    rounded: "{rounded.dock}"
+    padding: "18px"
+    width: "265px"
   button-primary:
     backgroundColor: "{colors.accent}"
     textColor: "{colors.surface}"
@@ -157,7 +189,9 @@ components:
 
 Trove is a working research marketplace: an ink navigation rail establishes orientation, chalk surfaces hold the source inventory, cobalt marks selection and action, and amber gives the research question its own place. The result is compact, orderly, and specific to a tool for investigating data.
 
-The approved replacement of the former green identity retains the application and local fonts. Prepared regulatory datasets appear as ordinary paid products; source scope, original attribution, upstream reuse rights, exact USD prices, and human approval remain legible. The system uses functional line icons and CSS geometry, with concise copy and progressive disclosure for detailed terms. Supply assumptions belong in the hackathon pitch, while the interface identifies the actual PayPal payment environment.
+The approved replacement of the former green identity retains the application and local fonts. Prepared regulatory datasets appear as ordinary paid products; source scope, original attribution, upstream reuse rights, exact USD prices, and human approval remain legible. The system uses functional line icons and geometry, with concise copy and progressive disclosure for detailed terms. Supply assumptions belong in the hackathon pitch, while the interface identifies the actual PayPal payment environment.
+
+The approved Data Convergence public introduction expands this world into deep ink, porcelain, and amber, with larger, lighter Manrope type and real Three.js particle geometry. Its spacious Persuade mode leads into the established Operate mode for authentication and research. This is an extension of the Technical Atlas: the working application retains its navigation, compact density, and exact-price controls. The scene adds no raster asset or invented partner identity.
 
 **Key Characteristics:**
 
@@ -166,12 +200,13 @@ The approved replacement of the former green identity retains the application an
 - An amber question composer separated from source browsing.
 - Manrope headings, Inter controls, and tabular financial values.
 - Flat information surfaces with depth reserved for controls and overlays.
+- A spacious deep-ink introduction with amber entry actions and source fragments that gather into context.
 
-The normative values above describe the current cascade in `src/app/globals.css`. This document is the system record; the surface brief in `.impeccable/surfaces/src-components-discover-tsx.md` owns the Discover composition.
+The normative values above describe the current cascades in `src/app/globals.css` and `src/app/landing.css`. This document is the system record; the surface briefs in `.impeccable/surfaces/src-components-discover-tsx.md` and `.impeccable/surfaces/src-components-landing-tsx.md` own their respective compositions. Page-specific story order and routes remain surface and product decisions.
 
 ## Colors
 
-Cool ink and cobalt organize the interface; amber identifies the research surface and sandbox context.
+Cool ink and cobalt organize the working interface; amber identifies research, sandbox context, and entry actions on the deep-ink public introduction.
 
 ### Primary
 
@@ -180,6 +215,7 @@ Cool ink and cobalt organize the interface; amber identifies the research surfac
 ### Secondary
 
 - **Amber Marker** (`highlight`): the brand period on the ink rail, agent connection link, and primary action inside the dark comparison dock.
+- On deep-ink public surfaces, **Amber Marker** also carries headline emphasis, entry actions, and the connected-context bundle. The pale closing section returns to cobalt actions and emphasis.
 - **Research Paper** (`research-paper`) and **Research Rule** (`research-line`): the question composer and its containing stroke. The textarea uses an even lighter warm inset.
 
 ### Neutral
@@ -188,10 +224,11 @@ Cool ink and cobalt organize the interface; amber identifies the research surfac
 - **Navigation Ink** (`sidebar`): the persistent rail; its inset controls use lighter ink tones and pale text.
 - **Reading Ink** (`ink`): primary content. **Slate Text** (`muted`) and **Secondary Slate** (`faint`) support contextual copy.
 - **Cool Rule** (`line`): panel edges and structural dividers. **Selected Paper** (`selected-surface`) pairs with a cobalt border and inset stroke for selected offers.
+- **Deep Ink** (`night`) and **Porcelain** (`porcelain`): the public introduction and the sign-in story panel. These extend rather than replace the working rail and reading-ink roles. **Story Slate** (`landing-muted`) supports public navigation, skip links, and footer copy.
 
 Success green belongs to confirmed status badges and success notices. Error red belongs to error copy and error states. Neither is a brand accent. Every state also carries text or an icon with an accessible name.
 
-**The Action Cobalt Rule.** Use cobalt to express an action, selection, or the established heading emphasis; preserve amber for its research, navigation-highlight, and sandbox roles.
+**The Action Cobalt Rule.** In the working application, use cobalt to express an action, selection, or the established heading emphasis; preserve amber for its research, navigation-highlight, and sandbox roles. Deep-ink public surfaces use amber entry actions and headline emphasis; pale public surfaces return to cobalt.
 
 ## Typography
 
@@ -200,10 +237,11 @@ Success green belongs to confirmed status badges and success notices. Error red 
 **Identifier Font:** the system monospace stack for hashes, tokens, configuration, and keyboard hints.
 **Google sign-in only:** Google Sans Medium, self-hosted as a 4 KB text subset for the official “Continue with Google” label. The official full-color Google G is sourced unchanged from [Google's branding assets](https://developers.google.com/identity/branding-guidelines). The font's OFL licence is bundled in `public/fonts/GOOGLE-SANS-OFL.txt`. This is a provider-brand treatment, not a replacement for Trove's Manrope/Inter typography.
 
-Manrope adds rounded, confident headings while Inter preserves the dense working rhythm of controls and metadata. Retaining Inter is intentional in this operate-mode implementation.
+Manrope adds rounded, confident headings while Inter preserves the dense working rhythm of controls and metadata. Retaining Inter is intentional in the working application and its public extension; no new font family is introduced by Data Convergence.
 
 ### Hierarchy
 
+- **Public display:** the landing-display role uses a lighter Manrope weight and balanced wrapping. It becomes (57px) up to (1100px), then `clamp(39px, 8.9vw, 58px)` up to (760px). Desktop heights up to (700px) use (64px). Supporting story copy uses the landing-body role, a (370px) maximum width, and becomes (13px) with a (330px) maximum on mobile. The pale closing headline uses `clamp(40px, 4.6vw, 68px)`, then (44px) on mobile. Sign-in uses a (31px) heading, becoming (29px) on mobile.
 - **Display:** the frontmatter role governs the main Discover heading. It becomes (38px) at widths up to (1050px) and (36px) up to (760px). Compact route headings use (36px), then (34px), then (32px) at the same breakpoints.
 - **Headline:** section headings start with the frontmatter role; catalogue and panel titles often use (15px). The amber composer's question uses (27px), weight (650), line height (1.3), and tracking (-0.03em); at widths between (761px) and (1250px), it uses (24px).
 - **Title:** offer titles use the frontmatter role, become (16px) up to (1250px), and (18px) up to (760px).
@@ -214,9 +252,13 @@ Manrope adds rounded, confident headings while Inter preserves the dense working
 
 **The Stable Amount Rule.** Financial values retain tabular numerals and an explicit USD context; changes in value must not shift a comparison column's rhythm.
 
-Inherited compact metadata and uppercase utility labels remain in secondary screens. Their smallest sizes and eyebrow treatment are not canonical primitives for new work.
+Inherited compact metadata and uppercase utility labels remain in secondary screens. Their smallest sizes and eyebrow treatment are not canonical primitives for new work. The landing's compact field preview, including its (8px) mobile override, is a local detail rather than a reusable body or label role.
 
 ## Layout
+
+Public surfaces run outside the application rail. The landing's fixed header is (96px) high with (5.5vw) horizontal gutters; on mobile it becomes (76px) with (22px) gutters. Native scrolling passes four viewport-height chapters alongside a sticky `100svh` scene, with a (600px) desktop minimum and (650px) mobile minimum. The text column occupies (52%) with a (740px) maximum; mobile makes it full width and moves source fragments below the copy. The scene stays inside its story so the pale closing section remains clear. The closing section uses a two-column grid with (112px 7vw) padding; up to (760px), it becomes one column with (70px 25px) padding. Reduced motion and graphics failure put all chapters into normal flow, followed by the source disclosures, while the fixed header and skip links stay reachable.
+
+Dedicated sign-in uses a (44% / 56%) story/form split, with the form centered at a (400px) maximum width. Up to (760px), the story contracts to a brand strip and the form uses (24px) page gutters and a (420px) maximum. The dashboard reuses the working shell and a (1200px) content maximum. Three adjacent action links precede two equal recent-research/data columns with a (30px) gap; both groups stack up to (760px). Its mobile heading and primary action stack, with a (30px) heading. Empty states occupy the same sections as genuine account data.
 
 The fixed rail is (232px) wide, matched by the main shell's left margin. At widths up to (1250px), both become (208px). The rail uses (100dvh): its brand and account footer do not shrink, and the middle region has `min-height: 0` with vertical scrolling. The agent callout lives inside that scrollable region, so “Your agent. Better informed.” stays reachable on shorter laptops. At desktop heights up to (820px), rail padding and gaps compress; up to (700px), the callout icon hides and copy spacing tightens. Account controls remain outside the scroll region.
 
@@ -246,6 +288,8 @@ White panels and offer cards rest on borders and tonal separation. Fine-pointer 
 - **Offer hover:** `0 7px 20px #1c32670a`, for pointers that support hover.
 - **Scrolled utility bar:** `0 5px 18px #1822400a`, without changing bar geometry.
 - **Google sign-in hover:** `0 2px 6px #20212412`, within the provider-brand action.
+- **Public entry hover:** `0 6px 20px #050a1a42`, over deep ink.
+- **Source fragment:** `0 18px 40px #02081830`, separating the interactive document surfaces from the particle field.
 
 **The Flat Inventory Rule.** Keep inventory card geometry fixed on hover; use border, a restrained ambient shadow, and selection treatments to communicate interaction.
 
@@ -253,17 +297,25 @@ Motion uses feedback (140ms), arrival (220ms), and exit (110ms) durations. Arriv
 
 Existing button and offer colors, borders, and shadows retain (180ms) transitions; field and icon-button feedback uses (140ms), and navigation uses (160ms); pressed buttons move down (1px) over the exit duration. Primary-action and offer arrows move (3px) over the feedback duration, while research-suggestion arrows retain (180ms). The mobile drawer opens over the arrival duration and closes over the exit duration. Dialogs enter with opacity and scale (0.985 to 1) over the arrival duration; content exits with opacity and a (4px) downward translation over the exit duration, while the overlay fades in over the feedback duration and out over the exit duration. Account menus settle from (4px) with opacity over (160ms). Route content fades from opacity (0.6) to (1) over (240ms) without translation. Only source inventory and newly returned decision rows unfold on first intersection: opacity (0.86 to 1) and an (8px to 0) bottom clip over (360ms), using arrival easing. Their default render remains visible; focused rows skip the animation. The scroll hook cancels active Web Animations when reduced motion is requested and cleans up observers on route changes. Reduced-motion preferences disable animations, transitions, smooth scrolling, and decorative press/hover transforms; selection marks, state colors, live status, and focus behavior remain available immediately.
 
+The public scene is progressively enhanced: accessible copy appears before Three.js is imported. Native scroll progress drives particles from scattered points toward layered document frames; subtle pointer rotation stays decorative. Render work is throttled by a (32ms) frame interval, with (2200) desktop particles and (700) mobile particles, and device-pixel-ratio caps of (1.5 / 1.25). Offscreen and hidden-document rendering pauses; geometry, materials, observers, and listeners are disposed on cleanup. Reduced motion skips the geometry import, and graphics failure or context loss selects the normal-flow story. Entry arrows move (2px, -2px) over (180ms); the context bundle fades and settles from (14px) over (240ms). None of this motion signals a real purchase or research completion.
+
+**The Readable Story Rule.** Keep every story chapter, source disclosure, entry action, and skip route usable when animated geometry is unavailable or motion is reduced.
+
 ## Shapes
 
 Use softly squared forms with thin rules. Tags have the smallest radius; standard controls, search, offers, panels, the dock, and dialogs use the distinct radius roles in frontmatter. Borders are generally (1px). A selected offer adds an inset (1px) cobalt stroke rather than a hard offset shadow. Provider identities are compact rounded monograms with distinct cobalt, blue, or sand tints. Their shapes identify offers without implying verification or an upstream partnership.
 
 The Connect example brief uses a uniform (1px) border around its light inset. Do not turn it into a decorative thick quote rail. Circles belong to avatars and state dots. The workspace empty state uses a short heading and explanation; example prompts stay with the composer.
 
+Public source fragments and the context bundle reuse the softly squared (12px) form. Fragment rotations and layered line frames belong to the cinematic story; working inventory cards keep their fixed geometry. The existing (8px) control radius also governs public entry links. The landing's geometry is native Three.js points and lines, with CSS guide lines and document surfaces; it does not introduce a raster illustration library.
+
 ## Components
 
 ### Buttons
 
 Clear, compact actions with an (8px) radius and standard minimum height of (44px). Primary buttons use cobalt and white, deepen on hover, and shift down on press. Secondary buttons use white with a pale cool stroke; hover uses a pale cobalt fill and stronger stroke. Small buttons have a (36px) minimum height. Disabled buttons reduce opacity to (0.48) and show a not-allowed cursor. Keyboard focus uses a (2px) outline in `#5378ff`, offset by (4px).
+
+Public entry links use the landing-action role: amber on deep ink, pale amber hover, and an inline northeast arrow. Their (48px) desktop minimum becomes (43px) in mobile story copy and (40px) in the compact mobile header. The pale closing section uses cobalt and white. Public links and native disclosure summaries use an amber (2px) focus outline with a (6px) offset, maintaining contrast on the dark field.
 
 ### Chips
 
@@ -281,6 +333,16 @@ Search is a (46px) white field with an inline search icon and optional keyboard 
 
 The rail uses pale text on ink. Hover lightens the inset; the active route uses cobalt with white text and `aria-current="page"`. The callout uses a lighter ink panel, amber icon/link, and readable supporting text. Profile settings stay pinned at the rail foot; the account menu opens upward and remains available in the icon rail. Preserve the labelled collapse control, accessible icon names, drawer, and height behavior described in Layout.
 
+The public header stays above the story with the Trove home link, a chapter anchor, sign-in/dashboard link, and entry action. The chapter anchor hides on mobile while entry and account navigation remain available. A keyboard skip link precedes the header and a visible skip link appears in the opening chapter. The footer offers privacy, terms, and the catalogue; the application shell retains its existing navigation and adds an Overview destination for the dashboard.
+
+### Source Fragments
+
+Native `details` surfaces let a visitor inspect a domain without depending on the canvas. The medical/regulatory fragment exposes current public offer metadata, a catalogue link, and original attribution when available. A fine-pointer hover or keyboard focus previews its attribution; opening it reveals the complete source explanation. Legal and financial fragments state that they are future domains. A stronger border and raised stacking order keep open disclosures readable. The decorative connected-context bundle is hidden from assistive technology; written chapter copy carries the meaning.
+
+### Dashboard
+
+The compact action strip links to research, browsing, and agent connection. Recent research uses actual task prompts and dates; purchased data lists only captured, available, unrevoked access. Pending payment states appear in a separate attention section. Quiet empty sections offer a next step, errors offer recovery, and the agent callout appears only when no active unexpired token exists. Task and purchase rows preserve the shared line, type, and icon vocabulary without invented activity or metrics.
+
 ### Research Composer
 
 The amber composer is a functional question surface with a large Manrope prompt, warm inset textarea, concise approval reminder, cobalt submit action, and regulatory example prompts. Its heading leads directly without a decorative eyebrow. It opens the research workspace, where a budget and genuine Gemini planning produce a source-selection task and exact-price quote. When AI is unavailable, the workspace disables research and links to browsing and comparison. Suggestions remain controls with a subtle warm hover fill and a short arrow movement.
@@ -297,7 +359,7 @@ Loading, empty search, connection failure, expired quote, unavailable integratio
 
 ### Accounts and Provider Publishing
 
-Private workspaces use a shared sign-in and registration dialog with visible field labels, inline errors, and password guidance only when needed. Email ownership verification stays in that dialog with one labelled six-digit field, a numeric keyboard hint, and one-time-code autofill. Delivery feedback follows the service response; failed verification keeps an inline error and returns focus to the field. Resend shows its cooldown, “Use another account” provides recovery, and pending verification resumes in the same browser session. Successful proof continues the requested action automatically. Profile changes, password changes, account export, and account closure live on Account; destructive closure uses a separate confirmation dialog. Password recovery uses its own focused form and reports real service availability. When Google authentication is configured, the shared dialog offers a secondary “Continue with Google” action above the email form. Account exposes explicit Google linking; accounts without a password use Google identity confirmation for closure. The Google action uses the official full-color G at (20px), unchanged aspect ratio, provider-specific type, a white fill, gray stroke, and quiet hover feedback. Other controls follow the existing button and form vocabulary.
+The dedicated sign-in page and protected-action dialog use the same authentication component, with visible field labels, inline errors, and password guidance only when needed. Email ownership verification stays in that active surface with one labelled six-digit field, a numeric keyboard hint, and one-time-code autofill. Delivery feedback follows the service response; failed verification keeps an inline error and returns focus to the field. Resend shows its cooldown, “Use another account” provides recovery, and pending verification resumes in the same browser session. Successful proof continues the requested action automatically. Profile changes, password changes, account export, and account closure live on Account; destructive closure uses a separate confirmation dialog. Password recovery uses its own focused form and reports real service availability. When Google authentication is configured, both authentication surfaces offer a secondary “Continue with Google” action above the email form. Account exposes explicit Google linking; accounts without a password use Google identity confirmation for closure. The Google action uses the official full-color G at (20px), unchanged aspect ratio, provider-specific type, a white fill, gray stroke, and quiet hover feedback. Other controls follow the existing button and form vocabulary.
 
 Provider onboarding collects profile details and distribution-rights attestation. Pending providers can prepare datasets, with a short review notice explaining why offers are not yet discoverable. Dataset publishing uses the same form vocabulary for a real JSON upload, source and licence links, attribution, declared source date, price, and explicit rights and AI-processing choices. Published offer edits create new versions. Keep review, publishing, earnings, and payout states truthful and specific to their audience.
 
@@ -314,6 +376,8 @@ Connect presents a compact token-management row above the client-configuration a
 - **Do** use local Manrope headings, Inter body copy, and tabular financial values.
 - **Do** pair state color with text, preserve visible keyboard focus, and honor reduced motion.
 - **Do** keep exact-price approval, the actual payment environment, permissions, and source provenance visible where relevant.
+- **Do** keep the public story readable in normal flow when motion is reduced or graphics are unavailable.
+- **Do** label future domains explicitly and keep available-source details tied to actual catalogue metadata.
 
 ### Don't:
 

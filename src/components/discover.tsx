@@ -26,7 +26,7 @@ import type { Offer, QuoteView } from "@/lib/types";
 import { money } from "@/lib/types";
 import { api, post } from "@/lib/client";
 import { examplePrompts } from "@/lib/examples";
-import { useTrove } from "./trove-app";
+import { useTrove } from "./trove-context";
 import { Badge, DataTable, EmptyState, Modal } from "./ui";
 import { QuoteReview } from "./quote-review";
 export function ageLabel(timestamp: string) {

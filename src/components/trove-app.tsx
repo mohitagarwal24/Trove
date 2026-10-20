@@ -1,12 +1,5 @@
 "use client";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useRef,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -39,18 +32,11 @@ import { Account } from "./account";
 import { Legal } from "./legal";
 import { AuthDialog, PasswordRecovery } from "./auth";
 import { Connect } from "./connect";
-type AppState = {
-  offers: Offer[];
-  user: UserView | null;
-  capabilities: Capabilities;
-  refresh: () => Promise<void>;
-  notify: (message: string, error?: boolean) => void;
-  ensureAuth: () => Promise<boolean>;
-};
-const AppContext = createContext<AppState | null>(null);
-export const useTrove = () => useContext(AppContext)!;
+import { AppContext, type AppState } from "./trove-context";
+import { Dashboard } from "./dashboard";
 const nav = [
-  { href: "/", label: "Discover", icon: Compass },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/discover", label: "Discover", icon: Compass },
   { href: "/workspace", label: "Research workspace", icon: LayoutDashboard },
   { href: "/purchases", label: "Purchases & receipts", icon: ReceiptText },
 ];
@@ -250,7 +236,8 @@ export function TroveApp() {
     ensureAuth,
   };
   let page: ReactNode = <Discover />;
-  if (pathname === "/workspace") page = <Workspace />;
+  if (pathname === "/dashboard") page = <Dashboard />;
+  else if (pathname === "/workspace") page = <Workspace />;
   else if (pathname === "/purchases") page = <Purchases />;
   else if (pathname.startsWith("/purchases/"))
     page = <PurchaseDetail id={pathname.split("/")[2]} />;

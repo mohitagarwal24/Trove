@@ -133,7 +133,7 @@ async function handler(
         return response;
       } catch {
         return NextResponse.redirect(
-          new URL("/?auth_error=google_start", appUrl()),
+          new URL("/sign-in?auth_error=google_start", appUrl()),
         );
       }
     }
@@ -170,7 +170,7 @@ async function handler(
             : "google_callback";
         response = NextResponse.redirect(
           new URL(
-            "/?auth_error=" + message,
+            "/sign-in?auth_error=" + message,
             process.env.APP_URL || request.url,
           ),
         );

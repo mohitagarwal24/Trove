@@ -1,3 +1,4 @@
+import { safeReturnPath as safeReturnTo } from "@/lib/routes";
 import { randomBytes } from "node:crypto";
 import { OAuth2Client, CodeChallengeMethod } from "google-auth-library";
 import { db } from "@/lib/db";
@@ -32,27 +33,7 @@ export const googleApi = {
     return ticket.getPayload();
   },
 };
-export function safeReturnTo(value: string | null) {
-  if (
-    !value ||
-    !value.startsWith("/") ||
-    value.startsWith("//") ||
-    value.includes("\\")
-  )
-    return "/";
-  const url = new URL(value, appUrl());
-  if (url.origin !== new URL(appUrl()).origin) return "/";
-  return [
-    "/",
-    "/workspace",
-    "/connect",
-    "/account",
-    "/purchases",
-    "/seller",
-  ].includes(url.pathname) || /^\/purchases\/[a-zA-Z0-9_-]+$/.test(url.pathname)
-    ? url.pathname + url.search
-    : "/";
-}
+export { safeReturnPath as safeReturnTo } from "@/lib/routes";
 export async function beginGoogle(
   request: Request,
   returnTo: string | null,

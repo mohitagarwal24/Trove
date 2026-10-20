@@ -12,11 +12,13 @@ Researchers and developers discover and compare scoped data offers, then approve
 
 ## Product Purpose
 
-Make research data discoverable, purchasable with explicit human approval, and traceable to source-linked receipts. The initial vertical is regulatory intelligence, with real public FDA records prepared as paid products.
+Make research data discoverable, purchasable with explicit human approval, and traceable to source-linked receipts, so a user's agent can work from better context. Trove's broader direction spans medical, legal, and financial research. The currently available catalogue is medical/regulatory intelligence, with real public FDA records prepared as paid products; legal and financial research are explicitly future domains.
 
 ## Operating Context
 
-Discover → compare or research brief → immutable quote → human approval → delivery checks → payment capture → purchased results and receipt. Payment, delivery, and settlement have independent states. AI and payments use real integrations; Sandbox is explicitly identified as the payment environment.
+The public `/` route introduces Trove through Data Convergence, a native-scroll story with an immediate sign-in action and a skip route. `/sign-in` provides Google authentication when configured, email sign-in/registration, and ownership verification through the existing shared authentication flow. Safe internal return paths continue the requested action; the default signed-in destination is `/dashboard`. The dashboard is authenticated on the server and shows actual recent tasks, available purchased data, payment attention, and agent connection state. Recent research resumes the owner's task through `/workspace?task=<id>`. `/discover` remains the public catalogue inside the working application shell.
+
+Discover → compare or research brief → immutable quote → human approval → delivery checks → payment capture → purchased results and receipt. Existing workspace, purchase, seller, connection, and account flows remain available. Payment, delivery, and settlement have independent states. AI and payments use real integrations; Sandbox is explicitly identified as the payment environment. The public story illustrates the path from sources to context and never stands in for a completed research task or transaction. Reduced motion and graphics failure preserve every chapter in ordinary document flow.
 
 ## Capabilities and Constraints
 

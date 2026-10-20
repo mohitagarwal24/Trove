@@ -4,7 +4,7 @@ import { buyer } from "./fixtures";
 test("category changes never leave offers from the previous category clickable", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/discover");
   await expect(page.locator(".offer-card")).toHaveCount(6);
   for (const category of ["Drug recalls", "Device recalls", "Drug approvals"]) {
     await page.getByRole("tab", { name: new RegExp(category) }).click();
@@ -43,7 +43,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
         return animate.call(this, keyframes, options);
       };
     });
-    await page.goto("/");
+    await page.goto("/discover");
     await expect(page.locator(".offer-card")).toHaveCount(6);
     await page.locator(".offer-card").last().scrollIntoViewIfNeeded();
     await expect(page.locator(".topbar")).toHaveAttribute(

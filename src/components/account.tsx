@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, post } from "@/lib/client";
-import { useTrove } from "./trove-app";
+import { useTrove } from "./trove-context";
 import {
   EmptyState,
   GoogleLink,

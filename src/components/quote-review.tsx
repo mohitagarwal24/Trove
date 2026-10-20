@@ -6,7 +6,7 @@ import { ArrowRight, Clock3, LockKeyhole, ShieldCheck } from "lucide-react";
 import type { PurchaseView, QuoteView } from "@/lib/types";
 import { money } from "@/lib/types";
 import { post } from "@/lib/client";
-import { useTrove } from "./trove-app";
+import { useTrove } from "./trove-context";
 import { Badge, Modal, Notice } from "./ui";
 export function QuoteReview({
   quote,

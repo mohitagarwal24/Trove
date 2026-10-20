@@ -6,6 +6,10 @@ Trove is a data marketplace for researchers and their agents. Discover sources, 
 
 The initial catalogue contains six prepared regulatory-data products backed by real openFDA records. Payments use genuine PayPal APIs in Sandbox by default; there is no simulated checkout or canned AI response. The browser research composer requires a Gemini Free Tier key; connected agents use their own model and need only a Trove token. Provider identities and hackathon supply assumptions are disclosed in [PITCH.md](docs/PITCH.md). Source provenance and upstream rights remain accurate in every product.
 
+## Website and workspace
+
+The public home page tells Trove’s Data Convergence story. Choose Get started to sign in or create an account, then enter `/dashboard` for recent research, purchased data and agent access. The catalogue is at `/discover`; existing purchase and integration links remain valid. Regulatory products are available today; legal and financial scenes are explicitly future domains. The cinematic scene loads only on the landing page and provides reduced-motion and graphics-failure alternatives.
+
 ## Run locally
 
 Requires Node 22.9+ (24 recommended), npm and Docker.

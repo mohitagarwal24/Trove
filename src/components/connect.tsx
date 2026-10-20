@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Check, Copy, KeyRound, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { api, post } from "@/lib/client";
-import { useTrove } from "./trove-app";
+import { useTrove } from "./trove-context";
 import { Badge, ExternalLink, Modal, Notice } from "./ui";
 type Token = {
   id: string;
