@@ -31,8 +31,13 @@ const request = (token: string) =>
   });
 async function account() {
   const email = `${randomUUID()}-${suffix}@example.com`,
-    token = await register({ name: "Account test", email, password }),
-    actor = await authenticate(request(token));
+    token = await register({ name: "Account test", email, password });
+  // Existing-account fixture; verification itself is exercised separately.
+  await db.user.update({
+    where: { email },
+    data: { emailVerifiedAt: new Date() },
+  });
+  const actor = await authenticate(request(token));
   users.push(actor.id);
   workspaces.push(actor.workspaceId);
   return { email, token, actor };

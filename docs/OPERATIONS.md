@@ -46,15 +46,15 @@ In [Google Cloud Console](https://console.cloud.google.com/auth/clients), config
 - `http://localhost:3000/api/auth/google/callback`
 - `https://trove-mohit24.onrender.com/api/auth/google/callback`
 
-Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` privately on the server. Only OpenID `openid email profile` scopes are requested; no billing or Gmail access is needed for sign-in. Configure audience/test users as required by your Google project, then test both new signup and existing-account linking in Account. The Google option appears only when both credentials exist. Password signup remains available. Login credentials are separate from the sender’s Gmail API credentials below. See [Google OpenID Connect](https://developers.google.com/identity/openid-connect/openid-connect).
+Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` privately on the server. Only OpenID `openid email profile` scopes are requested; no billing or Gmail access is needed for sign-in. Configure audience/test users as required by your Google project, then test both new signup and existing-account linking in Account. The Google option appears only when both credentials exist. Password accounts require email confirmation before workspace access. Login credentials are separate from the sender’s Gmail API credentials below. Follow the complete [Google and Gmail setup guide](GOOGLE_AUTH_SETUP.md).
 
 ## Agent clients
 
 Connect shows configuration for Codex, Claude Code and Claude Desktop. Create a scoped Trove token; no OpenAI/Anthropic key is stored by Trove. Desktop uses `scripts/mcp-bridge.mjs`, which forwards stdio MCP to the authenticated hosted HTTP endpoint and needs only `TROVE_URL` and `TROVE_AGENT_TOKEN`. It does not load `.env` or access the database. Follow the client’s existing account/plan limits; no new paid service is provisioned. Current configuration references: [Codex MCP](https://developers.openai.com/codex/mcp/), [Claude Code MCP](https://code.claude.com/docs/en/mcp).
 
-## Password recovery over free HTTPS email
+## Email verification and recovery over free HTTPS email
 
-Render Free blocks outbound SMTP ports, so recovery uses the [Gmail HTTPS send API](https://developers.google.com/workspace/gmail/api/guides/sending). No email is simulated. Until configured, the recovery endpoint returns an unavailable error and sends nothing.
+Render Free blocks outbound SMTP ports, so verification and recovery use the [Gmail HTTPS send API](https://developers.google.com/workspace/gmail/api/guides/sending). No email is simulated. Until configured, email endpoints return an unavailable error and send nothing. Pending password accounts cannot access private workspaces, purchases or agent tokens. Signups and previously unverified password accounts confirm a browser-bound six-digit code, valid for ten minutes and five attempts. Resends have a 60-second cooldown and five-per-hour limit; guesses have a separate twenty-per-hour limit across replacements. Codes are stored as keyed hashes. Successful verification rotates the session; successful password recovery also proves email ownership and revokes existing sessions/tokens. Expired codes are removed by maintenance.
 
 Use an operator-controlled Gmail account. In a Google Cloud project, enable Gmail API, configure OAuth consent, and create a Web OAuth client. Authorize **that sender account only** with `https://www.googleapis.com/auth/gmail.send`, requesting offline access. Exchange the authorization code for a refresh token using your own OAuth client; [OAuth Playground](https://developers.google.com/oauthplayground/) can do this with “Use your own OAuth credentials” and its redirect URI.
 

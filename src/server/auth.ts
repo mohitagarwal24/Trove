@@ -17,6 +17,7 @@ export type Actor = {
   tokenId?: string;
   hasPassword?: boolean;
   googleConnected?: boolean;
+  emailVerified?: boolean;
   authenticatedAt?: Date;
   authProvider?: string;
 };
@@ -24,6 +25,7 @@ export const sessionCookie = "trove_session";
 export async function authenticate(
   request: Request,
   scope = "read",
+  allowUnverified = false,
 ): Promise<Actor> {
   const authorization = request.headers.get("authorization");
   if (authorization?.startsWith("Bearer ")) {
@@ -55,6 +57,7 @@ export async function authenticate(
       },
     });
     assert(member, "FORBIDDEN", "Workspace access was revoked.", 403);
+    requireVerifiedEmail(profile(token.user));
     return {
       ...profile(token.user),
       workspaceId: token.workspaceId,
@@ -84,6 +87,7 @@ export async function authenticate(
     "Sign in to your Trove workspace.",
     401,
   );
+  if (!allowUnverified) requireVerifiedEmail(profile(session.user));
   return {
     ...profile(session.user),
     authenticatedAt: session.authenticatedAt,
@@ -149,6 +153,7 @@ function profile(user: {
   sellerId: string | null;
   passwordHash: string | null;
   googleSubject: string | null;
+  emailVerifiedAt: Date | null;
 }) {
   return {
     id: user.id,
@@ -158,6 +163,7 @@ function profile(user: {
     sellerId: user.sellerId,
     hasPassword: !!user.passwordHash,
     googleConnected: !!user.googleSubject,
+    emailVerified: !!user.emailVerifiedAt,
   };
 }
 export async function logoutSession(request: Request) {
@@ -179,6 +185,7 @@ export function requireBrowser(actor: Actor) {
 }
 export async function issueToken(actor: Actor, name: string, scopes: string[]) {
   requireBrowser(actor);
+  requireVerifiedEmail(actor);
   assert(
     scopes.length > 0 && scopes.every((s) => ["read", "purchase"].includes(s)),
     "INVALID_SCOPES",
@@ -204,6 +211,14 @@ export async function issueToken(actor: Actor, name: string, scopes: string[]) {
     expiresAt: token.expiresAt,
     value,
   };
+}
+export function requireVerifiedEmail(actor: { emailVerified?: boolean }) {
+  assert(
+    actor.emailVerified,
+    "EMAIL_NOT_VERIFIED",
+    "Verify your email before using your workspace.",
+    403,
+  );
 }
 
 export async function register(input: {
@@ -295,7 +310,7 @@ export async function resetPassword(token: string, password: string) {
     );
     await tx.user.update({
       where: { id: rows[0].userId },
-      data: { passwordHash: digest },
+      data: { passwordHash: digest, emailVerifiedAt: new Date() },
     });
     await tx.session.deleteMany({ where: { userId: rows[0].userId } });
     await tx.agentToken.updateMany({
@@ -305,6 +320,9 @@ export async function resetPassword(token: string, password: string) {
     await tx.passwordReset.updateMany({
       where: { userId: rows[0].userId, usedAt: null },
       data: { usedAt: new Date() },
+    });
+    await tx.emailVerification.deleteMany({
+      where: { userId: rows[0].userId },
     });
   });
 }
@@ -338,6 +356,7 @@ export async function changePassword(
       data: { revokedAt: new Date() },
     });
     await tx.passwordReset.deleteMany({ where: { userId: actor.id } });
+    await tx.emailVerification.deleteMany({ where: { userId: actor.id } });
   });
 }
 export async function closeAccount(actor: Actor, password?: string) {
@@ -374,6 +393,7 @@ export async function closeAccount(actor: Actor, password?: string) {
       data: { revokedAt: new Date() },
     });
     await tx.passwordReset.deleteMany({ where: { userId: actor.id } });
+    await tx.emailVerification.deleteMany({ where: { userId: actor.id } });
     await tx.workspace.update({
       where: { id: actor.workspaceId },
       data: { name: "Closed workspace" },

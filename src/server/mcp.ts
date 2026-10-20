@@ -28,7 +28,7 @@ export function createMcpServer(actor: Actor) {
                 userId: actor.id,
                 revokedAt: null,
                 expiresAt: { gt: new Date() },
-                user: { disabledAt: null },
+                user: { disabledAt: null, emailVerifiedAt: { not: null } },
               },
             })
           : null;

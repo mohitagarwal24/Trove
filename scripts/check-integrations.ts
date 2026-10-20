@@ -10,7 +10,9 @@ async function main() {
     JSON.stringify(
       {
         database: "connected",
-        googleSignIn: caps.googleAuth ? "configured_requires_consent_test" : "not_configured",
+        googleSignIn: caps.googleAuth
+          ? "configured_requires_consent_test"
+          : "not_configured",
         offers: await db.offerVersion.count({
           where: {
             current: true,
@@ -21,6 +23,9 @@ async function main() {
         passwordRecovery: emailConfigured()
           ? "configured_requires_delivery_test"
           : "not_configured",
+        emailVerification: emailConfigured()
+          ? "configured_requires_delivery_test"
+          : "not_configured_password_accounts_cannot_verify",
         searchEngine: search.engine,
         paymentEnvironment: paymentEnvironment(),
         paypal: caps.paypal

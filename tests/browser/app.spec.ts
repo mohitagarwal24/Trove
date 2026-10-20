@@ -1,21 +1,14 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { resolve } from "node:path";
-const password = "Browser acceptance password 42";
-async function buyer(page: Page) {
-  const email = `browser-${randomUUID()}@example.com`;
-  const response = await page.request.post("/api/auth/register", {
-    data: { name: "Acceptance Buyer", email, password },
-  });
-  expect(response.ok()).toBeTruthy();
-  return email;
-}
+import { buyer, verifiedAccount, password } from "./fixtures";
 test("catalogue filtering, public preview and authenticated purchase review", async ({
   page,
 }) => {
+  const email = await verifiedAccount();
   await page.goto("/");
   await expect(page.locator(".offer-card")).toHaveCount(6);
   await page.getByRole("tab", { name: /Drug recalls/ }).click();
@@ -35,16 +28,11 @@ test("catalogue filtering, public preview and authenticated purchase review", as
   await page.getByRole("button", { name: "Back to catalogue" }).click();
   await page.getByRole("button", { name: "Compare & review" }).click();
   await expect(page.getByRole("dialog")).toContainText("Welcome back");
-  await page
-    .getByRole("button", { name: "Create an account", exact: true })
-    .click();
-  await page.getByLabel("Name", { exact: true }).fill("Acceptance Buyer");
-  await page
-    .getByLabel("Email", { exact: true })
-    .fill(`browser-${randomUUID()}@example.com`);
+  await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page
-    .getByRole("button", { name: "Create account", exact: true })
+    .getByRole("button", { name: "Sign in", exact: true })
+    .last()
     .click();
   await expect(page.getByRole("dialog")).toContainText(
     "Review your purchase plan",

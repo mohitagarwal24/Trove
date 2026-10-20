@@ -48,6 +48,12 @@ import { drainJobs, wakeEmbeddedJobs } from "@/server/embedded-jobs";
 import { rateLimit } from "@/server/rate-limit";
 import { categories } from "@/lib/catalogue";
 import { requireCron } from "@/server/cron-auth";
+import { hash } from "@/lib/crypto";
+import {
+  verificationStatus,
+  requestEmailVerification,
+  verifyEmail,
+} from "@/server/email-verification";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const json = (value: unknown, status = 200) =>
@@ -55,6 +61,29 @@ const json = (value: unknown, status = 200) =>
     status,
     headers: { "Cache-Control": "no-store" },
   });
+async function authResponse(request: NextRequest, token: string, status = 200) {
+  const session = await db.session.findUniqueOrThrow({
+    where: { id: hash(token) },
+    include: { user: true },
+  });
+  const verified = !!session.user.emailVerifiedAt;
+  const response = json(
+    {
+      signedIn: verified,
+      verificationRequired: !verified,
+      email: session.user.email,
+    },
+    status,
+  );
+  response.cookies.set(sessionCookie, token, {
+    httpOnly: true,
+    secure: new URL(process.env.APP_URL || request.url).protocol === "https:",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 7 * 86400,
+  });
+  return response;
+}
 async function handler(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> },
@@ -158,17 +187,7 @@ async function handler(
         .object({ email: z.email(), password: z.string().min(1).max(200) })
         .parse(await readJson(request));
       const token = await login(input.email, input.password);
-      const response = json({ signedIn: true });
-      response.cookies.set(sessionCookie, token, {
-        httpOnly: true,
-        secure:
-          process.env.NODE_ENV === "production" &&
-          !request.url.startsWith("http://localhost"),
-        sameSite: "lax",
-        path: "/",
-        maxAge: 7 * 86400,
-      });
-      return response;
+      return authResponse(request, token);
     }
     if (route === "auth/register" && method === "POST") {
       const input = z
@@ -185,16 +204,7 @@ async function handler(
         20,
         3600000,
       );
-      const token = await register(input),
-        response = json({ signedIn: true }, 201);
-      response.cookies.set(sessionCookie, token, {
-        httpOnly: true,
-        secure: new URL(request.url).protocol === "https:",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 7 * 86400,
-      });
-      return response;
+      return authResponse(request, await register(input), 201);
     }
     if (route === "auth/forgot-password" && method === "POST") {
       const input = z
@@ -252,6 +262,30 @@ async function handler(
       );
     if (path[0] === "offers" && path[1] && method === "GET")
       return json(await getOffer(path[1]));
+    if (route.startsWith("auth/verification") || route === "auth/logout") {
+      const actor = await authenticate(request, "read", true);
+      requireBrowser(actor);
+      if (route === "auth/verification" && method === "GET")
+        return json(await verificationStatus(actor, request));
+      if (route === "auth/verification/send" && method === "POST")
+        return json(await requestEmailVerification(actor, request));
+      if (route === "auth/verification/confirm" && method === "POST") {
+        const { code } = z
+          .object({
+            code: z
+              .string()
+              .regex(/^\d{6}$/, "Enter the six-digit code from your email."),
+          })
+          .parse(await readJson(request));
+        return authResponse(request, await verifyEmail(actor, request, code));
+      }
+      if (route === "auth/logout" && method === "POST") {
+        await logoutSession(request);
+        const response = json({ signedIn: false });
+        response.cookies.delete(sessionCookie);
+        return response;
+      }
+    }
     const purchaseScope =
       method === "POST" && ["tasks", "quotes", "purchases"].includes(path[0]);
     const actor = await authenticate(
@@ -301,13 +335,6 @@ async function handler(
         tasks,
         purchases,
       });
-    }
-    if (route === "auth/logout" && method === "POST") {
-      requireBrowser(actor);
-      await logoutSession(request);
-      const response = json({ signedIn: false });
-      response.cookies.delete(sessionCookie);
-      return response;
     }
     if (route === "discovery" && method === "POST") {
       await rateLimit(actor.id, "discovery", 30, 60000);

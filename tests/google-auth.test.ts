@@ -132,6 +132,10 @@ test("an existing email never silently links Google; an authenticated account ca
       email,
       password: "existing-account-password-2026",
     });
+  await db.user.update({
+    where: { email },
+    data: { emailVerifiedAt: new Date() },
+  });
   const actor = await track(session);
   const collision = await attempt();
   collision.payload.email = email;

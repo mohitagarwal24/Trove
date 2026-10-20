@@ -20,6 +20,7 @@ model User {
   sessions     Session[]
   memberships  Membership[]
   tokens       AgentToken[]
+  emailVerification EmailVerification?
 }
 model Session {
   authProvider String @default("password")
@@ -341,4 +342,16 @@ model OAuthAttempt {
   expiresAt DateTime
   returnTo String
   linkUserId String?
+}
+
+model EmailVerification {
+  userId String @id
+  sessionId String
+  nonce String
+  digest String
+  expiresAt DateTime
+  sentAt DateTime @default(now())
+  attempts Int @default(0)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([expiresAt])
 }

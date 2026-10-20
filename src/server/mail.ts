@@ -7,11 +7,25 @@ export const emailConfigured = () =>
     process.env.MAIL_FROM
   );
 export async function sendResetEmail(to: string, url: string) {
+  await sendEmail(
+    to,
+    "Reset your Trove password",
+    `Reset your password:\n\n${url}\n\nThis link expires in 30 minutes and can be used once. If you didn't request it, ignore this email.`,
+  );
+}
+export async function sendVerificationEmail(to: string, code: string) {
+  await sendEmail(
+    to,
+    "Verify your Trove email",
+    `Your Trove verification code is:\n\n${code}\n\nIt expires in 10 minutes and can be used once. Enter it in the browser where you requested it. If you didn't request it, ignore this email.`,
+  );
+}
+async function sendEmail(to: string, subject: string, body: string) {
   // HTTPS works on free hosting, where outbound SMTP ports are blocked.
   assert(
     emailConfigured(),
     "EMAIL_UNAVAILABLE",
-    "Password recovery is temporarily unavailable.",
+    "Email delivery is temporarily unavailable. Please try again later.",
     503,
   );
   const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
@@ -29,7 +43,7 @@ export async function sendResetEmail(to: string, url: string) {
   assert(
     tokenResponse.ok && token.access_token,
     "EMAIL_UNAVAILABLE",
-    "Password recovery is temporarily unavailable.",
+    "Email delivery is temporarily unavailable. Please try again later.",
     503,
   );
   const from = process.env.MAIL_FROM!;
@@ -41,11 +55,11 @@ export async function sendResetEmail(to: string, url: string) {
   const mime = [
     `From: ${from}`,
     `To: ${to}`,
-    "Subject: Reset your Trove password",
+    `Subject: ${subject}`,
     "MIME-Version: 1.0",
     "Content-Type: text/plain; charset=utf-8",
     "",
-    `Reset your password:\n\n${url}\n\nThis link expires in 30 minutes and can be used once. If you didn't request it, ignore this email.`,
+    body,
   ].join("\r\n");
   const response = await fetch(
     "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
@@ -62,7 +76,7 @@ export async function sendResetEmail(to: string, url: string) {
   assert(
     response.ok,
     "EMAIL_UNAVAILABLE",
-    "Password recovery is temporarily unavailable.",
+    "Email delivery is temporarily unavailable. Please try again later.",
     503,
   );
 }

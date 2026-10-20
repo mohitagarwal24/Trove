@@ -22,9 +22,9 @@ npm run db:seed
 npm run dev
 ```
 
-Run `npm run worker` in another terminal, or choose `TROVE_JOB_MODE=embedded` before starting the app. Open http://localhost:3000 and create your own account. Seeding imports actual FDA data and creates no shared users. Internet access is required for the first source import. Later upstream failures preserve existing snapshots.
+Run `npm run worker` in another terminal, or choose `TROVE_JOB_MODE=embedded` before starting the app. Configure Google sign-in or the Gmail sender using [Google and Gmail setup](docs/GOOGLE_AUTH_SETUP.md), then open http://localhost:3000 and create your own account. Seeding imports actual FDA data and creates no shared users. Internet access is required for the first source import. Later upstream failures preserve existing snapshots.
 
-Without external credentials, registration, discovery, comparisons, provider publishing, account management and agent tokens work. AI research and checkout fail closed when unconfigured. Password recovery requires the email credentials in the operations guide.
+Without external credentials, public discovery, previews and comparison selection work. Password registration creates a restricted account until its email is confirmed through the configured Gmail sender. Verified accounts can manage their workspace, publish providers and create agent tokens; Google-verified accounts need no extra email code. AI research and checkout fail closed when unconfigured. Password recovery uses the same email sender.
 
 ## Implementation
 
@@ -35,6 +35,8 @@ Quotes bind an immutable source version, record indexes, fields, provenance, lic
 Optional Elasticsearch indexes public metadata only; PostgreSQL remains authoritative and provides search without it. Start local search with `docker compose --profile search up -d elasticsearch`, set `ELASTICSEARCH_URL=http://localhost:9201`, then run `npm run search:index`.
 
 ## Checks and operations
+
+For Google sign-in credentials and free email verification/recovery, follow [Google and Gmail setup](docs/GOOGLE_AUTH_SETUP.md).
 
 ```bash
 npm run typecheck

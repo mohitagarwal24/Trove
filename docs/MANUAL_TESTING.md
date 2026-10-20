@@ -6,7 +6,7 @@ App: https://trove-mohit24.onrender.com. Use a new private Trove account and fic
 
 1. Open Discover. Expect six regulatory-data offers across drug approvals, drug recalls and device recalls. Search and category filters should work on desktop and mobile.
 2. Open a product. Check fields, actual source update/retrieval dates, source attribution/licence and the two-row public preview. Prices cover preparation/delivery; raw source rights remain unchanged.
-3. Add one or two products to comparison. Choose Compare & review. If signed out, create your own account; the interrupted action should continue into the exact-price quote.
+3. Add one or two products to comparison. Choose Compare & review. If signed out, create your own account and confirm its email with the six-digit code, or use Google sign-in when configured. Email confirmation should resume the interrupted action into the exact-price quote.
 4. Check price, quantity, fields, purpose and five-minute expiry. Canceling the review creates no payment. Expired quotes must be replaced.
 
 ## Research and genuine checkout
@@ -30,6 +30,8 @@ App: https://trove-mohit24.onrender.com. Use a new private Trove account and fic
 7. Close a disposable account. Further login, sessions and tokens should fail; accounting records remain and profile details are redacted.
 
 ## Navigation and Google sign-in
+
+Configure credentials with [Google and Gmail setup](GOOGLE_AUTH_SETUP.md). Password signup and previously unverified password accounts require email confirmation before private workspace access. Check code delivery to a mailbox you control, wrong/expired codes, one-minute resend cooldown, replacement-code invalidation, browser binding, pending-step resume after reload and switching accounts. Successful verification works once and rotates the session. Until delivery is configured, the app must report an error and keep the account restricted. Google-verified addresses do not need an extra email code.
 
 Collapse the desktop sidebar using the button beside the breadcrumb. Reload and navigate: the icon rail should persist, with labelled navigation and a usable account menu. Resize to mobile: open the full drawer, close with Escape, then return to desktop and expand. At 100% laptop zoom, the expanded agent callout and account should fit.
 

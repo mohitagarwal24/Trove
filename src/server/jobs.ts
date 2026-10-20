@@ -110,6 +110,9 @@ export async function maintenance() {
   await db.passwordReset.deleteMany({
     where: { expiresAt: { lt: new Date() } },
   });
+  await db.emailVerification.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
+  });
   await db.rateLimit.deleteMany({
     where: { resetAt: { lt: new Date(Date.now() - 86400000) } },
   });
