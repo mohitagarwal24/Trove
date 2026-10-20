@@ -39,16 +39,27 @@ typography:
   body:
     fontFamily: "Inter, Arial, sans-serif"
     fontSize: "13px"
+  action:
+    fontFamily: "Inter, Arial, sans-serif"
+    fontSize: "13px"
+    fontWeight: 550
+    lineHeight: 1.35
   label:
     fontFamily: "Inter, Arial, sans-serif"
     fontSize: "12px"
     fontWeight: 550
-    lineHeight: 1.35
+    lineHeight: 1.5
   identifier:
     fontFamily: "ui-monospace, SFMono-Regular, Consolas, monospace"
+  google-sign-in:
+    fontFamily: "Google Sans, Arial, sans-serif"
+    fontSize: "14px"
+    fontWeight: 500
+    lineHeight: 1.35
 rounded:
   tag: "4px"
   control: "8px"
+  field: "7px"
   search: "9px"
   dock: "12px"
   offer: "13px"
@@ -67,17 +78,32 @@ components:
   button-primary:
     backgroundColor: "{colors.accent}"
     textColor: "{colors.surface}"
-    typography: "{typography.label}"
+    typography: "{typography.action}"
     rounded: "{rounded.control}"
     padding: "10px 15px"
+    height: "44px"
   button-primary-hover:
     backgroundColor: "{colors.accent-dark}"
   button-secondary:
     backgroundColor: "{colors.surface}"
     textColor: "#34415f"
-    typography: "{typography.label}"
+    typography: "{typography.action}"
     rounded: "{rounded.control}"
     padding: "10px 15px"
+    height: "44px"
+  form-field:
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.field}"
+    padding: "11px 12px"
+    height: "44px"
+  google-sign-in:
+    backgroundColor: "{colors.surface}"
+    textColor: "#1f1f1f"
+    typography: "{typography.google-sign-in}"
+    rounded: "{rounded.control}"
+    padding: "11px 12px"
+    height: "44px"
   search:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
@@ -120,7 +146,7 @@ components:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.dialog}"
-    padding: "26px"
+    padding: "0"
 ---
 
 # Design System: Trove
@@ -134,6 +160,7 @@ Trove is a working research marketplace: an ink navigation rail establishes orie
 The approved replacement of the former green identity retains the application and local fonts. Prepared regulatory datasets appear as ordinary paid products; source scope, original attribution, upstream reuse rights, exact USD prices, and human approval remain legible. The system uses functional line icons and CSS geometry, with concise copy and progressive disclosure for detailed terms. Supply assumptions belong in the hackathon pitch, while the interface identifies the actual PayPal payment environment.
 
 **Key Characteristics:**
+
 - Persistent ink navigation with reachable account and agent controls.
 - Cobalt actions and selection against quiet white inventory panels.
 - An amber question composer separated from source browsing.
@@ -171,6 +198,7 @@ Success green belongs to confirmed status badges and success notices. Error red 
 **Display Font:** locally hosted Manrope, falling back to Inter and Arial.
 **Body Font:** locally hosted Inter, falling back to Arial.
 **Identifier Font:** the system monospace stack for hashes, tokens, configuration, and keyboard hints.
+**Google sign-in only:** Google Sans Medium, self-hosted as a 4 KB text subset for the official “Continue with Google” label. The official full-color Google G is sourced unchanged from [Google's branding assets](https://developers.google.com/identity/branding-guidelines). The font's OFL licence is bundled in `public/fonts/GOOGLE-SANS-OFL.txt`. This is a provider-brand treatment, not a replacement for Trove's Manrope/Inter typography.
 
 Manrope adds rounded, confident headings while Inter preserves the dense working rhythm of controls and metadata. Retaining Inter is intentional in this operate-mode implementation.
 
@@ -180,7 +208,8 @@ Manrope adds rounded, confident headings while Inter preserves the dense working
 - **Headline:** section headings start with the frontmatter role; catalogue and panel titles often use (15px). The amber composer's question uses (27px), weight (650), line height (1.3), and tracking (-0.03em); at widths between (761px) and (1250px), it uses (24px).
 - **Title:** offer titles use the frontmatter role, become (16px) up to (1250px), and (18px) up to (760px).
 - **Body:** the application base is the frontmatter body role. Page descriptions use a maximum width of (65ch) and line height (1.8). Offer descriptions use (11px) and line height (1.75), becoming (12px) on mobile.
-- **Label:** the frontmatter label role describes standard buttons; small buttons use (11px). Sidebar links use (12px), increasing to (13px) on mobile.
+- **Action:** the frontmatter action role governs standard buttons; small buttons use (12px).
+- **Label:** the frontmatter label role governs visible form labels. Form values use body size with line height (1.6); helper copy uses (12px) and line height (1.65). Sidebar links use (12px), increasing to (13px) on mobile.
 - **Financial values:** use tabular numerals on offer prices, metrics, budgets, quote totals, summary totals, and amount columns. Offer prices use (22px).
 
 **The Stable Amount Rule.** Financial values retain tabular numerals and an explicit USD context; changes in value must not shift a comparison column's rhythm.
@@ -193,11 +222,11 @@ The fixed rail is (232px) wide, matched by the main shell's left margin. At widt
 
 Above the mobile breakpoint, a labelled utility-bar toggle switches the expanded rail to a (76px) icon rail and matches the main shell margin to it. The preference is stored in browser storage. The compact rail hides the workspace switch, group labels, callout, and profile text while retaining route icons with accessible names and native titles. Its account avatar still opens the account menu.
 
-The utility bar is (64px) tall. Main content is centered with a maximum width of (1510px), desktop horizontal gutters of (38px), top padding of (32px), and bottom padding of (55px). Up to (1250px), horizontal gutters become (25px) and bottom padding (45px). Up to (760px), gutters become (20px) and the utility bar (61px); up to (460px), gutters become (16px).
+The utility bar is (64px) tall. A (2px) cobalt progress line follows document scrolling; after (12px) of scroll the bar gains a restrained shadow without changing its position or height. Main content is centered with a maximum width of (1510px), desktop horizontal gutters of (38px), top padding of (32px), and bottom padding of (55px). Up to (1250px), horizontal gutters become (25px) and bottom padding (45px). Up to (760px), gutters become (20px) and the utility bar (61px); up to (460px), gutters become (16px).
 
 Discover has a flexible inventory plus a (294px) composer column, separated by (26px). At (1600px) and above, the composer becomes (320px) with a (32px) gap. Up to (1250px), it becomes (260px) with a (20px) gap. Up to (1050px), the composer group moves below the inventory and uses a (1.5fr / 1fr) internal grid; up to (460px), that group becomes one column. Offers use two equal columns and a (16px) gap, collapsing to one column up to (460px). Category tabs scroll horizontally rather than wrap.
 
-Workspace uses a (350px) composer beside flexible output, becoming (300px) up to (1250px) and one column up to (1050px). Connect uses a single stacked column with a maximum width of (1000px); token management, client configuration, and the example task remain in that reading order. Its tool reference is collapsed until requested. Purchase details similarly collapse their summary aside at (1050px). Data tables preserve columns inside horizontally scrollable containers.
+Workspace uses a (350px) composer beside flexible output, becoming (300px) up to (1250px) and one column up to (1050px). Connect has a maximum width of (1160px). A full-width compact token row precedes configuration and example-task columns (1.5fr / 0.9fr, with a 260px minimum on the latter) separated by (22px). These columns stack up to (1050px); token creation stacks below its heading up to (760px). Account uses a maximum width of (1000px), paired profile and Google panels, then full-width security and data panels. Password fields share two equal columns; account grids become one column up to (760px). Connect’s tool reference is collapsed until requested. Purchase details similarly collapse their summary aside at (1050px). Data tables preserve columns inside horizontally scrollable containers.
 
 Up to (760px), the rail becomes a full-content drawer of `min(288px, 86vw)`, regardless of the stored desktop rail preference; the desktop collapse toggle is hidden. It opens above a backdrop, makes the main shell inert, locks body scrolling, traps keyboard focus, closes on Escape, and restores focus. Closed mobile navigation is inert. Retain its labelled dialog and modal semantics when open. A skip link precedes the shell.
 
@@ -205,7 +234,7 @@ Up to (760px), the rail becomes a full-content drawer of `min(288px, 86vw)`, reg
 
 ## Elevation & Depth
 
-White panels and offer cards rest on borders and tonal separation. Hover changes an offer's border without lifting the card. Selected offers add a cobalt inset stroke. Primary buttons have a small ambient shadow; menus, the comparison dock, and dialogs carry the deeper shadows that explain their position above working content.
+White panels and offer cards rest on borders and tonal separation. Fine-pointer hover changes an offer's border and adds a restrained ambient shadow without moving the card. Selected offers add a cobalt inset stroke. Primary buttons have a small ambient shadow; menus, the comparison dock, and dialogs carry the deeper shadows that explain their position above working content.
 
 ### Shadow Vocabulary
 
@@ -214,24 +243,27 @@ White panels and offer cards rest on borders and tonal separation. Hover changes
 - **Account menu:** `0 12px 35px #10182d26`.
 - **Comparison dock:** `0 12px 32px #18233a30`.
 - **Dialog:** `0 28px 100px #0b122230`; its scrim uses blur (5px).
+- **Offer hover:** `0 7px 20px #1c32670a`, for pointers that support hover.
+- **Scrolled utility bar:** `0 5px 18px #1822400a`, without changing bar geometry.
+- **Google sign-in hover:** `0 2px 6px #20212412`, within the provider-brand action.
 
-**The Flat Inventory Rule.** Keep inventory cards flat on hover; use border and selection treatments to communicate interaction.
+**The Flat Inventory Rule.** Keep inventory card geometry fixed on hover; use border, a restrained ambient shadow, and selection treatments to communicate interaction.
 
 Motion uses feedback (140ms), arrival (220ms), and exit (110ms) durations. Arrivals use `cubic-bezier(0.16, 1, 0.3, 1)`; drawer exits use `cubic-bezier(0.4, 0, 1, 1)`. The comparison dock arrives from a (10px) offset with opacity, keeping its shadow constant. The selected checkmark draws and the category underline expands from (0.3) to full width over the arrival duration. Selection-count changes fade over the feedback duration; financial values and layout-driving properties remain immediate.
 
-Existing control colors, borders, and shadows retain (180ms) transitions; pressed buttons move down (1px) over the exit duration. Primary-action and offer arrows move (3px) over the feedback duration, while research-suggestion arrows retain (180ms). The mobile drawer opens over the arrival duration and closes over the exit duration. Dialogs enter with opacity and scale (0.985 to 1) over the arrival duration; content closes immediately, while the overlay fades in over the feedback duration and out over the exit duration. Account menus settle from (4px) with opacity over (160ms). Full-page entrance animation is disabled. Reduced-motion preferences disable animations, transitions, smooth scrolling, and decorative press/hover transforms; selection marks, state colors, live status, and focus behavior remain available immediately.
+Existing button and offer colors, borders, and shadows retain (180ms) transitions; field and icon-button feedback uses (140ms), and navigation uses (160ms); pressed buttons move down (1px) over the exit duration. Primary-action and offer arrows move (3px) over the feedback duration, while research-suggestion arrows retain (180ms). The mobile drawer opens over the arrival duration and closes over the exit duration. Dialogs enter with opacity and scale (0.985 to 1) over the arrival duration; content exits with opacity and a (4px) downward translation over the exit duration, while the overlay fades in over the feedback duration and out over the exit duration. Account menus settle from (4px) with opacity over (160ms). Route content fades from opacity (0.6) to (1) over (240ms) without translation. Only source inventory and newly returned decision rows unfold on first intersection: opacity (0.86 to 1) and an (8px to 0) bottom clip over (360ms), using arrival easing. Their default render remains visible; focused rows skip the animation. The scroll hook cancels active Web Animations when reduced motion is requested and cleans up observers on route changes. Reduced-motion preferences disable animations, transitions, smooth scrolling, and decorative press/hover transforms; selection marks, state colors, live status, and focus behavior remain available immediately.
 
 ## Shapes
 
 Use softly squared forms with thin rules. Tags have the smallest radius; standard controls, search, offers, panels, the dock, and dialogs use the distinct radius roles in frontmatter. Borders are generally (1px). A selected offer adds an inset (1px) cobalt stroke rather than a hard offset shadow. Provider identities are compact rounded monograms with distinct cobalt, blue, or sand tints. Their shapes identify offers without implying verification or an upstream partnership.
 
-The Connect example brief uses a uniform (1px) border around its light inset. Do not turn it into a decorative thick quote rail. Circles belong to avatars and state dots. The workspace empty state uses a short heading, explanation, and four numbered workflow steps.
+The Connect example brief uses a uniform (1px) border around its light inset. Do not turn it into a decorative thick quote rail. Circles belong to avatars and state dots. The workspace empty state uses a short heading and explanation; example prompts stay with the composer.
 
 ## Components
 
 ### Buttons
 
-Clear, compact actions with an (8px) radius and standard minimum height of (41px). Primary buttons use cobalt and white, deepen on hover, and shift down on press. Secondary buttons use white with a pale cool stroke; hover uses a pale cobalt fill and stronger stroke. Small buttons have a (33px) minimum height. Disabled buttons reduce opacity to (0.48) and show a not-allowed cursor. Keyboard focus uses a (2px) outline in `#5378ff`, offset by (4px).
+Clear, compact actions with an (8px) radius and standard minimum height of (44px). Primary buttons use cobalt and white, deepen on hover, and shift down on press. Secondary buttons use white with a pale cool stroke; hover uses a pale cobalt fill and stronger stroke. Small buttons have a (36px) minimum height. Disabled buttons reduce opacity to (0.48) and show a not-allowed cursor. Keyboard focus uses a (2px) outline in `#5378ff`, offset by (4px).
 
 ### Chips
 
@@ -243,7 +275,7 @@ Offer cards pair a provider identity and selection control with title, scope cop
 
 ### Inputs / Fields
 
-Search is a (46px) white field with an inline search icon and optional keyboard hint. Focus changes its border and adds the restrained shadow in Elevation. The slash shortcut focuses search; clear search has an accessible label. Normal forms use visible labels, cool inset fills, (1px) borders, and (7–8px) radii. Research textareas resize vertically. Search must continue querying public offer metadata only; its visual affordance must not imply access to paid payloads.
+Search is a (46px) white field with an inline search icon and optional keyboard hint. Focus changes its border and adds the restrained shadow in Elevation. The slash shortcut focuses search; clear search has an accessible label. Normal forms use visible labels, cool inset fills, (1px) borders, (7–8px) radii, and a (44px) minimum field height. Hover strengthens the border; focus uses white fill and cobalt border. Shared password fields reserve (48px) inside the input for a labelled show/hide button with pressed state; helper text remains associated with the field. Research textareas resize vertically. Search must continue querying public offer metadata only; its visual affordance must not imply access to paid payloads.
 
 ### Navigation
 
@@ -259,19 +291,19 @@ Selecting sources reveals a fixed dark-ink dock with selection count, exact comb
 
 ### Dialogs and Operational States
 
-Dialogs are centered white surfaces with (16px) corners, (26px) padding, a maximum height of (88vh), and scrolling content. Standard width is `min(480px, calc(100vw - 32px))`; wide dialogs use (710px) instead of (480px). Keep labelled dialog semantics, focus trapping, Escape dismissal, and explicit close controls. Restore focus to the actual opener when it remains connected and outside inert content; preserve focus in another open dialog during a handoff.
+Dialogs are centered white flex-column surfaces with (16px) corners and a maximum height of `calc(100dvh - 48px)`. The fixed heading uses (24px 26px 20px) padding; only the body scrolls, with (24px 26px 26px) padding and contained overscroll. Up to (760px), the maximum height becomes `calc(100dvh - 24px)`, heading padding becomes (20px 20px 16px), and body padding becomes (20px). Standard width is `min(480px, calc(100vw - 32px))`; wide dialogs use (710px) instead of (480px). Keep labelled dialog semantics, focus trapping, Escape dismissal, and explicit close controls. Restore focus to the actual opener when it remains connected and outside inert content; preserve focus in another open dialog during a handoff.
 
-Loading, empty search, connection failure, expired quote, unavailable integration, and uncertain-payment states retain concise explanations and recovery controls. Payment approval uses PayPal; Sandbox is identified when that environment is active. Payment and fulfilment remain distinct in purchase status; seller earnings and payout status appear in the provider workspace. Voids remain distinct from refunds. Results expose purchased rows, provenance, download, receipt, and a genuine AI summary only when integration and source permissions allow it. Missing integrations fail closed. Quote scope, filtered rows, expiry, and exact total precede approval; source licences and access details use an expandable section rather than repeated explanatory blocks. Previously purchased sources appear as separate no-charge rows with links to the purchased data. A zero-total plan explains that the data is already owned and shows no checkout action.
+Loading, empty search, connection failure, expired quote, unavailable integration, and uncertain-payment states retain concise explanations and recovery controls. Payment approval uses PayPal; Sandbox is identified when that environment is active. Payment and fulfilment remain distinct in purchase status; seller earnings and payout status appear in the provider workspace. Voids remain distinct from refunds. Results expose purchased rows, provenance, download, receipt, and a genuine AI summary only when integration and source permissions allow it. Missing integrations fail closed. Quote scope, filtered rows, expiry, and exact total precede approval; source licences and access details use an expandable section rather than repeated explanatory blocks. Previously purchased sources appear as separate no-charge rows with links to the purchased data. A zero-total plan opens with “Already purchased” and direct data links; checkout totals, expiry, payment-environment copy, and checkout controls are omitted. Receipt references and integrity fingerprints use native disclosure controls. Data tables keep headers sticky inside a bounded scroll region; values over (160) characters show a (140)-character preview with a keyboard-operable “Full value” disclosure, preserving the complete value and JSON download. Expanded values scroll within (18rem) rather than expanding the whole page.
 
 ### Accounts and Provider Publishing
 
-Private workspaces use a shared sign-in and registration dialog with visible field labels, inline errors, and password guidance only when needed. Email ownership verification stays in that dialog with one labelled six-digit field, a numeric keyboard hint, and one-time-code autofill. Delivery feedback follows the service response; failed verification keeps an inline error and returns focus to the field. Resend shows its cooldown, “Use another account” provides recovery, and pending verification resumes in the same browser session. Successful proof continues the requested action automatically. Profile changes, password changes, account export, and account closure live on Account; destructive closure uses a separate confirmation dialog. Password recovery uses its own focused form and reports real service availability. When Google authentication is configured, the shared dialog offers a secondary “Continue with Google” action above the email form. Account exposes explicit Google linking; accounts without a password use Google identity confirmation for closure. These controls follow the existing button and form vocabulary.
+Private workspaces use a shared sign-in and registration dialog with visible field labels, inline errors, and password guidance only when needed. Email ownership verification stays in that dialog with one labelled six-digit field, a numeric keyboard hint, and one-time-code autofill. Delivery feedback follows the service response; failed verification keeps an inline error and returns focus to the field. Resend shows its cooldown, “Use another account” provides recovery, and pending verification resumes in the same browser session. Successful proof continues the requested action automatically. Profile changes, password changes, account export, and account closure live on Account; destructive closure uses a separate confirmation dialog. Password recovery uses its own focused form and reports real service availability. When Google authentication is configured, the shared dialog offers a secondary “Continue with Google” action above the email form. Account exposes explicit Google linking; accounts without a password use Google identity confirmation for closure. The Google action uses the official full-color G at (20px), unchanged aspect ratio, provider-specific type, a white fill, gray stroke, and quiet hover feedback. Other controls follow the existing button and form vocabulary.
 
 Provider onboarding collects profile details and distribution-rights attestation. Pending providers can prepare datasets, with a short review notice explaining why offers are not yet discoverable. Dataset publishing uses the same form vocabulary for a real JSON upload, source and licence links, attribution, declared source date, price, and explicit rights and AI-processing choices. Published offer edits create new versions. Keep review, publishing, earnings, and payout states truthful and specific to their audience.
 
 ### Agent Connection
 
-Connect presents three stacked setup panels: create a scoped token, copy the client configuration, and give the agent a task. Tokens show scope and active, expired, or revoked status; a token secret is displayed once, with copy feedback. The configuration panel uses a visibly labelled client selector for Codex, Claude Code, and Claude Desktop. File name, configuration text, setup hint, documentation link, and copied content follow the selected client. Tool descriptions sit in an expandable reference. Browser approval remains required for agent-prepared purchases. These are customer workflows and use the same shell, forms, focus treatment, and error handling as the rest of the application.
+Connect presents a compact token-management row above the client-configuration and example-task panels, following the responsive layout described above. Tokens show scope and active, expired, or revoked status; a token secret is displayed once, with copy feedback. The configuration panel uses a visibly labelled client selector for Codex, Claude Code, and Claude Desktop. File name, configuration text, setup hint, documentation link, and copied content follow the selected client. Tool descriptions sit in an expandable reference. Browser approval remains required for agent-prepared purchases. These are customer workflows and use the same shell, forms, focus treatment, and error handling as the rest of the application.
 
 ## Do's and Don'ts
 

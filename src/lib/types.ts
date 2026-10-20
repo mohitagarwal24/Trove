@@ -112,6 +112,7 @@ export type PurchaseView = {
   fulfilmentState: string;
   settlementState: string;
   paypalOrderId: string | null;
+  approvedAt: string | null;
   authorizationId: string | null;
   captureId: string | null;
   error: string | null;

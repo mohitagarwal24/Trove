@@ -19,6 +19,7 @@ export function QuoteReview({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const owned = quote?.totalCents === 0;
   useEffect(() => {
     if (!quote) return;
     const update = () =>
@@ -52,24 +53,30 @@ export function QuoteReview({
     <Modal
       open={!!quote}
       onOpenChange={(open) => !open && onClose()}
-      title="Review your purchase plan"
-      description="Confirm the data, price and access terms."
+      title={owned ? "Already purchased" : "Review your purchase plan"}
+      description={
+        owned
+          ? "Open your data at no extra charge."
+          : "Confirm the data, price and access terms."
+      }
       wide
     >
       {quote && (
         <div className="quote-review">
-          <div className="quote-meta">
-            <Badge tone="green">
-              <LockKeyhole size={11} />
-              Price reserved
-            </Badge>
-            <span className={seconds === 0 ? "error-text" : "muted"}>
-              <Clock3 size={13} />
-              {seconds
-                ? `Expires in ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
-                : "Quote expired"}
-            </span>
-          </div>
+          {!owned && (
+            <div className="quote-meta">
+              <Badge tone="green">
+                <LockKeyhole size={11} />
+                Price reserved
+              </Badge>
+              <span className={seconds === 0 ? "error-text" : "muted"}>
+                <Clock3 size={13} />
+                {seconds
+                  ? `Expires in ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
+                  : "Quote expired"}
+              </span>
+            </div>
+          )}
           <div className="quote-lines">
             {quote.reusedSources?.map((source) => (
               <div
@@ -103,7 +110,11 @@ export function QuoteReview({
                     {line.snapshot.sellerName} · Version {line.snapshot.version}{" "}
                     · {line.quantity} records
                   </span>
-                  <small>{line.fields.join(" · ")}</small>
+                  <small>
+                    {line.fields
+                      .map((field) => field.replaceAll("_", " "))
+                      .join(" · ")}
+                  </small>
                   {!!line.snapshot.filters?.length && (
                     <small>
                       {line.snapshot.filters
@@ -123,24 +134,26 @@ export function QuoteReview({
               </div>
             ))}
           </div>
-          <div className="quote-breakdown">
-            <div>
-              <span>Data preparation</span>
-              <span>{money(quote.totalCents - quote.commissionCents)}</span>
+          {!owned && (
+            <div className="quote-breakdown">
+              <div>
+                <span>Data preparation</span>
+                <span>{money(quote.totalCents - quote.commissionCents)}</span>
+              </div>
+              <div>
+                <span>
+                  Trove fee <small>(included)</small>
+                </span>
+                <span>{money(quote.commissionCents)}</span>
+              </div>
+              <div className="quote-total">
+                <span>Total</span>
+                <span>
+                  {money(quote.totalCents)} <small>USD</small>
+                </span>
+              </div>
             </div>
-            <div>
-              <span>
-                Trove fee <small>(included)</small>
-              </span>
-              <span>{money(quote.commissionCents)}</span>
-            </div>
-            <div className="quote-total">
-              <span>Total</span>
-              <span>
-                {money(quote.totalCents)} <small>USD</small>
-              </span>
-            </div>
-          </div>
+          )}
           <details className="purchase-terms">
             <summary>Source licences and access</summary>
             {quote.lines.map((line) => (
@@ -154,7 +167,7 @@ export function QuoteReview({
               new quote. Source licence terms apply.
             </p>
           </details>
-          {capabilities.paymentEnvironment === "sandbox" && (
+          {!owned && capabilities.paymentEnvironment === "sandbox" && (
             <p className="caption">PayPal Sandbox — no real money moves.</p>
           )}
           {quote.totalCents > 0 && !capabilities.paypal && (
@@ -162,7 +175,7 @@ export function QuoteReview({
               Checkout is temporarily unavailable. Please try again later.
             </Notice>
           )}
-          {quote.totalCents > 0 ? (
+          {quote.totalCents > 0 && (
             <button
               className="button button-paypal"
               disabled={!capabilities.paypal || busy || seconds === 0}
@@ -172,10 +185,6 @@ export function QuoteReview({
               <span>Continue with PayPal</span>
               <ArrowRight size={17} />
             </button>
-          ) : (
-            <Notice kind="success">
-              You already own this data. Open it above; no checkout is needed.
-            </Notice>
           )}
         </div>
       )}

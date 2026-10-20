@@ -49,7 +49,6 @@ export function Purchases() {
       .finally(() => setLoading(false));
   }, [user]);
   const captured = items.filter((p) => p.paymentState === "captured");
-  const real = captured;
   const visible = items.filter(
     (p) => filter === "all" || p.paymentState === filter,
   );
@@ -65,34 +64,35 @@ export function Purchases() {
           <ArrowRight size={16} />
         </Link>
       </section>
-      <div className="metric-grid">
-        <Metric
-          label="Total purchased"
-          value={money(real.reduce((s, p) => s + p.quote.totalCents, 0))}
-          detail={`${real.length} completed purchases`}
-          icon={Wallet}
-        />
-        <Metric
-          label="Ready to download"
-          value={String(
-            real.filter((p) => p.entitlement && !p.entitlement.revokedAt)
-              .length,
-          )}
-          detail="Available from your purchases"
-          icon={PackageCheck}
-        />
-        <Metric
-          label="Purchase plans"
-          value={String(items.length).padStart(2, "0")}
-          detail="Across this workspace"
-          icon={ReceiptText}
-        />
-      </div>
+      {user && items.length > 0 && (
+        <div className="metric-grid">
+          <Metric
+            label="Total purchased"
+            value={money(captured.reduce((s, p) => s + p.quote.totalCents, 0))}
+            detail={`${captured.length} completed purchases`}
+            icon={Wallet}
+          />
+          <Metric
+            label="Ready to download"
+            value={String(
+              captured.filter((p) => p.entitlement && !p.entitlement.revokedAt)
+                .length,
+            )}
+            detail="Available from your purchases"
+            icon={PackageCheck}
+          />
+          <Metric
+            label="Purchase plans"
+            value={String(items.length).padStart(2, "0")}
+            detail="Across this workspace"
+            icon={ReceiptText}
+          />
+        </div>
+      )}
       <section className="panel purchase-table-panel">
         <div className="table-panel-heading">
           <div>
             <h2>Purchase history</h2>
-            <p>Open a purchase to access its data or receipt.</p>
           </div>
           <select
             aria-label="Filter purchases"
@@ -123,13 +123,26 @@ export function Purchases() {
           />
         ) : !visible.length ? (
           <EmptyState
-            title="A clean slate"
-            description="Compare a few offers or run a research task. Your first purchase will appear here."
+            title={items.length ? "No matching purchases" : "A clean slate"}
+            description={
+              items.length
+                ? "Try a different payment status."
+                : "Your first purchase will appear here."
+            }
             action={
-              <Link href="/" className="button button-secondary">
-                Discover data
-                <ArrowRight size={15} />
-              </Link>
+              items.length ? (
+                <button
+                  className="button button-secondary"
+                  onClick={() => setFilter("all")}
+                >
+                  Show all purchases
+                </button>
+              ) : (
+                <Link href="/" className="button button-secondary">
+                  Discover data
+                  <ArrowRight size={15} />
+                </Link>
+              )
             }
           />
         ) : (
@@ -342,12 +355,12 @@ export function PurchaseDetail({ id }: { id: string }) {
         <div>
           <h1>
             {completed
-              ? "Your evidence is ready."
+              ? "Your data is ready"
               : p.paymentState === "refunded"
-                ? "Refund completed."
+                ? "Refund completed"
                 : failed
-                  ? "This purchase was stopped."
-                  : "A clear plan. Your approval."}
+                  ? "Purchase stopped"
+                  : "Review and approve"}
           </h1>
           <p>
             {p.quote.lines.length}{" "}
@@ -370,9 +383,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                 { label: "Plan created", done: true, Icon: FileCheck2 },
                 {
                   label: "Buyer approval",
-                  done: !["created", "awaiting_approval"].includes(
-                    p.paymentState,
-                  ),
+                  done: !!p.approvedAt,
                   Icon: CheckCheck,
                 },
                 {
@@ -394,7 +405,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                   done: !!p.entitlement && !p.entitlement.revokedAt,
                   Icon: PackageCheck,
                 },
-              ].map((s, i) => (
+              ].map((s) => (
                 <div
                   className={`progress-step ${s.done ? "step-done" : ""}`}
                   key={s.label}
@@ -402,7 +413,6 @@ export function PurchaseDetail({ id }: { id: string }) {
                   <span>
                     {s.done ? <Check size={16} /> : <s.Icon size={16} />}
                   </span>
-                  <small>{String(i + 1).padStart(2, "0")}</small>
                   <strong>{s.label}</strong>
                 </div>
               ))}
@@ -474,10 +484,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                 <div className="results-content">
                   <div className="research-answer">
                     <div>
-                      <h3>Put the evidence to work.</h3>
-                      <p>
-                        Draft a source-linked answer from this purchased subset.
-                      </p>
+                      <h3>Research summary</h3>
                     </div>
                     <button
                       className="button button-small button-secondary"
@@ -575,7 +582,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                         ? "Access revoked after refund"
                         : "The result stays protected"
                   }
-                  description="Purchased data is released only after all delivery checks and an authoritative completed capture."
+                  description="Your data appears after payment and delivery checks."
                 />
               ))}
             {tab === "receipt" && (
@@ -591,32 +598,35 @@ export function PurchaseDetail({ id }: { id: string }) {
                   <h3>
                     {money(p.quote.totalCents)} <span>USD</span>
                   </h3>
-                  <dl>
-                    <div>
-                      <dt>Purchase ID</dt>
-                      <dd>{p.id}</dd>
-                    </div>
-                    <div>
-                      <dt>Quote fingerprint</dt>
-                      <dd className="hash-value">{p.quote.planHash}</dd>
-                    </div>
-                    <div>
-                      <dt>Order reference</dt>
-                      <dd>{p.paypalOrderId || "Not created"}</dd>
-                    </div>
-                    <div>
-                      <dt>Authorisation</dt>
-                      <dd>{p.authorizationId || "Not authorised"}</dd>
-                    </div>
-                    <div>
-                      <dt>Capture</dt>
-                      <dd>{p.captureId || "Not captured"}</dd>
-                    </div>
-                    <div>
-                      <dt>Trove fee (included)</dt>
-                      <dd>{money(p.quote.commissionCents)}</dd>
-                    </div>
-                  </dl>
+                  <details className="receipt-references">
+                    <summary>Transaction references</summary>
+                    <dl>
+                      <div>
+                        <dt>Purchase ID</dt>
+                        <dd>{p.id}</dd>
+                      </div>
+                      <div>
+                        <dt>Quote fingerprint</dt>
+                        <dd className="hash-value">{p.quote.planHash}</dd>
+                      </div>
+                      <div>
+                        <dt>Order reference</dt>
+                        <dd>{p.paypalOrderId || "Not created"}</dd>
+                      </div>
+                      <div>
+                        <dt>Authorisation</dt>
+                        <dd>{p.authorizationId || "Not authorised"}</dd>
+                      </div>
+                      <div>
+                        <dt>Capture</dt>
+                        <dd>{p.captureId || "Not captured"}</dd>
+                      </div>
+                      <div>
+                        <dt>Trove fee (included)</dt>
+                        <dd>{money(p.quote.commissionCents)}</dd>
+                      </div>
+                    </dl>
+                  </details>
                   {p.receipt && (
                     <button
                       className="button button-secondary"
@@ -654,32 +664,30 @@ export function PurchaseDetail({ id }: { id: string }) {
                           <small>{check.passed ? "Passed" : "Failed"}</small>
                         </div>
                       ))}
-                      <p className="caption hash-value">
-                        SHA-256: {execution.resultHash}
-                      </p>
+                      <details className="integrity-reference">
+                        <summary>Source fingerprint</summary>
+                        <p className="caption hash-value">
+                          SHA-256: {execution.resultHash}
+                        </p>
+                      </details>
                     </div>
                   ))
                 ) : (
                   <EmptyState
                     title="Checks have not completed"
-                    description="The worker validates the exact approved fields, quantity, schema, and quoted timestamp before capture."
+                    description="Data and source checks run before payment is captured."
                   />
                 )}
                 <Notice>
-                  Passing these checks confirms conformance to the purchase
-                  plan. It does not independently verify the accuracy of
-                  seller-provided information.
+                  Checks confirm the agreed scope and source integrity, not the
+                  accuracy of the original data.
                 </Notice>
               </div>
             )}
           </section>
         </div>
         <aside className="purchase-summary panel">
-          <h2>
-            {p.quote.lines.length === 1
-              ? "A focused data purchase."
-              : "One bundle. Clear terms."}
-          </h2>
+          <h2>Purchase summary</h2>
           <div className="summary-lines">
             {p.quote.lines.map((line) => (
               <div key={line.id}>

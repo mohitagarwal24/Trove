@@ -87,7 +87,7 @@ export function SellerStudio() {
     }
   }
   return (
-    <div className="seller-studio">
+    <div className="seller-studio page-enter">
       <section className="page-heading compact-heading">
         <div>
           <h1>Seller studio</h1>

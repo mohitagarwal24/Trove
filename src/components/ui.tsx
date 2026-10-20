@@ -7,8 +7,73 @@ import {
   Loader2,
   Check,
   AlertCircle,
+  ChevronDown,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-import { useRef, type ReactNode } from "react";
+import {
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+  type InputHTMLAttributes,
+} from "react";
+export function GoogleLink({
+  href,
+  children = "Continue with Google",
+}: {
+  href: string;
+  children?: ReactNode;
+}) {
+  return (
+    <a className="button google-button" href={href}>
+      {/* Official Google brand asset, kept at its original aspect ratio. */}
+      <img
+        src="/brand/google-g.png"
+        width={20}
+        height={20}
+        alt=""
+        aria-hidden="true"
+      />
+      <span>{children}</span>
+    </a>
+  );
+}
+export function PasswordField({
+  label,
+  hint,
+  ...props
+}: Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & {
+  label: string;
+  hint?: string;
+}) {
+  const generatedId = useId(),
+    id = props.id || generatedId,
+    [visible, setVisible] = useState(false);
+  return (
+    <div className="password-field">
+      <label htmlFor={id}>{label}</label>
+      <div className="password-control">
+        <input
+          {...props}
+          id={id}
+          type={visible ? "text" : "password"}
+          aria-describedby={hint ? `${id}-hint` : props["aria-describedby"]}
+        />
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`}
+          aria-pressed={visible}
+          onClick={() => setVisible((v) => !v)}
+        >
+          {visible ? <EyeOff size={17} /> : <Eye size={17} />}
+        </button>
+      </div>
+      {hint && <small id={`${id}-hint`}>{hint}</small>}
+    </div>
+  );
+}
 export function Logo({ small = false }: { small?: boolean }) {
   return (
     <span className={`brand ${small ? "brand-small" : ""}`}>
@@ -117,15 +182,17 @@ export function Modal({
           <div className="dialog-heading">
             <div>
               <Dialog.Title>{title}</Dialog.Title>
-              <Dialog.Description>
-                {description || "Review the details below."}
+              <Dialog.Description
+                className={description ? undefined : "sr-only"}
+              >
+                {description || "Complete this action."}
               </Dialog.Description>
             </div>
             <Dialog.Close className="icon-button" aria-label="Close dialog">
               <X size={19} />
             </Dialog.Close>
           </div>
-          {children}
+          <div className="dialog-body">{children}</div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -212,9 +279,7 @@ export function DataTable({ rows }: { rows: Record<string, unknown>[] }) {
             <tr key={i}>
               {keys.map((k) => (
                 <td key={k}>
-                  {typeof row[k] === "object"
-                    ? JSON.stringify(row[k])
-                    : String(row[k] ?? "—")}
+                  <DataValue value={row[k]} />
                 </td>
               ))}
             </tr>
@@ -222,6 +287,24 @@ export function DataTable({ rows }: { rows: Record<string, unknown>[] }) {
         </tbody>
       </table>
     </div>
+  );
+}
+function DataValue({ value }: { value: unknown }) {
+  const text =
+    typeof value === "object" && value !== null
+      ? JSON.stringify(value)
+      : String(value ?? "—");
+  if (text.length <= 160) return text;
+  return (
+    <details className="data-cell-detail">
+      <summary>
+        <span className="data-cell-preview">{text.slice(0, 140)}…</span>
+        <span className="data-cell-toggle">
+          Full value <ChevronDown size={12} />
+        </span>
+      </summary>
+      <div className="data-cell-value">{text}</div>
+    </details>
   );
 }
 export const shortId = (id: string) => id.slice(-8).toUpperCase();

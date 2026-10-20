@@ -1,7 +1,7 @@
 import Link from "next/link";
 export function Legal({ page }: { page: "privacy" | "terms" }) {
   return (
-    <article className="panel legal-page">
+    <article className="panel legal-page page-enter">
       <h1>{page === "privacy" ? "Privacy" : "Terms of use"}</h1>
       {page === "privacy" ? (
         <>

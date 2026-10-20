@@ -1,14 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import {
-  Cable,
-  Check,
-  Copy,
-  KeyRound,
-  Plus,
-  ShieldCheck,
-  Trash2,
-} from "lucide-react";
+import { Check, Copy, KeyRound, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { api, post } from "@/lib/client";
 import { useTrove } from "./trove-app";
 import { Badge, ExternalLink, Modal, Notice } from "./ui";
@@ -149,18 +141,14 @@ export function Connect() {
           <h1>Connect your agent</h1>
           <p>Bring Trove’s data to Codex or Claude.</p>
         </div>
-        <span className="large-connect-icon">
-          <Cable size={34} />
-        </span>
       </section>
       <div className="connect-layout">
         <div className="connect-main">
-          <section className="panel setup-card">
+          <section className="panel setup-card token-setup">
             <div className="setup-heading">
               <span className="step-number">01</span>
               <div>
-                <h2>Create a scoped agent token</h2>
-                <p>Choose what your agent can access.</p>
+                <h2>Create an agent token</h2>
               </div>
             </div>
             <div className="token-list">
@@ -217,7 +205,7 @@ export function Connect() {
               Create agent token
             </button>
           </section>
-          <section className="panel setup-card">
+          <section className="panel setup-card client-setup">
             <div className="setup-heading">
               <span className="step-number">02</span>
               <div>
@@ -255,12 +243,11 @@ export function Connect() {
             <p className="caption">{config.hint}</p>
             <ExternalLink href={config.docs}>Client setup guide</ExternalLink>
           </section>
-          <section className="panel setup-card">
+          <section className="panel setup-card task-setup">
             <div className="setup-heading">
               <span className="step-number">03</span>
               <div>
                 <h2>Give your agent a task</h2>
-                <p>Ask for sources and a budget.</p>
               </div>
             </div>
             <blockquote className="example-brief">
@@ -293,8 +280,8 @@ export function Connect() {
         title={value ? "Your token is ready" : "Create an agent token"}
         description={
           value
-            ? "Copy this token now. Trove stores only a hash and cannot show it again."
-            : "Choose a name and the smallest useful scope."
+            ? "Copy and save your token. It won’t be shown again."
+            : "Choose the access your agent needs."
         }
       >
         {value ? (

@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import type { Capabilities, Offer, UserView } from "@/lib/types";
 import { api, post } from "@/lib/client";
+import { usePageMotion } from "@/lib/use-page-motion";
 import { Logo, Loading, Notice } from "./ui";
 import { Discover } from "./discover";
 import { Workspace } from "./workspace";
@@ -73,6 +74,7 @@ export function TroveApp() {
   const [caps, setCaps] = useState(defaults);
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState("");
+  usePageMotion(pathname, !loading && !failure);
   const [mobile, setMobile] = useState(false);
   const [smallScreen, setSmallScreen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -403,7 +405,10 @@ export function TroveApp() {
                 <button
                   onClick={() => {
                     if (user) router.push("/account");
-                    else setAuth(true);
+                    else {
+                      setMobile(false);
+                      setAuth(true);
+                    }
                     setAccountMenu(false);
                   }}
                 >
@@ -429,6 +434,7 @@ export function TroveApp() {
         </aside>
         <div className="main-shell" inert={smallScreen && mobile}>
           <header className="topbar">
+            <div className="scroll-progress" aria-hidden="true" />
             <div className="breadcrumb">
               <button
                 className="icon-button sidebar-toggle"

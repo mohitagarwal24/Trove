@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-19T14:40:47.458271+00:00",
+  "generatedAt": "2026-10-20T06:43:57.303564+00:00",
   "title": "Design System: Trove",
   "extensions": {
     "colorMeta": {
@@ -247,12 +247,20 @@
         "purpose": "Retained operate-mode body and information text."
       },
       "label": {
-        "displayName": "Inter Action",
-        "purpose": "Standard button labels."
+        "displayName": "Inter Form Label",
+        "purpose": "Visible 12px field labels at 1.5 line height."
       },
       "identifier": {
         "displayName": "Monospace Identifier",
         "purpose": "Hashes, tokens, configuration and keyboard hints."
+      },
+      "action": {
+        "displayName": "Inter Action",
+        "purpose": "Standard 13px button labels; compact buttons use 12px."
+      },
+      "google-sign-in": {
+        "displayName": "Google Sans Medium",
+        "purpose": "Provider-brand Continue with Google label only; self-hosted 4KB text subset, OFL license in public/fonts/GOOGLE-SANS-OFL.txt."
       }
     },
     "shadows": [
@@ -285,6 +293,21 @@
         "name": "dialog",
         "value": "0 28px 100px #0b122230",
         "purpose": "Modal surface."
+      },
+      {
+        "name": "offer-hover",
+        "value": "0 7px 20px #1c32670a",
+        "purpose": "Fine-pointer offer hover without card movement."
+      },
+      {
+        "name": "scrolled-utility-bar",
+        "value": "0 5px 18px #1822400a",
+        "purpose": "Document scroll feedback above 12px; position and height remain fixed."
+      },
+      {
+        "name": "google-sign-in-hover",
+        "value": "0 2px 6px #20212412",
+        "purpose": "Restrained provider-brand action feedback."
       }
     ],
     "motion": [
@@ -301,7 +324,7 @@
       {
         "name": "motion-exit",
         "value": "110ms",
-        "purpose": "Dialog overlay exit, mobile drawer closing, and press transforms."
+        "purpose": "Dialog content and overlay exit, mobile drawer closing, and press transforms."
       },
       {
         "name": "ease-arrive",
@@ -311,12 +334,12 @@
       {
         "name": "ease-exit",
         "value": "cubic-bezier(0.4, 0, 1, 1)",
-        "purpose": "Mobile drawer closing easing."
+        "purpose": "Mobile drawer and dialog content closing easing."
       },
       {
         "name": "control-transition",
         "value": "180ms ease",
-        "purpose": "Existing control color, border and shadow transitions; navigation, card treatments, and research-suggestion arrow retain this duration."
+        "purpose": "Button and offer color, border and shadow feedback; research-suggestion arrows retain this duration."
       },
       {
         "name": "comparison-arrive",
@@ -351,7 +374,7 @@
       {
         "name": "dialog-enter",
         "value": "220ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Dialog opacity and scale from 0.985 to 1; content closes immediately and focus returns to the actual opener unless another open dialog has focus."
+        "purpose": "Dialog opacity and scale from 0.985 to 1. Focus returns to the opener unless another open dialog has focus."
       },
       {
         "name": "overlay-enter",
@@ -376,7 +399,37 @@
       {
         "name": "reduced-motion",
         "value": "animation: none; transition: none; scroll-behavior: auto",
-        "purpose": "Disable animations, transitions, and decorative press/hover transforms; preserve immediate marks, state colors, live status and focus. Page entrance is disabled for all users."
+        "purpose": "Disable CSS animations, transitions, smooth scrolling and decorative press/hover transforms. Cancel active Web Animations and disconnect reveal observation when the preference changes; preserve immediate marks, colors, live status and focus."
+      },
+      {
+        "name": "field-and-icon-feedback",
+        "value": "140ms",
+        "purpose": "Field border/fill/shadow, icon-button color/fill/shadow, and purchase-row background."
+      },
+      {
+        "name": "navigation-feedback",
+        "value": "160ms",
+        "purpose": "Rail navigation background and color."
+      },
+      {
+        "name": "page-arrival",
+        "value": "240ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Route opacity from 0.6 to 1 without geometry changes."
+      },
+      {
+        "name": "row-unfold",
+        "value": "360ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Only source inventory and decision rows: opacity 0.86 to 1, bottom clip 8px to 0. Threshold 0.08, bottom root margin -16px. Visible by default; focused rows skip reveal; no card translation."
+      },
+      {
+        "name": "dialog-exit",
+        "value": "110ms cubic-bezier(0.4, 0, 1, 1)",
+        "purpose": "Content fades with 4px downward translation."
+      },
+      {
+        "name": "scroll-feedback",
+        "value": "2px progress line; 220ms shadow transition",
+        "purpose": "Document progress uses scaleX; utility-bar shadow follows scrolling beyond 12px. Both preserve bar position and geometry."
       }
     ],
     "breakpoints": [
@@ -413,7 +466,19 @@
     "layoutBehavior": {
       "rail": "232px default; 208px at max-width 1250px; 100dvh with scrollable middle and pinned account. Height compression at 820px and 700px applies above 760px width.",
       "mobileDrawer": "At max-width 760px: min(288px, 86vw), modal dialog, main-shell inert, closed drawer inert, focus trap, Escape dismissal, body lock and focus restoration.",
-      "connect": "Single stacked column, maximum width 1000px; three setup panels followed by a collapsed tool reference."
+      "connect": "Maximum 1160px. Full-width token row above 1.5fr / 0.9fr configuration/example columns, 260px minimum example width, 22px gap; columns stack at 1050px, token controls stack at 760px. Collapsed tool reference spans the columns.",
+      "account": "Maximum 1000px. Paired profile and Google panels, full-width security/data panels; paired password fields. One column at 760px.",
+      "dialog": "Fixed heading plus scrollable body; maximum calc(100dvh - 48px), or calc(100dvh - 24px) up to 760px. Heading/body padding follows docs/DESIGN.md.",
+      "dataDisclosure": "Sticky table headers inside bounded scroll containers. Values over 160 characters show 140-character previews and native details with full text; expanded text scrolls within 18rem. Receipt refs and fingerprints use details; JSON download remains complete."
+    },
+    "assets": {
+      "google-sign-in": {
+        "icon": "public/brand/google-g.png",
+        "source": "https://developers.google.com/identity/branding-guidelines",
+        "usage": "Official full-color Google G, unchanged aspect ratio, displayed at 20px. Origin metadata remains embedded in the PNG.",
+        "font": "public/fonts/google-sans.ttf",
+        "license": "public/fonts/GOOGLE-SANS-OFL.txt"
+      }
     }
   },
   "components": [
@@ -423,7 +488,7 @@
       "refersTo": "button-primary",
       "description": "Cobalt action for research and approval flows.",
       "html": "<button class=\"ds-primary\">Start a research task<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button>",
-      "css": ".ds-primary{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:41px;border-radius:8px;padding:10px 15px;font-size:12px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;background:var(--accent,#3155d9);color:#fff;border:1px solid var(--accent,#3155d9);box-shadow:0 3px 7px #233f9915;}.ds-primary:hover:not(:disabled){background:var(--accent-dark,#2441af);border-color:var(--accent-dark,#2441af);box-shadow:0 4px 12px #233f9925;}.ds-primary:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-primary:active:not(:disabled){transform:translateY(1px);}.ds-primary:disabled{opacity:.48;cursor:not-allowed;} @media(prefers-reduced-motion:reduce){.ds-primary{animation:none!important;transition:none!important;}}"
+      "css": ".ds-primary{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:8px;padding:10px 15px;font-size:13px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;background:var(--accent,#3155d9);color:#fff;border:1px solid var(--accent,#3155d9);box-shadow:0 3px 7px #233f9915;}.ds-primary:hover:not(:disabled){background:var(--accent-dark,#2441af);border-color:var(--accent-dark,#2441af);box-shadow:0 4px 12px #233f9925;}.ds-primary:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-primary:active:not(:disabled){transform:translateY(1px);}.ds-primary:disabled{opacity:.48;cursor:not-allowed;} @media(prefers-reduced-motion:reduce){.ds-primary{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
       "name": "Secondary button",
@@ -431,15 +496,15 @@
       "refersTo": "button-secondary",
       "description": "Quiet supporting action with a pale cobalt hover.",
       "html": "<button class=\"ds-secondary\">Bring your own agent<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button>",
-      "css": ".ds-secondary{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:41px;border-radius:8px;padding:10px 15px;font-size:12px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;background:#fff;color:#34415f;border:1px solid #d4dbe9;}.ds-secondary:hover:not(:disabled){background:#edf1ff;border-color:#9aabd9;}.ds-secondary:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-secondary:active:not(:disabled){transform:translateY(1px);}.ds-secondary:disabled{opacity:.48;cursor:not-allowed;} @media(prefers-reduced-motion:reduce){.ds-secondary{animation:none!important;transition:none!important;}}"
+      "css": ".ds-secondary{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:8px;padding:10px 15px;font-size:13px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;background:#fff;color:#34415f;border:1px solid #d4dbe9;}.ds-secondary:hover:not(:disabled){background:#edf1ff;border-color:#9aabd9;}.ds-secondary:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-secondary:active:not(:disabled){transform:translateY(1px);}.ds-secondary:disabled{opacity:.48;cursor:not-allowed;} @media(prefers-reduced-motion:reduce){.ds-secondary{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
       "name": "Catalogue search",
       "kind": "input",
       "refersTo": "search",
       "description": "Public metadata search with an inset keyboard hint.",
-      "html": "<label class=\"ds-search\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input aria-label=\"Search data offers\" placeholder=\"Search datasets, suppliers, or topics…\"/><kbd>/</kbd></label>",
-      "css": ".ds-search{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;align-items:center;gap:10px;width:min(420px,100%);height:46px;padding:0 12px;background:#fff;color:#65718b;border:1px solid var(--line,#dde1eb);border-radius:9px;}.ds-search input{font-family:var(--font-body,Inter,Arial,sans-serif);min-width:0;width:100%;border:0;background:none;color:var(--ink,#20283f);font-size:12px;caret-color:var(--accent,#3155d9);}.ds-search input::placeholder{color:#626d84;}.ds-search:focus-within{border-color:#637fe6;box-shadow:0 3px 12px #3155d919;}.ds-search input:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-search kbd{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;border:1px solid #dfe1e6;border-radius:4px;padding:0 5px;color:#626d84;} @media(prefers-reduced-motion:reduce){.ds-search{animation:none!important;transition:none!important;}}"
+      "html": "<label class=\"ds-search\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input aria-label=\"Search data offers\" placeholder=\"Search datasets, suppliers, or topics\u2026\"/><kbd>/</kbd></label>",
+      "css": ".ds-search{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;align-items:center;gap:10px;width:min(420px,100%);height:46px;padding:0 12px;background:#fff;color:#65718b;border:1px solid var(--line,#dde1eb);border-radius:9px;}.ds-search input{font-family:var(--font-body,Inter,Arial,sans-serif);min-width:0;width:100%;border:0;background:none;color:var(--ink,#20283f);font-size:12px;caret-color:var(--accent,#3155d9);}.ds-search input::placeholder{color:#626d84;}.ds-search:focus-within{border-color:#637fe6;box-shadow:0 3px 12px #3155d919;}.ds-search input:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-search kbd{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;border:1px solid #dfe1e6;border-radius:4px;padding:0 5px;color:#626d84;} @media(prefers-reduced-motion:reduce){.ds-search{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
       "name": "Ink navigation",
@@ -447,7 +512,7 @@
       "refersTo": "navigation-active",
       "description": "A selected route inside the dark workspace rail; desktop supports an accessible 76px icon rail, while mobile retains a full-content drawer.",
       "html": "<nav class=\"ds-rail\" aria-label=\"Example workspace\"><a class=\"ds-nav ds-current\" href=\"#discover\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m16.2 7.8-2.4 6-6 2.4 2.4-6 6-2.4z\"/></svg><span>Discover</span><span class=\"ds-count\">6</span></a><a class=\"ds-nav\" href=\"#workspace\">Research workspace</a></nav>",
-      "css": ".ds-rail{font-family:var(--font-body,Inter,Arial,sans-serif);width:200px;padding:16px;background:var(--sidebar,#171d30);border-radius:8px;}.ds-nav{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:3px;color:#c0c8dd;border-radius:8px;font-size:12px;text-decoration:none;transition:background .18s,color .18s;}.ds-nav:hover{background:#29324a;color:#fff;}.ds-current,.ds-current:hover{background:#354fbb;color:#fff;font-weight:600;}.ds-nav:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-nav>span:first-of-type{flex:1;}.ds-count{min-width:20px;padding:2px 5px;border-radius:4px;background:#ffffff1c;color:#fff;font-size:10px;text-align:center;} @media(prefers-reduced-motion:reduce){.ds-count,.ds-current,.ds-nav,.ds-rail{animation:none!important;transition:none!important;}}"
+      "css": ".ds-rail{font-family:var(--font-body,Inter,Arial,sans-serif);width:200px;padding:16px;background:var(--sidebar,#171d30);border-radius:8px;}.ds-nav{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:3px;color:#c0c8dd;border-radius:8px;font-size:12px;text-decoration:none;transition:background .16s,color .16s;}.ds-nav:hover{background:#29324a;color:#fff;}.ds-current,.ds-current:hover{background:#354fbb;color:#fff;font-weight:600;}.ds-nav:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-nav>span:first-of-type{flex:1;}.ds-count{min-width:20px;padding:2px 5px;border-radius:4px;background:#ffffff1c;color:#fff;font-size:10px;text-align:center;} @media(prefers-reduced-motion:reduce){.ds-count,.ds-current,.ds-nav,.ds-rail{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
       "name": "Offer tags",
@@ -455,7 +520,7 @@
       "refersTo": "offer-tag",
       "description": "Descriptive scope tags rather than interactive filters.",
       "html": "<div class=\"ds-tags\"><span>Drug approvals</span></div>",
-      "css": ".ds-tags{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;flex-wrap:wrap;gap:5px;}.ds-tags>span{padding:3px 6px;font-size:9px;border-radius:4px;border:1px solid #e4e7ef;color:#5d6881;background:#f4f5f9;} @media(prefers-reduced-motion:reduce){.ds-tags{animation:none!important;transition:none!important;}}"
+      "css": ".ds-tags{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;flex-wrap:wrap;gap:5px;}.ds-tags>span{padding:3px 6px;font-size:9px;border-radius:4px;border:1px solid #e4e7ef;color:#5d6881;background:#f4f5f9;} @media(prefers-reduced-motion:reduce){.ds-tags{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
       "name": "Selected offer card",
@@ -463,15 +528,15 @@
       "refersTo": "offer-card",
       "description": "A selected regulatory data offer with a provider identity and scoped-batch price.",
       "html": "<article class=\"ds-offer\"><div class=\"ds-provider\"><strong>Northstar Regulatory</strong><small>Data provider</small></div><button class=\"ds-offer-title\">Drug approval dossiers</button><p>Application, sponsor, active ingredients and approval dates, normalized into one research-ready batch.</p><div class=\"ds-offer-tags\"><span>Drug approvals</span></div><footer><strong>$3.20</strong><span>/ scoped batch</span><button class=\"ds-offer-open\" aria-label=\"View offer\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></footer></article>",
-      "css": ".ds-offer{font-family:var(--font-body,Inter,Arial,sans-serif);width:min(300px,100%);min-height:285px;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--accent,#3155d9);border-radius:13px;background:#f1f4ff;color:var(--ink,#20283f);padding:20px 20px 0;box-shadow:inset 0 0 0 1px var(--accent,#3155d9);transition:border-color .18s,background .18s;}.ds-offer:hover{border-color:#91a4da;box-shadow:none;}.ds-provider{font-size:11px;color:#45516d;margin-bottom:18px;}.ds-provider strong{font-weight:550;}.ds-provider small{display:block;color:#6a7489;font-size:9px;margin-top:3px;}.ds-offer-title{font-family:var(--font-heading,Manrope,Inter,Arial,sans-serif);text-align:left;padding:0;border:0;background:none;color:#263451;font-size:17px;font-weight:650;line-height:1.45;letter-spacing:-.025em;cursor:pointer;}.ds-offer-title:hover{color:var(--accent,#3155d9);}.ds-offer p{font-size:11px;line-height:1.75;color:#646f85;margin:8px 0 0;}.ds-offer-tags{display:flex;gap:5px;margin:13px 0 12px;}.ds-offer-tags span{padding:3px 6px;font-size:9px;background:#f4f5f9;border:1px solid #e4e7ef;border-radius:4px;color:#5d6881;}.ds-offer footer{display:flex;align-items:center;gap:5px;min-height:52px;border-top:1px solid #eaebee;margin-top:auto;}.ds-offer footer strong{font-size:22px;font-weight:600;color:#263451;font-variant-numeric:tabular-nums;letter-spacing:-.025em;}.ds-offer footer>span{font-size:9px;color:#68738a;}.ds-offer-open{display:grid;place-items:center;margin-left:auto;width:32px;height:32px;border-radius:7px;border:0;color:#50648f;background:none;cursor:pointer;}.ds-offer-open:hover{color:#fff;background:var(--accent,#3155d9);}.ds-offer button:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-offer button:active{transform:translateY(1px);} @media(prefers-reduced-motion:reduce){.ds-offer,.ds-offer-open,.ds-offer-tags,.ds-offer-title,.ds-provider{animation:none!important;transition:none!important;}}"
+      "css": ".ds-offer{font-family:var(--font-body,Inter,Arial,sans-serif);width:min(300px,100%);min-height:285px;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--accent,#3155d9);border-radius:13px;background:#f1f4ff;color:var(--ink,#20283f);padding:20px 20px 0;box-shadow:inset 0 0 0 1px var(--accent,#3155d9);transition:border-color .18s,background .18s,box-shadow .18s;}@media(hover:hover){.ds-offer:hover{border-color:var(--accent,#3155d9);box-shadow:0 7px 20px #1c32670a;}}.ds-provider{font-size:11px;color:#45516d;margin-bottom:18px;}.ds-provider strong{font-weight:550;}.ds-provider small{display:block;color:#6a7489;font-size:9px;margin-top:3px;}.ds-offer-title{font-family:var(--font-heading,Manrope,Inter,Arial,sans-serif);text-align:left;padding:0;border:0;background:none;color:#263451;font-size:17px;font-weight:650;line-height:1.45;letter-spacing:-.025em;cursor:pointer;}.ds-offer-title:hover{color:var(--accent,#3155d9);}.ds-offer p{font-size:11px;line-height:1.75;color:#646f85;margin:8px 0 0;}.ds-offer-tags{display:flex;gap:5px;margin:13px 0 12px;}.ds-offer-tags span{padding:3px 6px;font-size:9px;background:#f4f5f9;border:1px solid #e4e7ef;border-radius:4px;color:#5d6881;}.ds-offer footer{display:flex;align-items:center;gap:5px;min-height:52px;border-top:1px solid #eaebee;margin-top:auto;}.ds-offer footer strong{font-size:22px;font-weight:600;color:#263451;font-variant-numeric:tabular-nums;letter-spacing:-.025em;}.ds-offer footer>span{font-size:9px;color:#68738a;}.ds-offer-open{display:grid;place-items:center;margin-left:auto;width:32px;height:32px;border-radius:7px;border:0;color:#50648f;background:none;cursor:pointer;}.ds-offer-open:hover{color:#fff;background:var(--accent,#3155d9);}.ds-offer button:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-offer button:active{transform:translateY(1px);} @media(prefers-reduced-motion:reduce){.ds-offer,.ds-offer-open,.ds-offer-tags,.ds-offer-title,.ds-provider{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
       "name": "Amber research composer",
       "kind": "custom",
       "refersTo": "research-composer",
       "description": "Question input kept distinct from the source inventory.",
-      "html": "<section class=\"ds-composer\"><h2>What are you<br/>working on?</h2><p>Find the right sources. Approve an exact price.</p><textarea aria-label=\"Your research question\" placeholder=\"Find recent drug approvals and recall reasons…\" rows=\"5\"></textarea><div class=\"ds-approval\">No purchase without your approval</div><button>Start a research task<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></section>",
-      "css": ".ds-composer{font-family:var(--font-body,Inter,Arial,sans-serif);width:min(294px,100%);padding:23px 20px 17px;border:1px solid #ead7aa;border-radius:14px;background:#fcf0d5;}.ds-composer h2{font-family:var(--font-heading,Manrope,Inter,Arial,sans-serif);margin:0 0 12px;font-size:27px;font-weight:650;letter-spacing:-.03em;line-height:1.3;color:#42351f;}.ds-composer p{margin:0;color:#745f3c;font-size:11px;line-height:1.9;}.ds-composer textarea{font-family:var(--font-body,Inter,Arial,sans-serif);display:block;width:100%;min-height:132px;resize:vertical;margin-top:19px;padding:13px;border:1px solid #decca3;border-radius:8px;background:#fffaf0;color:#403a2b;font-size:12px;line-height:1.8;caret-color:var(--accent,#3155d9);}.ds-composer textarea::placeholder{color:#75654b;}.ds-composer textarea:focus{border-color:#a2782c;}.ds-approval{margin:10px 0 14px;color:#725c37;font-size:9px;text-align:center;}.ds-composer button{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:41px;border-radius:8px;padding:10px 15px;font-size:12px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;width:100%;font-size:11px;border:1px solid var(--accent,#3155d9);background:var(--accent,#3155d9);color:#fff;box-shadow:0 3px 7px #233f9915;}.ds-composer button:hover{background:var(--accent-dark,#2441af);border-color:var(--accent-dark,#2441af);box-shadow:0 4px 12px #233f9925;}.ds-composer button:active{transform:translateY(1px);}.ds-composer button:focus-visible,.ds-composer textarea:focus-visible{outline:2px solid #5378ff;outline-offset:4px;} @media(prefers-reduced-motion:reduce){.ds-approval,.ds-composer{animation:none!important;transition:none!important;}}"
+      "html": "<section class=\"ds-composer\"><h2>What are you<br/>working on?</h2><p>Find the right sources. Approve an exact price.</p><textarea aria-label=\"Your research question\" placeholder=\"Find recent drug approvals and recall reasons\u2026\" rows=\"5\"></textarea><div class=\"ds-approval\">No purchase without your approval</div><button>Start a research task<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></section>",
+      "css": ".ds-composer{font-family:var(--font-body,Inter,Arial,sans-serif);width:min(294px,100%);padding:23px 20px 17px;border:1px solid #ead7aa;border-radius:14px;background:#fcf0d5;}.ds-composer h2{font-family:var(--font-heading,Manrope,Inter,Arial,sans-serif);margin:0 0 12px;font-size:27px;font-weight:650;letter-spacing:-.03em;line-height:1.3;color:#42351f;}.ds-composer p{margin:0;color:#745f3c;font-size:11px;line-height:1.9;}.ds-composer textarea{font-family:var(--font-body,Inter,Arial,sans-serif);display:block;width:100%;min-height:132px;resize:vertical;margin-top:19px;padding:13px;border:1px solid #decca3;border-radius:8px;background:#fffaf0;color:#403a2b;font-size:12px;line-height:1.8;caret-color:var(--accent,#3155d9);}.ds-composer textarea::placeholder{color:#75654b;}.ds-composer textarea:focus{border-color:#a2782c;}.ds-approval{margin:10px 0 14px;color:#725c37;font-size:9px;text-align:center;}.ds-composer button{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:8px;padding:10px 15px;font-size:13px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;width:100%;font-size:13px;border:1px solid var(--accent,#3155d9);background:var(--accent,#3155d9);color:#fff;box-shadow:0 3px 7px #233f9915;}.ds-composer button:hover{background:var(--accent-dark,#2441af);border-color:var(--accent-dark,#2441af);box-shadow:0 4px 12px #233f9925;}.ds-composer button:active{transform:translateY(1px);}.ds-composer button:focus-visible,.ds-composer textarea:focus-visible{outline:2px solid #5378ff;outline-offset:4px;} @media(prefers-reduced-motion:reduce){.ds-approval,.ds-composer{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
       "name": "Comparison dock",
@@ -479,7 +544,23 @@
       "refersTo": "comparison-dock",
       "description": "A dark selection summary and amber review action before quote approval.",
       "html": "<section class=\"ds-dock\" aria-label=\"Offer comparison\"><div><strong>2 offers selected</strong><span>$6.00 total</span></div><button class=\"ds-clear\">Clear</button><button class=\"ds-review\">Compare &amp; review<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></section>",
-      "css": ".ds-dock{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 15px;background:#202c4d;color:#fff;border:1px solid #3e4f77;border-radius:12px;box-shadow:0 12px 32px #18233a30;animation:ds-arrive var(--motion-arrive,220ms) var(--ease-arrive,cubic-bezier(.16,1,.3,1));}.ds-dock>div{display:flex;align-items:center;gap:12px;flex:1;}.ds-dock strong{font-size:11px;font-weight:600;}.ds-dock span{color:#c3cde4;font-size:10px;font-variant-numeric:tabular-nums;}.ds-clear{font-family:var(--font-body,Inter,Arial,sans-serif);background:none;border:0;color:#d6def2;text-decoration:underline;text-underline-offset:3px;padding:5px;font-size:11px;cursor:pointer;}.ds-clear:hover{color:#fff;}.ds-review{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:41px;border-radius:8px;padding:10px 15px;font-size:12px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;background:#f5d683;color:#302b1d;border:1px solid #f5d683;}.ds-review:hover{background:#ffe6a5;}.ds-review:active{transform:translateY(1px);}.ds-dock button:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}@keyframes ds-arrive{from{opacity:0;translate:0 10px;}to{opacity:1;translate:0 0;}} @media(prefers-reduced-motion:reduce){.ds-clear,.ds-dock,.ds-review{animation:none!important;transition:none!important;}}"
+      "css": ".ds-dock{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 15px;background:#202c4d;color:#fff;border:1px solid #3e4f77;border-radius:12px;box-shadow:0 12px 32px #18233a30;animation:ds-arrive var(--motion-arrive,220ms) var(--ease-arrive,cubic-bezier(.16,1,.3,1));}.ds-dock>div{display:flex;align-items:center;gap:12px;flex:1;}.ds-dock strong{font-size:11px;font-weight:600;}.ds-dock span{color:#c3cde4;font-size:10px;font-variant-numeric:tabular-nums;}.ds-clear{font-family:var(--font-body,Inter,Arial,sans-serif);background:none;border:0;color:#d6def2;text-decoration:underline;text-underline-offset:3px;padding:5px;font-size:11px;cursor:pointer;}.ds-clear:hover{color:#fff;}.ds-review{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:8px;padding:10px 15px;font-size:13px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;background:#f5d683;color:#302b1d;border:1px solid #f5d683;}.ds-review:hover{background:#ffe6a5;}.ds-review:active{transform:translateY(1px);}.ds-dock button:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}@keyframes ds-arrive{from{opacity:0;translate:0 10px;}to{opacity:1;translate:0 0;}} @media(prefers-reduced-motion:reduce){.ds-clear,.ds-dock,.ds-review{animation:none!important;transition:none!important;transform:none!important;}}"
+    },
+    {
+      "name": "Form field",
+      "kind": "input",
+      "refersTo": "form-field",
+      "description": "Visible label and readable value with quiet hover/focus feedback.",
+      "html": "<label class=\"ds-field\">Name<input type=\"text\" value=\"Research team\" /></label>",
+      "css": ".ds-field{font-family:var(--font-body,Inter,Arial,sans-serif);display:grid;gap:8px;color:#4b5263;font-size:12px;font-weight:550;line-height:1.5;}.ds-field input{font-family:var(--font-body,Inter,Arial,sans-serif);min-height:44px;padding:11px 12px;border:1px solid var(--line,#dde1eb);border-radius:7px;background:#f9f9fa;color:var(--ink,#20283f);font-size:13px;font-weight:400;line-height:1.6;transition:border-color 140ms,background-color 140ms,box-shadow 140ms;}.ds-field input:hover{border-color:#a9b4cc;}.ds-field input:focus{background:#fff;border-color:var(--accent,#3155d9);}.ds-field input:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}@media(prefers-reduced-motion:reduce){.ds-field input{transition:none;}}"
+    },
+    {
+      "name": "Scrollable dialog",
+      "kind": "custom",
+      "refersTo": "dialog",
+      "description": "Fixed title and close control above a bounded scrollable body.",
+      "html": "<section class=\"ds-dialog\" role=\"dialog\" aria-labelledby=\"ds-dialog-title\"><header class=\"ds-dialog-heading\"><h2 id=\"ds-dialog-title\">Publish a dataset</h2><button aria-label=\"Close dialog\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m18 6-12 12M6 6l12 12\"/></svg></button></header><div class=\"ds-dialog-body\"><p>Set the data, source terms and batch price.</p></div></section>",
+      "css": ".ds-dialog{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;flex-direction:column;width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:hidden;border:1px solid #dde0e5;border-radius:16px;background:var(--surface,#fff);color:var(--ink,#20283f);box-shadow:0 28px 100px #0b122230;}.ds-dialog-heading{display:flex;align-items:start;justify-content:space-between;gap:16px;flex:0 0 auto;padding:24px 26px 20px;border-bottom:1px solid var(--line,#dde1eb);}.ds-dialog-heading h2{font-family:var(--font-heading,Manrope,Inter,Arial,sans-serif);font-size:22px;line-height:1.35;letter-spacing:-.025em;margin:0;}.ds-dialog-heading button{display:grid;place-items:center;width:29px;height:29px;border:0;border-radius:6px;background:none;color:#606c87;cursor:pointer;transition:color 140ms,background-color 140ms;}.ds-dialog-heading button:hover{background:#e9edfa;color:var(--accent,#3155d9);}.ds-dialog-heading button:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-dialog-body{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:24px 26px 26px;font-size:13px;}.ds-dialog-body p{margin:0;}@media(max-width:760px){.ds-dialog{max-height:calc(100dvh - 24px);}.ds-dialog-heading{padding:20px 20px 16px;}.ds-dialog-heading h2{font-size:21px;}.ds-dialog-body{padding:20px;}}@media(prefers-reduced-motion:reduce){.ds-dialog-heading button{transition:none;}}"
     }
   ],
   "narrative": {
@@ -510,7 +591,7 @@
       },
       {
         "name": "The Flat Inventory Rule",
-        "body": "Keep inventory cards flat on hover; use border and selection treatments to communicate interaction.",
+        "body": "Keep inventory card geometry fixed on hover; use border, a restrained ambient shadow, and selection treatments to communicate interaction.",
         "section": "elevation"
       }
     ],

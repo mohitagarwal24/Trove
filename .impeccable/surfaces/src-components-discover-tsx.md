@@ -22,3 +22,12 @@ FIRST VIEWPORT: An expanded 232px ink rail with a persistent desktop option for 
 FORM: Technical atlas index, fourth grounded direction; seed 2e59ff18. Other grounded sources: scientific data appendix, procurement desk, field notebook, airline navigation chart, standards binder, library periodical index. User delegates selection. Challenger verdicts: concourse board competitive in density; folio declined (comparison discipline retained); developer console competitive in control clarity; character catalogue declined (distinct provider identities retained); ticket wallet competitive in provenance; garden map declined (strong region separation retained). No borrowed illustration or literal ornament.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+
+## Approved shared refinement
+
+The all-route refinement keeps the incumbent visual world and real service behavior. Shared controls use 44px minimum height and 13px labels; forms use 12px labels and 13px values. Fixed dialog headings stay above a scrollable body within viewport bounds. Account pairs profile/Google panels and password fields before stacking on mobile. Connect has a compact token row above configuration and example-task columns, stacked up to 1050px. The official Google G and Google Sans Medium belong only to provider sign-in; local Manrope/Inter remain Trove’s typography.
+
+Long purchased values, receipt references, fingerprints, and source terms use progressive disclosure while retaining full data and download content. Owned zero-price plans lead directly to purchased data. Redundant introductions, decorative heading icons and empty-state workflow steps are removed.
+
+Motion extends existing comparison feedback with route opacity arrival, quiet button/row hover, a document-progress line, a scrolled utility-bar shadow, and a first-intersection opacity/clip reveal only for source and decision rows. Card geometry and tabular amounts remain stable. Default content stays visible, focused rows skip reveal, and reduced motion cancels active Web Animations and CSS transitions. Keep the rail callout and account controls reachable at normal zoom and short laptop heights. Do not restore green branding or invent provider verification, AI results or payment success.

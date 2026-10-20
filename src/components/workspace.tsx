@@ -126,7 +126,7 @@ export function Workspace() {
           <div className="composer-examples">
             {examplePrompts.map((p, i) => (
               <button key={i} onClick={() => setPrompt(p)}>
-                Example {i + 1}
+                {["Approvals", "Drug recalls", "Device recalls"][i]}
                 <ArrowRight size={11} />
               </button>
             ))}
@@ -182,22 +182,9 @@ export function Workspace() {
         <section className="task-output">
           {!task && !running ? (
             <div className="workspace-welcome">
-              <h2>Your next research task starts here.</h2>
-              <p>Find relevant data and review the price before you buy.</p>
-              <div className="welcome-steps">
-                <span>
-                  <b>01</b>Discover
-                </span>
-                <span>
-                  <b>02</b>Compare
-                </span>
-                <span>
-                  <b>03</b>Approve
-                </span>
-                <span>
-                  <b>04</b>Receive
-                </span>
-              </div>
+              <ListFilter size={28} aria-hidden="true" />
+              <h2>Your source shortlist</h2>
+              <p>Run a brief to compare matching data and prices.</p>
             </div>
           ) : running ? (
             <div className="planning-state panel">
@@ -267,12 +254,10 @@ export function Workspace() {
                     <h2>Source comparison</h2>
                     <span className="count-pill">{task.decisions.length}</span>
                   </div>
-                  <p className="panel-subtitle">
-                    Concrete trade-offs, before any money moves.
-                  </p>
                   <div className="source-decision-list">
                     {task.decisions.map((d) => (
                       <div
+                        data-reveal
                         className={`source-decision ${d.selected ? "decision-selected" : ""}`}
                         key={d.offerId}
                       >

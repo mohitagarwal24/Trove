@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api, post } from "@/lib/client";
-import { Modal, Notice } from "./ui";
+import { GoogleLink, Modal, Notice, PasswordField } from "./ui";
 import { useTrove } from "./trove-app";
 export function AuthDialog({
   open,
@@ -117,9 +117,7 @@ export function AuthDialog({
       description={
         verificationEmail
           ? `${sent ? "Enter the code sent to" : "Confirm your address:"} ${verificationEmail}${sent ? ". It expires in 10 minutes." : "."}`
-          : mode === "register"
-            ? "Your research and purchases, in one workspace."
-            : "Sign in to your workspace."
+          : undefined
       }
     >
       {verificationEmail ? (
@@ -223,13 +221,14 @@ export function AuthDialog({
         <>
           {capabilities.googleAuth && (
             <div className="google-sign-in">
-              <a
-                className="button button-secondary"
+              <GoogleLink
                 href={`/api/auth/google?returnTo=${encodeURIComponent(typeof window === "undefined" ? "/" : location.pathname + location.search)}`}
               >
                 Continue with Google
-              </a>
-              <p className="muted">or use your email</p>
+              </GoogleLink>
+              <p className="auth-divider">
+                <span>or</span>
+              </p>
             </div>
           )}
           <form
@@ -284,28 +283,18 @@ export function AuthDialog({
                 onChange={(e) => setEmail(e.target.value)}
               />
             </label>
-            <label>
-              Password
-              <input
-                type="password"
-                autoComplete={
-                  mode === "register" ? "new-password" : "current-password"
-                }
-                required
-                minLength={mode === "register" ? 12 : 1}
-                maxLength={128}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                aria-describedby={
-                  mode === "register" ? "password-hint" : undefined
-                }
-              />
-            </label>
-            {mode === "register" && (
-              <small id="password-hint" className="muted">
-                At least 12 characters.
-              </small>
-            )}
+            <PasswordField
+              label="Password"
+              autoComplete={
+                mode === "register" ? "new-password" : "current-password"
+              }
+              required
+              minLength={mode === "register" ? 12 : 1}
+              maxLength={128}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              hint={mode === "register" ? "At least 12 characters." : undefined}
+            />
             <button
               className="button button-primary"
               disabled={busy || checking}
@@ -354,7 +343,7 @@ export function PasswordRecovery() {
     [error, setError] = useState(""),
     [done, setDone] = useState(false);
   return (
-    <section className="panel recovery-panel">
+    <section className="panel recovery-panel page-enter">
       <h1>{token ? "Set a new password" : "Reset your password"}</h1>
       {done ? (
         <>
@@ -395,19 +384,16 @@ export function PasswordRecovery() {
         >
           {error && <Notice kind="error">{error}</Notice>}
           {token ? (
-            <label>
-              New password
-              <input
-                type="password"
-                autoComplete="new-password"
-                minLength={12}
-                maxLength={128}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <small>At least 12 characters.</small>
-            </label>
+            <PasswordField
+              label="New password"
+              autoComplete="new-password"
+              minLength={12}
+              maxLength={128}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              hint="At least 12 characters."
+            />
           ) : (
             <label>
               Email

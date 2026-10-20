@@ -105,11 +105,11 @@ export function Discover() {
   const [prompt, setPrompt] = useState("");
   useEffect(() => {
     const controller = new AbortController();
+    if (!query.trim()) {
+      setFound(offers);
+      return () => controller.abort();
+    }
     const timer = setTimeout(() => {
-      if (!query && category === "All data") {
-        setFound(offers);
-        return;
-      }
       api<{ offers: Offer[] }>(
         `/offers?q=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`,
         { signal: controller.signal },
@@ -124,7 +124,8 @@ export function Discover() {
       controller.abort();
     };
   }, [query, category, offers]);
-  const visible = found
+  const visible = (query.trim() ? found : offers)
+    .filter((o) => category === "All data" || o.category === category)
     .filter(
       (o) =>
         !freshOnly ||
@@ -401,17 +402,17 @@ export function OfferCard({
   onOpen: () => void;
 }) {
   return (
-    <article className={`offer-card ${selected ? "offer-selected" : ""}`}>
+    <article
+      data-reveal
+      className={`offer-card ${selected ? "offer-selected" : ""}`}
+    >
       <div className="offer-card-top">
         <div className="provider">
           <span className={`provider-logo provider-${offer.seller.color}`}>
             {offer.seller.initials}
             <span />
           </span>
-          <span>
-            {offer.seller.name}
-            <small>Data provider</small>
-          </span>
+          <span>{offer.seller.name}</span>
         </div>
         <button
           className={`select-offer ${selected ? "is-selected" : ""}`}
@@ -468,7 +469,7 @@ export function OfferDetail({
       open={!!offer}
       onOpenChange={(open) => !open && onClose()}
       title={offer?.title || "Offer details"}
-      description="Review the source, permitted scope, and fixed public preview before buying."
+      description="Source details and sample records."
       wide
     >
       {offer && (

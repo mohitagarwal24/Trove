@@ -37,6 +37,12 @@ Collapse the desktop sidebar using the button beside the breadcrumb. Reload and 
 
 Select a source and observe its checkmark and the comparison dock; adding another should update the count without changing card positions or animating prices. Change categories, open a source, and close with Escape: keyboard focus should return to the opener. Enable the operating system’s reduced-motion preference and repeat; state feedback remains immediate with no movement.
 
+Scroll through Discover and longer pages: the utility bar indicates position and source rows settle into view. Hover controls and verify feedback without shifting prices or card geometry. With reduced motion enabled, the scripted inventory reveals stop. Category changes should immediately show only the selected category, even before a text search completes.
+
+In sign-in, confirm the full-color Google mark appears when configured. Use Show/Hide password and verify the value is preserved. At a 610px laptop height the sign-in dialog, account control and sidebar agent callout should remain reachable. On a narrow phone, open Publish dataset and scroll to its final action: the dialog title and close button should remain in place.
+
+In purchased data, expand a long value and compare it with the downloaded JSON. The table scrolls independently instead of stretching the entire page. Open Transaction references and Source fingerprint when needed. A quote for entirely owned data should show Already purchased with direct access links and no payment action; mixed plans should retain an exact total for new scope.
+
 Once Google credentials exist, choose Continue with Google in sign-in, complete consent, and expect a new private account. An existing email/password account must sign in normally and connect Google explicitly in Account. Test Google login again, cancelled consent, stale callbacks, and Google-only account closure after confirming identity. Automated tests validate the callback boundaries; they do not replace actual Google consent.
 
 ## Agent and recovery checks
