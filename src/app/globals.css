@@ -1373,6 +1373,7 @@ kbd {
   margin-top: 21px;
 }
 .table-scroll {
+  position: relative;
   max-width: 100%;
   overflow: auto;
 }
@@ -1911,6 +1912,24 @@ kbd {
   color: #4d5465;
   margin-top: 10px;
 }
+.purchase-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin: 16px 0 0;
+}
+.purchase-statuses > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.purchase-statuses dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.purchase-statuses dd {
+  margin: 0;
+}
 .purchase-detail-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 295px;
@@ -1922,66 +1941,6 @@ kbd {
   display: grid;
   gap: 20px;
   min-width: 0;
-}
-.progress-steps {
-  display: flex;
-  margin-top: 29px;
-  margin-bottom: 22px;
-  gap: 7px;
-}
-.progress-step {
-  flex: 1;
-  position: relative;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  gap: 7px;
-}
-.progress-step > span {
-  width: 29px;
-  height: 29px;
-  border-radius: 50%;
-  background: #eff0f3;
-  border: 1px solid #dfe1e6;
-  display: grid;
-  place-items: center;
-  z-index: 1;
-}
-.progress-step:not(:last-child):after {
-  content: "";
-  position: absolute;
-  height: 1px;
-  top: 14px;
-  left: 65%;
-  width: 75%;
-  background: #e1e3e7;
-}
-.step-done > span {
-  background: #e2e4e9;
-  border-color: #d0d3da;
-  color: #464c5c;
-}
-.progress-step > small {
-  font-size: 7px;
-  color: #4e5668;
-}
-.progress-step > strong {
-  font-weight: 500;
-}
-.independent-states {
-  display: flex;
-  gap: 16px;
-  border-top: 1px solid var(--line);
-  padding-top: 15px;
-  flex-wrap: wrap;
-}
-.independent-states > span {
-  font-size: 8px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: #4c5465;
 }
 .checkout-panel > p {
   font-size: 11px;
@@ -2583,12 +2542,6 @@ paypal-button {
     grid-template-columns: minmax(0, 1fr) 270px;
     gap: 18px;
   }
-  .independent-states {
-    gap: 10px;
-  }
-  .independent-states .badge {
-    font-size: 7px;
-  }
 }
 @media (max-width: 1050px) {
   .discovery-layout {
@@ -2905,12 +2858,6 @@ paypal-button {
   }
   .purchase-detail-heading h1 {
     font-size: 29px;
-  }
-  .progress-step > strong {
-    font-size: 7px;
-  }
-  .independent-states {
-    gap: 9px;
   }
   .result-tabs {
     gap: 17px;
@@ -3359,15 +3306,6 @@ paypal-button {
 .token-row small {
   color: #4a5162;
   font-size: 9px;
-}
-.progress-step > strong {
-  font-size: 9px;
-}
-.progress-step {
-  color: #4d5465;
-}
-.step-done > strong {
-  color: #464c5c;
 }
 .app-footer {
   font-size: 9px;
@@ -4501,20 +4439,10 @@ summary:focus-visible {
 
 /* Shared launch surfaces: readable forms, quiet structure and useful motion. */
 .topbar {
-  --scroll-progress: 0;
   transition: box-shadow var(--motion-arrive) var(--ease-arrive);
 }
 .topbar[data-scrolled="true"] {
   box-shadow: 0 5px 18px #1822400a;
-}
-.scroll-progress {
-  position: absolute;
-  inset: auto 0 -1px;
-  height: 2px;
-  background: var(--accent);
-  transform: scaleX(var(--scroll-progress));
-  transform-origin: left;
-  pointer-events: none;
 }
 .button {
   min-height: 44px;

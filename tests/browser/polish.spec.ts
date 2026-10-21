@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { buyer } from "./fixtures";
+import { buyer, purchaseDisplayFixture } from "./fixtures";
 
 test("category changes never leave offers from the previous category clickable", async ({
   page,
@@ -28,9 +28,67 @@ test("category changes never leave offers from the previous category clickable",
   await expect(password).toHaveAttribute("type", "password");
   await expect(password).toHaveValue("A password I can inspect");
 });
+test("purchase status replaces the timeline without hiding approval, receipts or delivery checks", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1192, height: 507 });
+  await buyer(page);
+  for (const state of ["voided", "awaiting_approval"] as const) {
+    const id = await purchaseDisplayFixture(page, state);
+    await page.goto(`/purchases/${id}`);
+    await expect(page.locator(".purchase-statuses")).toContainText(
+      state.replaceAll("_", " "),
+    );
+    await expect(page.locator(".purchase-statuses")).toContainText("pending");
+    await expect(
+      page.getByRole("heading", { name: "Purchase progress", exact: true }),
+    ).toHaveCount(0);
+    await expect(page.locator(".progress-steps, .scroll-progress")).toHaveCount(
+      0,
+    );
+    if (state === "awaiting_approval")
+      await expect(
+        page.getByRole("heading", { name: "Approve purchase", exact: true }),
+      ).toBeVisible();
+    else
+      await expect(
+        page.getByRole("heading", { name: "Purchase stopped", exact: true }),
+      ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Receipt & provenance", exact: true })
+      .click();
+    await expect(page.locator(".receipt-sheet")).toBeVisible();
+    await page
+      .getByRole("button", { name: "Delivery checks", exact: true })
+      .click();
+    await expect(page.locator(".result-tabs button.active")).toHaveText(
+      "Delivery checks",
+    );
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBeTruthy();
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/purchases");
+  await expect(page.locator(".purchase-table tbody tr")).toHaveCount(2);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.locator(".purchase-table-panel .table-scroll").evaluate((el) => {
+    el.scrollLeft = el.scrollWidth;
+  });
+  await expect(
+    page.locator(".purchase-table tbody tr").first().getByRole("link").last(),
+  ).toBeInViewport();
+
+});
 
 for (const reducedMotion of ["no-preference", "reduce"] as const) {
-  test(`scroll feedback respects motion preference: ${reducedMotion}`, async ({
+  test(`source reveal respects motion preference without a scroll bar: ${reducedMotion}`, async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion });
@@ -50,26 +108,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
       "data-scrolled",
       "true",
     );
-    await expect
-      .poll(() =>
-        page
-          .locator(".topbar")
-          .evaluate((el) =>
-            Number(
-              (el as HTMLElement).style.getPropertyValue("--scroll-progress"),
-            ),
-          ),
-      )
-      .toBeGreaterThan(0.2);
-    const progressBounds = await page.locator(".scroll-progress").boundingBox();
-    const headerBounds = await page.locator(".topbar").boundingBox();
-    expect(progressBounds).not.toBeNull();
-    expect(headerBounds).not.toBeNull();
-    // Scrolling must never paint the progress line over catalogue content.
-    expect(progressBounds!.y).toBeCloseTo(
-      headerBounds!.y + headerBounds!.height - 2,
-      0,
-    );
+    await expect(page.locator(".scroll-progress")).toHaveCount(0);
     const count = await page.evaluate(
       () =>
         (window as typeof window & { inventoryAnimations: number })

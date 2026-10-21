@@ -53,6 +53,41 @@ export async function buyer(page: Page) {
   expect((await response.json()).signedIn).toBe(true);
   return email;
 }
+export async function purchaseDisplayFixture(
+  page: Page,
+  state: "voided" | "awaiting_approval",
+) {
+  localDatabase();
+  const bootstrapResponse = await page.request.get("/api/bootstrap");
+  const bootstrap = await bootstrapResponse.json();
+  const quoteResponse = await page.request.post("/api/quotes", {
+    headers: { Origin: new URL(bootstrapResponse.url()).origin },
+    data: {
+      offerIds: [bootstrap.offers[0].id],
+      quantity: 2,
+      purpose: "academic_research",
+    },
+  });
+  expect(quoteResponse.ok()).toBeTruthy();
+  const quote = await quoteResponse.json();
+  // Controlled local display state only: no PayPal order, capture, ledger or entitlement.
+  // An expired quote keeps the pending screen from loading the external checkout SDK.
+  await db.quote.update({
+    where: { id: quote.id },
+    data: { expiresAt: new Date(0) },
+  });
+  const purchase = await db.purchase.create({
+    data: {
+      quoteId: quote.id,
+      workspaceId: bootstrap.user.workspaceId,
+      mode: "sandbox",
+      idempotencyKey: `ui-progress-${randomUUID()}`,
+      paymentState: state,
+      ...(state === "voided" ? { cancelledAt: new Date() } : {}),
+    },
+  });
+  return purchase.id;
+}
 export async function verificationDelivery(page: Page) {
   localDatabase();
   const code = "401829";

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-20T17:01:10.938819+00:00",
+  "generatedAt": "2026-10-21T04:39:19.125518+00:00",
   "title": "Design System: Trove",
   "extensions": {
     "colorMeta": {
@@ -492,8 +492,8 @@
       },
       {
         "name": "scroll-feedback",
-        "value": "2px progress line; 220ms shadow transition",
-        "purpose": "Document progress uses scaleX; utility-bar shadow follows scrolling beyond 12px. Both preserve bar position and geometry."
+        "value": "220ms shadow transition",
+        "purpose": "Utility-bar shadow follows scrolling beyond 12px while preserving bar position and geometry."
       },
       {
         "name": "convergence-render-interval",

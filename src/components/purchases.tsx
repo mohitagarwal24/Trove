@@ -5,10 +5,8 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  CheckCheck,
   ChevronRight,
   Download,
-  FileCheck2,
   LockKeyhole,
   PackageCheck,
   ReceiptText,
@@ -367,65 +365,30 @@ export function PurchaseDetail({ id }: { id: string }) {
             {p.quote.lines.length === 1 ? "source" : "sources"} · Created{" "}
             {new Date(p.createdAt).toLocaleString()}
           </p>
+          <dl
+            className="purchase-statuses"
+            aria-label="Purchase status"
+            aria-live="polite"
+          >
+            <div>
+              <dt>Payment</dt>
+              <dd>
+                <Status value={p.paymentState} />
+              </dd>
+            </div>
+            <div>
+              <dt>Delivery</dt>
+              <dd>
+                <Status value={p.fulfilmentState} />
+              </dd>
+            </div>
+          </dl>
         </div>
         {p.mode === "sandbox" && <Badge tone="amber">PayPal Sandbox</Badge>}
       </section>
       {p.error && <Notice kind={failed ? "error" : "info"}>{p.error}</Notice>}
       <div className="purchase-detail-layout">
         <div className="purchase-detail-main">
-          <div className="panel purchase-progress">
-            <div className="panel-title">
-              <ShieldCheck size={18} />
-              <h2>Purchase progress</h2>
-            </div>
-            <div className="progress-steps">
-              {[
-                { label: "Plan created", done: true, Icon: FileCheck2 },
-                {
-                  label: "Buyer approval",
-                  done: !!p.approvedAt,
-                  Icon: CheckCheck,
-                },
-                {
-                  label: "Delivery checks",
-                  done: ["validated", "available", "access_expired"].includes(
-                    p.fulfilmentState,
-                  ),
-                  Icon: ShieldCheck,
-                },
-                {
-                  label: "Payment captured",
-                  done: ["captured", "refund_pending", "refunded"].includes(
-                    p.paymentState,
-                  ),
-                  Icon: Wallet,
-                },
-                {
-                  label: "Result available",
-                  done: !!p.entitlement && !p.entitlement.revokedAt,
-                  Icon: PackageCheck,
-                },
-              ].map((s) => (
-                <div
-                  className={`progress-step ${s.done ? "step-done" : ""}`}
-                  key={s.label}
-                >
-                  <span>
-                    {s.done ? <Check size={16} /> : <s.Icon size={16} />}
-                  </span>
-                  <strong>{s.label}</strong>
-                </div>
-              ))}
-            </div>
-            <div className="independent-states">
-              <span>
-                Payment <Status value={p.paymentState} />
-              </span>
-              <span>
-                Delivery <Status value={p.fulfilmentState} />
-              </span>
-            </div>
-          </div>
           {p.paymentState === "awaiting_approval" && (
             <section className="panel checkout-panel">
               <div className="panel-title">

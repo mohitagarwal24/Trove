@@ -421,7 +421,6 @@ export function TroveApp() {
         </aside>
         <div className="main-shell" inert={smallScreen && mobile}>
           <header className="topbar">
-            <div className="scroll-progress" aria-hidden="true" />
             <div className="breadcrumb">
               <button
                 className="icon-button sidebar-toggle"

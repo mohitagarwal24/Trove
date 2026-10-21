@@ -14,11 +14,6 @@ export function usePageMotion(pathname: string, ready: boolean) {
       disposed = false;
     const update = () => {
       frame = 0;
-      const range = document.documentElement.scrollHeight - innerHeight;
-      header.style.setProperty(
-        "--scroll-progress",
-        String(range > 0 ? Math.max(0, Math.min(1, scrollY / range)) : 0),
-      );
       header.dataset.scrolled = String(scrollY > 12);
     };
     const schedule = () => {
