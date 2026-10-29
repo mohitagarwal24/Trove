@@ -12,8 +12,6 @@ colors:
   accent: "#3155d9"
   accent-dark: "#2441af"
   highlight: "#f5d683"
-  research-paper: "#fcf0d5"
-  research-line: "#ead7aa"
   selected-surface: "#f1f4ff"
   success: "#23694d"
   success-surface: "#eaf5ee"
@@ -38,9 +36,9 @@ typography:
     fontWeight: 650
   display:
     fontFamily: "Manrope, Inter, Arial, sans-serif"
-    fontSize: "44px"
+    fontSize: "32px"
     fontWeight: 700
-    lineHeight: 1.13
+    lineHeight: 1.2
     letterSpacing: "-0.035em"
   headline:
     fontFamily: "Manrope, Inter, Arial, sans-serif"
@@ -49,7 +47,7 @@ typography:
     letterSpacing: "-0.4px"
   title:
     fontFamily: "Manrope, Inter, Arial, sans-serif"
-    fontSize: "17px"
+    fontSize: "18px"
     fontWeight: 650
     lineHeight: 1.45
     letterSpacing: "-0.025em"
@@ -79,7 +77,7 @@ rounded:
   field: "7px"
   search: "9px"
   dock: "12px"
-  offer: "13px"
+  offer: "12px"
   panel: "14px"
   dialog: "16px"
 spacing:
@@ -89,7 +87,7 @@ spacing:
   lg: "20px"
   panel: "23px"
   section: "26px"
-  page-top: "32px"
+  page-top: "36px"
   desktop-gutter: "38px"
 components:
   landing-action:
@@ -156,14 +154,12 @@ components:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.offer}"
-    padding: "20px 20px 0"
+    padding: "22px 22px 0"
   offer-card-selected:
     backgroundColor: "{colors.selected-surface}"
-  research-composer:
-    backgroundColor: "{colors.research-paper}"
-    textColor: "#42351f"
-    rounded: "{rounded.panel}"
-    padding: "23px 20px 17px"
+  research-start:
+    textColor: "{colors.ink}"
+    padding: "19px 4px"
   comparison-dock:
     backgroundColor: "#202c4d"
     textColor: "{colors.surface}"
@@ -187,7 +183,7 @@ components:
 
 **Creative North Star: "The Technical Atlas"**
 
-Trove is a working research marketplace: an ink navigation rail establishes orientation, chalk surfaces hold the source inventory, cobalt marks selection and action, and amber gives the research question its own place. The result is compact, orderly, and specific to a tool for investigating data.
+Trove is a working research marketplace: an ink navigation rail establishes orientation, chalk surfaces hold the source inventory, cobalt marks selection and action, and amber marks navigation highlights and public entry actions. The result is compact, orderly, and specific to a tool for investigating data.
 
 The approved replacement of the former green identity retains the application and local fonts. Prepared regulatory datasets appear as ordinary paid products; source scope, original attribution, upstream reuse rights, exact USD prices, and human approval remain legible. The system uses functional line icons and geometry, with concise copy and progressive disclosure for detailed terms. Supply assumptions belong in the hackathon pitch, while the interface identifies the actual PayPal payment environment.
 
@@ -197,7 +193,7 @@ The approved Data Convergence public introduction expands this world into deep i
 
 - Persistent ink navigation with reachable account and agent controls.
 - Cobalt actions and selection against quiet white inventory panels.
-- An amber question composer separated from source browsing.
+- Editable research starting points shared across dashboard, catalogue, and workspace.
 - Manrope headings, Inter controls, and tabular financial values.
 - Flat information surfaces with depth reserved for controls and overlays.
 - A spacious deep-ink introduction with amber entry actions and source fragments that gather into context.
@@ -206,7 +202,7 @@ The normative values above describe the current cascades in `src/app/globals.css
 
 ## Colors
 
-Cool ink and cobalt organize the working interface; amber identifies research, sandbox context, and entry actions on the deep-ink public introduction.
+Cool ink and cobalt organize the working interface; amber identifies navigation highlights, sandbox context, and entry actions on the deep-ink public introduction.
 
 ### Primary
 
@@ -216,7 +212,6 @@ Cool ink and cobalt organize the working interface; amber identifies research, s
 
 - **Amber Marker** (`highlight`): the brand period on the ink rail, agent connection link, and primary action inside the dark comparison dock.
 - On deep-ink public surfaces, **Amber Marker** also carries headline emphasis, entry actions, and the connected-context bundle. The pale closing section returns to cobalt actions and emphasis.
-- **Research Paper** (`research-paper`) and **Research Rule** (`research-line`): the question composer and its containing stroke. The textarea uses an even lighter warm inset.
 
 ### Neutral
 
@@ -228,7 +223,7 @@ Cool ink and cobalt organize the working interface; amber identifies research, s
 
 Success green belongs to confirmed status badges and success notices. Error red belongs to error copy and error states. Neither is a brand accent. Every state also carries text or an icon with an accessible name.
 
-**The Action Cobalt Rule.** In the working application, use cobalt to express an action, selection, or the established heading emphasis; preserve amber for its research, navigation-highlight, and sandbox roles. Deep-ink public surfaces use amber entry actions and headline emphasis; pale public surfaces return to cobalt.
+**The Action Cobalt Rule.** In the working application, use cobalt to express an action, selection, or the established heading emphasis; preserve amber for its navigation-highlight, agent-panel icon, and sandbox roles. Deep-ink public surfaces use amber entry actions and headline emphasis; pale public surfaces return to cobalt.
 
 ## Typography
 
@@ -242,12 +237,12 @@ Manrope adds rounded, confident headings while Inter preserves the dense working
 ### Hierarchy
 
 - **Public display:** the landing-display role uses a lighter Manrope weight and balanced wrapping. It becomes (57px) up to (1100px), then `clamp(39px, 8.9vw, 58px)` up to (760px). Desktop heights up to (700px) use (64px). Supporting story copy uses the landing-body role, a (370px) maximum width, and becomes (13px) with a (330px) maximum on mobile. The pale closing headline uses `clamp(40px, 4.6vw, 68px)`, then (44px) on mobile. Sign-in uses a (31px) heading, becoming (29px) on mobile.
-- **Display:** the frontmatter role governs the main Discover heading. It becomes (38px) at widths up to (1050px) and (36px) up to (760px). Compact route headings use (36px), then (34px), then (32px) at the same breakpoints.
-- **Headline:** section headings start with the frontmatter role; catalogue and panel titles often use (15px). The amber composer's question uses (27px), weight (650), line height (1.3), and tracking (-0.03em); at widths between (761px) and (1250px), it uses (24px).
+- **Display:** the frontmatter role sets the working-page baseline. Existing compact route overrides still use (36px) on desktop and (34px) up to (1050px), while the older standard-page override makes Discover (38px) between (761px) and (1050px). The final shared mobile override is (28px). This tablet increase is inherited cascade drift, not a scale to extend to new surfaces.
+- **Headline:** section headings start with the frontmatter role; catalogue and panel titles often use (15px). The white catalogue guide uses (20px) Manrope at line height (1.35). Research-start titles use (14px) Inter at weight (550), with (12px) supporting text, locally (11px) inside the narrower catalogue guide.
 - **Title:** offer titles use the frontmatter role, become (16px) up to (1250px), and (18px) up to (760px).
-- **Body:** the application base is the frontmatter body role. Page descriptions use a maximum width of (65ch) and line height (1.8). Offer descriptions use (11px) and line height (1.75), becoming (12px) on mobile.
+- **Body:** the application base is the frontmatter body role. Page descriptions use a maximum width of (65ch) and line height (1.8). Offer descriptions use (13px) and line height (1.75), becoming (12px) on mobile. Search values and placeholders use (13px); provider names use (12px) on desktop and (11px) on mobile.
 - **Action:** the frontmatter action role governs standard buttons; small buttons use (12px).
-- **Label:** the frontmatter label role governs visible form labels. Form values use body size with line height (1.6); helper copy uses (12px) and line height (1.65). Sidebar links use (12px), increasing to (13px) on mobile.
+- **Label:** the frontmatter label role governs visible form labels. Form values use body size with line height (1.6); helper copy uses (12px) and line height (1.65). Sidebar links use (13px).
 - **Financial values:** use tabular numerals on offer prices, metrics, budgets, quote totals, summary totals, and amount columns. Offer prices use (22px).
 
 **The Stable Amount Rule.** Financial values retain tabular numerals and an explicit USD context; changes in value must not shift a comparison column's rhythm.
@@ -256,17 +251,17 @@ Inherited compact metadata and uppercase utility labels remain in secondary scre
 
 ## Layout
 
-Public surfaces run outside the application rail. The landing's fixed header is (96px) high with (5.5vw) horizontal gutters; on mobile it becomes (76px) with (22px) gutters. Native scrolling passes four viewport-height chapters alongside a sticky `100svh` scene, with a (600px) desktop minimum and (650px) mobile minimum. The text column occupies (52%) with a (740px) maximum; mobile makes it full width and moves source fragments below the copy. The scene stays inside its story so the pale closing section remains clear. The closing section uses a two-column grid with (112px 7vw) padding; up to (760px), it becomes one column with (70px 25px) padding. Reduced motion and graphics failure put all chapters into normal flow, followed by the source disclosures, while the fixed header and skip links stay reachable.
+Public surfaces run outside the application rail. The landing's fixed header is (96px) high with (5.5vw) horizontal gutters; on mobile it becomes (76px) with (22px) gutters. Native scrolling passes four viewport-height chapters alongside a sticky `100svh` scene, with a (600px) desktop minimum and (650px) mobile minimum. The text column occupies (52%) with a (740px) maximum; mobile makes it full width and moves source fragments below the copy. The scene stays inside its story so the pale closing section remains clear. Available catalogue metadata adds a white source-preview section between the story and closing section, with a three-column divided inventory that stacks up to (760px). Source titles and arrows lead directly into descriptions, fields, bounded record counts, and tabular USD prices. The closing section uses a two-column grid with (112px 7vw) padding; up to (760px), it becomes one column with (70px 25px) padding. Reduced motion and graphics failure put all chapters into normal flow, followed by the source disclosures, while the fixed header and skip links stay reachable.
 
-Dedicated sign-in uses a (44% / 56%) story/form split, with the form centered at a (400px) maximum width. Up to (760px), the story contracts to a brand strip and the form uses (24px) page gutters and a (420px) maximum. The dashboard reuses the working shell and a (1200px) content maximum. Three adjacent action links precede two equal recent-research/data columns with a (30px) gap; both groups stack up to (760px). Its mobile heading and primary action stack, with a (30px) heading. The mobile agent callout uses a (24px) icon column beside flexible text, with the action below the text. Empty states occupy the same sections as genuine account data.
+Dedicated sign-in uses a (44% / 56%) story/form split, with the form centered at a (400px) maximum width. Up to (760px), the story contracts to a brand strip and the form uses (24px) page gutters and a (420px) maximum. The dashboard reuses the working shell and a (1200px) content maximum. A white research-start panel and deep-ink agent panel share (1.65fr / 1fr) columns, a (270px) minimum agent width, and a (24px) gap; they stack up to (1050px). Two equal recent-research/data columns follow with a (30px) gap and stack up to (760px). Its mobile heading and primary action stack. The mobile agent callout uses a (24px) icon column beside flexible text, with the action below the text. Empty states occupy the same sections as genuine account data.
 
 The fixed rail is (232px) wide, matched by the main shell's left margin. At widths up to (1250px), both become (208px). The rail uses (100dvh): its brand and account footer do not shrink, and the middle region has `min-height: 0` with vertical scrolling. The agent callout lives inside that scrollable region, so “Your agent. Better informed.” stays reachable on shorter laptops. At desktop heights up to (820px), rail padding and gaps compress; up to (700px), the callout icon hides and copy spacing tightens. Account controls remain outside the scroll region.
 
 Above the mobile breakpoint, a labelled utility-bar toggle switches the expanded rail to a (76px) icon rail and matches the main shell margin to it. The preference is stored in browser storage. The compact rail hides the workspace switch, group labels, callout, and profile text while retaining route icons with accessible names and native titles. Its account avatar still opens the account menu.
 
-The utility bar is (64px) tall. After (12px) of scroll the bar gains a restrained shadow without changing its position or height. Main content is centered with a maximum width of (1510px), desktop horizontal gutters of (38px), top padding of (32px), and bottom padding of (55px). Up to (1250px), horizontal gutters become (25px) and bottom padding (45px). Up to (760px), gutters become (20px) and the utility bar (61px); up to (460px), gutters become (16px).
+The utility bar is (64px) tall. After (12px) of scroll the bar gains a restrained shadow without changing its position or height. Main content is centered with a maximum width of (1510px), desktop horizontal gutters of (38px), top padding of (36px), and bottom padding of (55px). Up to (1250px), horizontal gutters become (25px) and bottom padding (45px). Up to (760px), gutters become (20px) and the utility bar (61px); up to (460px), gutters become (16px).
 
-Discover has a flexible inventory plus a (294px) composer column, separated by (26px). At (1600px) and above, the composer becomes (320px) with a (32px) gap. Up to (1250px), it becomes (260px) with a (20px) gap. Up to (1050px), the composer group moves below the inventory and uses a (1.5fr / 1fr) internal grid; up to (460px), that group becomes one column. Offers use two equal columns and a (16px) gap, collapsing to one column up to (460px). Category tabs scroll horizontally rather than wrap.
+Discover has a flexible inventory plus a (294px) guide column, separated by (26px). At (1600px) and above, the guide becomes (320px) with a (32px) gap. Up to (1250px), it becomes (260px) with a (20px) gap. Up to (1050px), the guide moves below the inventory and its three research starts form equal columns with a (20px) gap; up to (760px), the starts return to divided rows. Offers use two equal columns and a (16px) gap, collapsing to one column up to (460px). Category tabs scroll horizontally rather than wrap.
 
 Workspace uses a (350px) composer beside flexible output, becoming (300px) up to (1250px) and one column up to (1050px). Connect has a maximum width of (1160px). Account-based client setup and connected-app management occupy adjacent columns (1.5fr / 0.9fr, with a 260px minimum on the latter) separated by (22px). Advanced access tokens use a full-width native disclosure below these panels; the example task and collapsed tool reference follow. The columns stack up to (1050px), and connected-app rows wrap on narrow screens. Standalone connection consent sits outside the rail, with a home link above a panel in a centered (540px) maximum-width column. Long app names and callback hosts wrap; consent actions can wrap on narrow screens. Account uses a maximum width of (1000px), paired profile and Google panels, then full-width security and data panels. Password fields share two equal columns; account grids become one column up to (760px). Connect’s tool reference is collapsed until requested. Purchase details similarly collapse their summary aside at (1050px). Data tables preserve columns inside horizontally scrollable containers.
 
@@ -295,7 +290,7 @@ White panels and offer cards rest on borders and tonal separation. Fine-pointer 
 
 Motion uses feedback (140ms), arrival (220ms), and exit (110ms) durations. Arrivals use `cubic-bezier(0.16, 1, 0.3, 1)`; drawer exits use `cubic-bezier(0.4, 0, 1, 1)`. The comparison dock arrives from a (10px) offset with opacity, keeping its shadow constant. The selected checkmark draws and the category underline expands from (0.3) to full width over the arrival duration. Selection-count changes fade over the feedback duration; financial values and layout-driving properties remain immediate.
 
-Existing button and offer colors, borders, and shadows retain (180ms) transitions; field and icon-button feedback uses (140ms), and navigation uses (160ms); pressed buttons move down (1px) over the exit duration. Primary-action and offer arrows move (3px) over the feedback duration, while research-suggestion arrows retain (180ms). The mobile drawer opens over the arrival duration and closes over the exit duration. Dialogs enter with opacity and scale (0.985 to 1) over the arrival duration; content exits with opacity and a (4px) downward translation over the exit duration, while the overlay fades in over the feedback duration and out over the exit duration. Account menus settle from (4px) with opacity over (160ms). Route content fades from opacity (0.6) to (1) over (240ms) without translation. Only source inventory and newly returned decision rows unfold on first intersection: opacity (0.86 to 1) and an (8px to 0) bottom clip over (360ms), using arrival easing. Their default render remains visible; focused rows skip the animation. The scroll hook cancels active Web Animations when reduced motion is requested and cleans up observers on route changes. Reduced-motion preferences disable animations, transitions, smooth scrolling, and decorative press/hover transforms; selection marks, state colors, live status, and focus behavior remain available immediately.
+Existing button and offer colors, borders, and shadows retain (180ms) transitions; field and icon-button feedback uses (140ms), and navigation uses (160ms); pressed buttons move down (1px) over the exit duration. Primary-action and offer arrows move (3px) over the feedback duration, while research-start rows change fill and text color over (160ms). The mobile drawer opens over the arrival duration and closes over the exit duration. Dialogs enter with opacity and scale (0.985 to 1) over the arrival duration; content exits with opacity and a (4px) downward translation over the exit duration, while the overlay fades in over the feedback duration and out over the exit duration. Account menus settle from (4px) with opacity over (160ms). Route content fades from opacity (0.6) to (1) over (240ms) without translation. Only source inventory and newly returned decision rows unfold on first intersection: opacity (0.86 to 1) and an (8px to 0) bottom clip over (360ms), using arrival easing. Their default render remains visible; focused rows skip the animation. The scroll hook cancels active Web Animations when reduced motion is requested and cleans up observers on route changes. Reduced-motion preferences disable animations, transitions, smooth scrolling, and decorative press/hover transforms; selection marks, state colors, live status, and focus behavior remain available immediately.
 
 The public scene is progressively enhanced: accessible copy appears before Three.js is imported. Native scroll progress drives particles from scattered points toward layered document frames; subtle pointer rotation stays decorative. Render work is throttled by a (32ms) frame interval, with (2200) desktop particles and (700) mobile particles, and device-pixel-ratio caps of (1.5 / 1.25). Offscreen and hidden-document rendering pauses; geometry, materials, observers, and listeners are disposed on cleanup. Reduced motion skips the geometry import, and graphics failure or context loss selects the normal-flow story. Entry arrows move (2px, -2px) over (180ms); the context bundle fades and settles from (14px) over (240ms). None of this motion signals a real purchase or research completion.
 
@@ -323,7 +318,7 @@ Offer tags use a pale cool fill, thin border, small radius, and compact padding.
 
 ### Cards / Containers
 
-Offer cards pair a provider identity and selection control with title, scope copy, category tags, source freshness, record limit, and a divided scoped-batch price footer. Standard cards use frontmatter padding and a minimum height of (285px) across the current cascade. At widths up to (1250px), padding becomes (18px 17px 0); up to (760px), it becomes (21px 20px 0). Selected cards use tinted paper plus cobalt border and inset stroke. Generic panels use the panel radius and padding roles, with (19px) padding up to (1250px). Purchase and seller tables retain their data hierarchy and scroll container. Shared table scroll containers establish a relative positioning context so absolute accessibility labels remain contained on narrow screens.
+Offer cards pair a provider identity and selection control with title, scope copy, category tags, source freshness, record limit, and a divided scoped-batch price footer. Standard cards use frontmatter padding and a minimum height of (290px) across the current cascade. At widths up to (1250px), padding becomes (18px 17px 0); up to (760px), it becomes (21px 20px 0). Selected cards use tinted paper plus cobalt border and inset stroke. Generic panels use the panel radius and padding roles, with (19px) padding up to (1250px). Purchase and seller tables retain their data hierarchy and scroll container. Shared table scroll containers establish a relative positioning context so absolute accessibility labels remain contained on narrow screens.
 
 ### Inputs / Fields
 
@@ -333,7 +328,7 @@ Search is a (46px) white field with an inline search icon and optional keyboard 
 
 The rail uses pale text on ink. Hover lightens the inset; the active route uses cobalt with white text and `aria-current="page"`. The callout uses a lighter ink panel, amber icon/link, and readable supporting text. Profile settings stay pinned at the rail foot; the account menu opens upward and remains available in the icon rail. Preserve the labelled collapse control, accessible icon names, drawer, and height behavior described in Layout.
 
-The public header stays above the story with the Trove home link, a chapter anchor, sign-in/dashboard link, and entry action. The chapter anchor hides on mobile while entry and account navigation remain available. A keyboard skip link precedes the header and a visible skip link appears in the opening chapter. The footer offers privacy, terms, and the catalogue; the application shell retains its existing navigation and adds an Overview destination for the dashboard.
+The public header stays above the story with the Trove home link, catalogue link, chapter anchor, sign-in/dashboard link, and entry action. The catalogue link and chapter anchor hide on mobile while entry and account navigation remain available. A keyboard skip link precedes the header and a visible skip link appears in the opening chapter. The footer offers privacy, terms, and the catalogue; the application shell retains its existing navigation and adds an Overview destination for the dashboard.
 
 ### Source Fragments
 
@@ -341,11 +336,13 @@ Native `details` surfaces let a visitor inspect a domain without depending on th
 
 ### Dashboard
 
-The compact action strip links to research, browsing, and agent connection. Recent research uses actual task prompts and dates; purchased data lists only captured, available, unrevoked access. Pending payment states appear in a separate attention section. Quiet empty sections offer a next step, errors offer recovery, and the agent callout appears only when no active unexpired app connection or legacy token exists. Connection actions name ChatGPT, Claude, and Codex and lead to Trove-account setup. Task and purchase rows preserve the shared line, type, and icon vocabulary without invented activity or metrics.
+The dashboard leads with three editable research starts and a persistent deep-ink agent panel. The panel uses an amber connection icon, pale copy, and a white secondary action; actual connection state changes its copy and action between setup and management. Recent research uses actual task prompts and dates; purchased data lists only captured, available, unrevoked access. Pending payment states appear in a separate attention section. Quiet, left-aligned empty sections offer a next step, and errors offer recovery. Task and purchase rows preserve the shared line, type, and icon vocabulary without invented activity or metrics.
 
-### Research Composer
+### Research Starts and Composer
 
-The amber composer is a functional question surface with a large Manrope prompt, warm inset textarea, concise approval reminder, cobalt submit action, and regulatory example prompts. Its heading leads directly without a decorative eyebrow. It opens the research workspace, which offers a visibly selected “Choose requirements” mode alongside an optional “Describe a brief” mode. Requirements use labelled category choices, record count, snapshot age, and intended use; per-category native disclosures reveal required fields and filters. These explicit requirements produce real source matches and an exact-price quote without a model call or prefunded balance. Genuine Gemini planning remains available for briefs when configured; brief failures expose a “Choose requirements” recovery action. Task and account spending caps are labelled as limits rather than wallet balances, with USD prices and PayPal approval remaining visible. Suggestions remain controls with a subtle warm hover fill and a short arrow movement.
+Dashboard, catalogue, and workspace reuse divided rows with a functional line icon, explicit category title, short field description, and arrow. These link to or select editable requirements; they never submit a task. The catalogue places them in a white guide with a separate preview-and-approval reminder. The workspace owns the actual composer, using the standard white panel beside a left-aligned welcome region. Choosing a start focuses that composer and selects “Choose requirements”; the optional “Describe a brief” mode remains available.
+
+Requirements use labelled category choices, record count, snapshot age, and intended use; per-category native disclosures reveal required fields and filters. These explicit requirements produce real source matches and an exact-price quote without a model call or prefunded balance. Genuine Gemini planning remains available for briefs when configured; brief failures expose a “Choose requirements” recovery action. Task and account spending caps are labelled as limits rather than wallet balances, with USD prices and PayPal approval remaining visible.
 
 ### Comparison Dock
 
@@ -373,7 +370,7 @@ Standalone consent identifies the signed-in account, requested permissions, clie
 
 ### Do:
 
-- **Do** preserve ink navigation, cobalt actions, and the amber research surface across routes.
+- **Do** preserve ink navigation, cobalt actions, and amber navigation and public-entry highlights across routes.
 - **Do** keep the rail callout and account controls reachable at normal zoom and short laptop heights.
 - **Do** use local Manrope headings, Inter body copy, and tabular financial values.
 - **Do** pair state color with text, preserve visible keyboard focus, and honor reduced motion.

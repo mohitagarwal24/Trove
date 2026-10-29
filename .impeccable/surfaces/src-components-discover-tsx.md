@@ -2,7 +2,7 @@
 version: 1
 slug: "src-components-discover-tsx"
 primary_target: "src/components/discover.tsx"
-related_targets: ["src/app/globals.css","src/components/trove-app.tsx"]
+related_targets: ["src/app/globals.css","src/components/trove-app.tsx","src/components/research-starts.tsx"]
 ---
 
 # Catalogue and shared application shell
@@ -11,13 +11,13 @@ Mode: Operate. Refine the existing ink/cobalt/amber identity across existing rou
 
 ## Direction contract
 
-THESIS: A technical atlas index for research sources: readable inventory, persistent orientation, and an independent place to formulate a question.
+THESIS: A technical atlas index for research sources: readable inventory, persistent orientation, and guided entry into editable research requirements.
 
-OWN-WORLD: Ink navigation, chalk content, cobalt selection and actions, amber research surface. Manrope headings, Inter controls, tabular amounts. Crisp rules and generous space between functional groups.
+OWN-WORLD: Ink navigation, chalk content, cobalt selection and actions, amber navigation highlights. Manrope headings, Inter controls, tabular amounts. Crisp rules and generous space between functional groups.
 
 STORY: Find a source, inspect its scope, compare an exact price, or bring a research question. Real source provenance and human approval remain explicit.
 
-FIRST VIEWPORT: An expanded 232px ink rail with a persistent desktop option for a 76px icon rail, 64px utility bar, a horizontal heading, searchable two-column offer inventory, and an amber research composer. The agent connection panel and account controls fit a 768px laptop height. The icon rail keeps labelled route icons and the account menu reachable; mobile always opens the full-content drawer regardless of the desktop preference. Selection updates a shared comparison dock; its arrival is the signature interaction, with a short upward settling motion and a reduced-motion alternative.
+FIRST VIEWPORT: An expanded 232px ink rail with a persistent desktop option for a 76px icon rail, 64px utility bar, a horizontal heading, searchable two-column offer inventory, and a white guide with three concrete research starting points. The agent connection panel and account controls fit a 768px laptop height. The icon rail keeps labelled route icons and the account menu reachable; mobile always opens the full-content drawer regardless of the desktop preference. Selection updates a shared comparison dock; its arrival is the signature interaction, with a short upward settling motion and a reduced-motion alternative.
 
 FORM: Technical atlas index, fourth grounded direction; seed 2e59ff18. Other grounded sources: scientific data appendix, procurement desk, field notebook, airline navigation chart, standards binder, library periodical index. User delegates selection. Challenger verdicts: concourse board competitive in density; folio declined (comparison discipline retained); developer console competitive in control clarity; character catalogue declined (distinct provider identities retained); ticket wallet competitive in provenance; garden map declined (strong region separation retained). No borrowed illustration or literal ornament.
 
@@ -33,3 +33,12 @@ Long purchased values, receipt references, fingerprints, and source terms use pr
 Motion extends existing comparison feedback with route opacity arrival, quiet button/row hover, a scrolled utility-bar shadow, and a first-intersection opacity/clip reveal only for source and decision rows. Card geometry and tabular amounts remain stable. Default content stays visible, focused rows skip reveal, and reduced motion cancels active Web Animations and CSS transitions. Keep the rail callout and account controls reachable at normal zoom and short laptop heights. Do not restore green branding or invent provider verification, AI results or payment success.
 
 The decorative document-scroll progress line is removed from the shared shell. Functional landing chapter progression and the spending meter retain their existing behavior.
+
+
+## Startup refinement — 29 October 2026
+
+The catalogue heading is now “Discover data” with concise supporting copy. Cards give source titles and descriptions more room, larger desktop type, wrapping metadata, and an explicit Preview action. The catalogue guide replaces the duplicate question composer with Drug approvals, Drug recalls, and Device recalls links. Each opens `/workspace?start=<id>` with editable requirements; neither research nor payment starts automatically. The guide remains white, while amber retains the established navigation and public-entry roles.
+
+Public landing previews can link to `/discover?source=<id>`. Only public catalogue offers are resolved; unknown IDs expose no details. Dismissal removes the source parameter. Sample rows, source attribution, licence, scope and exact-price review remain in their existing detail and quote surfaces. Up to 1050px the guide follows inventory with three equal start columns; up to 760px they return to divided rows.
+
+Shared changes use 13px navigation/search text, 36px main-content top padding, 18px desktop offer titles, 13px desktop descriptions, and 12px card corners. Existing responsive overrides remain documented as actual cascade in `docs/DESIGN.md`, including tablet heading growth as legacy drift rather than a new scale prescription. Review artifacts are under `.impeccable/review/startup-polish/final/`; final release disposition belongs to `docs/AUDIT.md`.

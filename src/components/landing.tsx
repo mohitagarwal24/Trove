@@ -16,6 +16,7 @@ import {
 import { Logo } from "./ui";
 import { api } from "@/lib/client";
 import type { Offer, UserView } from "@/lib/types";
+import { money } from "@/lib/types";
 const chapters = [
   {
     title: (
@@ -65,6 +66,7 @@ export function Landing() {
   const [stage, setStage] = useState(0),
     [mode, setMode] = useState("loading"),
     [offer, setOffer] = useState<Offer | null>(null),
+    [sources, setSources] = useState<Offer[]>([]),
     [signedIn, setSignedIn] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
@@ -72,6 +74,18 @@ export function Landing() {
       signal: controller.signal,
     })
       .then((data) => {
+        setSources(
+          data.offers
+            .filter(
+              (item, index, all) =>
+                item.available &&
+                all.findIndex(
+                  (other) =>
+                    other.available && other.category === item.category,
+                ) === index,
+            )
+            .slice(0, 3),
+        );
         setOffer(
           data.offers.find((o) => o.category === "Drug recalls") ||
             data.offers[0] ||
@@ -151,6 +165,9 @@ export function Landing() {
           <Logo />
         </Link>
         <nav aria-label="Main navigation">
+          <Link href="/discover" className="landing-about">
+            Browse sources
+          </Link>
           <Link href="#chapter-question" className="landing-about">
             How it connects
           </Link>
@@ -300,6 +317,9 @@ export function Landing() {
                         {signedIn ? "Open dashboard" : "Get started"}
                         <ArrowUpRight size={18} />
                       </Link>
+                      <Link href="/discover" className="story-catalogue">
+                        Explore the data <ArrowRight size={16} />
+                      </Link>
                       <a href="#landing-exit" className="story-skip">
                         Skip the story <ArrowRight size={14} />
                       </a>
@@ -339,6 +359,56 @@ export function Landing() {
             ))}
           </div>
         </section>
+        {!!sources.length && (
+          <section
+            className="landing-sources"
+            aria-labelledby="landing-sources-title"
+          >
+            <div className="landing-sources-heading">
+              <div>
+                <h2 id="landing-sources-title">
+                  See what you’re working with.
+                </h2>
+                <p>
+                  Real regulatory records. Clear scope. A price you approve.
+                </p>
+              </div>
+              <Link href="/discover">
+                Explore the catalogue <ArrowUpRight size={17} />
+              </Link>
+            </div>
+            <div className="landing-source-list">
+              {sources.map((source) => (
+                <Link
+                  className="landing-source"
+                  key={source.id}
+                  href={`/discover?source=${encodeURIComponent(source.id)}`}
+                >
+                  <div className="landing-source-top">
+                    <h3>{source.title}</h3>
+                    <ArrowUpRight size={18} />
+                  </div>
+                  <p>{source.description}</p>
+                  <div className="landing-source-fields">
+                    {source.fields.slice(0, 3).map((field) => (
+                      <span key={field}>{field.replaceAll("_", " ")}</span>
+                    ))}
+                  </div>
+                  <div className="landing-source-price">
+                    <span>Up to {source.recordLimit} records</span>
+                    <strong>
+                      {money(source.priceCents)} <small>USD / batch</small>
+                    </strong>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <p className="landing-source-attribution">
+              Prepared from public FDA records. Inspect the original source,
+              sample rows and licence before purchasing.
+            </p>
+          </section>
+        )}
         <section className="landing-exit" id="landing-exit">
           <div>
             <Cable size={31} strokeWidth={1.3} />

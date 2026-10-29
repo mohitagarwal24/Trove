@@ -1,31 +1,27 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowDownUp,
   ArrowRight,
   ArrowUpRight,
   Check,
-  ChevronRight,
   Clock3,
   Database,
   Filter,
   Layers3,
   Pill,
-  Package,
   Plus,
   Search,
   ShieldCheck,
-  Sparkles,
-  TrendingUp,
   Stethoscope,
   X,
 } from "lucide-react";
 import type { Offer, QuoteView } from "@/lib/types";
 import { money } from "@/lib/types";
 import { api, post } from "@/lib/client";
-import { examplePrompts } from "@/lib/examples";
+import { ResearchStarts } from "./research-starts";
 import { useTrove } from "./trove-context";
 import { Badge, DataTable, EmptyState, Modal } from "./ui";
 import { QuoteReview } from "./quote-review";
@@ -49,6 +45,8 @@ const categoryIcons: Record<string, typeof Database> = {
 export function Discover() {
   const { offers, ensureAuth, notify } = useTrove();
   const router = useRouter();
+  const params = useSearchParams();
+  const requestedSource = params.get("source");
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {
@@ -102,7 +100,23 @@ export function Discover() {
   const [detail, setDetail] = useState<Offer | null>(null);
   const [quote, setQuote] = useState<QuoteView | null>(null);
   const [quoting, setQuoting] = useState(false);
-  const [prompt, setPrompt] = useState("");
+  useEffect(() => {
+    setDetail(
+      requestedSource
+        ? offers.find((offer) => offer.id === requestedSource) || null
+        : null,
+    );
+  }, [requestedSource, offers]);
+  function closeDetail() {
+    setDetail(null);
+    if (requestedSource) {
+      const next = new URLSearchParams(params.toString());
+      next.delete("source");
+      router.replace(`/discover${next.size ? `?${next}` : ""}`, {
+        scroll: false,
+      });
+    }
+  }
   useEffect(() => {
     const controller = new AbortController();
     if (!query.trim()) {
@@ -158,20 +172,12 @@ export function Discover() {
       setQuoting(false);
     }
   }
-  function startResearch(text: string) {
-    sessionStorage.setItem("trove-prompt", text || examplePrompts[0]);
-    router.push("/workspace");
-  }
   return (
     <div className="page-enter discover-page">
       <section className="page-heading">
         <div>
-          <h1>
-            Better data.
-            <br />
-            <span className="heading-soft">Clearer answers.</span>
-          </h1>
-          <p>Regulatory intelligence, ready for your research.</p>
+          <h1>Discover data</h1>
+          <p>Find the right source. Know exactly what you’re buying.</p>
         </div>
         <Link
           className="button button-secondary heading-action"
@@ -294,53 +300,21 @@ export function Discover() {
           )}
         </div>
         <aside className="research-aside">
-          <div className="research-panel">
-            <h2>
-              What are you
+          <section className="catalog-guide">
+            <h2>Start with a question.</h2>
+            <p>Choose a starting point and refine what you need.</p>
+            <ResearchStarts />
+            <Link href="/workspace" className="text-link">
+              Open research workspace <ArrowRight size={15} />
+            </Link>
+          </section>
+          <div className="catalog-reassurance">
+            <ShieldCheck size={19} strokeWidth={1.5} />
+            <p>
+              Preview the data first.
               <br />
-              working on?
-            </h2>
-            <p>Find the right sources. Approve an exact price.</p>
-            <label className="sr-only" htmlFor="discover-prompt">
-              Your research question
-            </label>
-            <textarea
-              id="discover-prompt"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder={"Find recent drug approvals and recall reasons…"}
-              rows={5}
-            />
-            <div className="research-panel-meta">
-              <ShieldCheck size={13} />
-              <span>No purchase without your approval</span>
-            </div>
-            <button
-              className="button button-primary research-submit"
-              onClick={() => startResearch(prompt)}
-            >
-              <Sparkles size={16} />
-              Start a research task
-              <ArrowRight size={17} />
-            </button>
-            <div className="panel-divider" />
-            <div className="suggestion-label">Try a starting point</div>
-            <button
-              className="prompt-suggestion"
-              onClick={() => startResearch(examplePrompts[1])}
-            >
-              <Package size={16} />
-              <span>Review drug recall risks</span>
-              <ChevronRight size={15} />
-            </button>
-            <button
-              className="prompt-suggestion"
-              onClick={() => startResearch(examplePrompts[2])}
-            >
-              <TrendingUp size={16} />
-              <span>Explore medical device recalls</span>
-              <ChevronRight size={15} />
-            </button>
+              Approve the exact price.
+            </p>
           </div>
         </aside>
       </div>
@@ -382,7 +356,7 @@ export function Discover() {
       )}
       <OfferDetail
         offer={detail}
-        onClose={() => setDetail(null)}
+        onClose={closeDetail}
         selected={!!detail && selected.includes(detail.id)}
         onToggle={() => detail && toggle(detail.id)}
       />
@@ -444,9 +418,10 @@ export function OfferCard({
         <button
           className="offer-view"
           onClick={onOpen}
-          aria-label={`View ${offer.title}`}
+          aria-label={`Preview ${offer.title}`}
         >
-          <ArrowUpRight size={18} />
+          <span>Preview</span>
+          <ArrowUpRight size={15} />
         </button>
       </div>
     </article>

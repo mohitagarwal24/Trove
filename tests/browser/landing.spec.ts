@@ -111,10 +111,10 @@ test("verified email login reaches a private dashboard and preserves safe return
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(
-    page.getByRole("heading", { name: "Your research starts here." }),
+    page.getByRole("heading", { name: "Overview", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("Make your first connection.", { exact: true }),
+    page.getByText("No research yet.", { exact: true }),
   ).toBeVisible();
   await page.goto("/sign-in?returnTo=https://outside.example");
   await expect(page).toHaveURL(/\/dashboard$/);
@@ -216,4 +216,74 @@ test("dashboard calls out reconciliation and pending voids without implying succ
     "href",
     "/purchases/uncertain-0",
   );
+});
+
+test("live catalogue previews open their source and dismiss cleanly", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const preview = page.locator(".landing-source-list > a").first();
+  await expect(preview).toBeVisible();
+  const href = await preview.getAttribute("href");
+  const title = await preview.locator("h3").innerText();
+  await preview.click();
+  await expect(page).toHaveURL(new RegExp(href!.replace("?", "\\?")));
+  await expect(page.getByRole("dialog")).toContainText(title);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/discover$/);
+  await page.evaluate((url) => history.pushState(null, "", url), href!);
+  await expect(page.getByRole("dialog")).toContainText(title);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/discover$/);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.goto("/discover?source=unknown-source");
+  await expect(page.locator(".offer-card").first()).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("research starting points select editable scope without submitting or charging", async ({
+  page,
+}) => {
+  await buyer(page);
+  let submissions = 0;
+  page.on("request", (request) => {
+    if (
+      request.method() === "POST" &&
+      /\/api\/(discovery|tasks|quotes|purchases)(?:$|\/)/.test(
+        new URL(request.url()).pathname,
+      )
+    )
+      submissions++;
+  });
+  await page.goto("/dashboard");
+  await page
+    .locator('.research-starts a[href="/workspace?start=drug-recalls"]')
+    .click();
+  await expect(page.getByLabel("Drug recalls", { exact: true })).toBeChecked();
+  await expect(
+    page.getByLabel("Drug approvals", { exact: true }),
+  ).not.toBeChecked();
+  await page.getByLabel("Records per category").fill("3");
+  expect(submissions).toBe(0);
+  const response = page.waitForResponse(
+    (r) => r.url().endsWith("/api/tasks") && r.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Find sources", exact: true }).click();
+  const result = await response;
+  expect(result.ok()).toBeTruthy();
+  expect(result.request().postDataJSON().requirements.needs[0]).toMatchObject({
+    category: "Drug recalls",
+    quantity: 3,
+  });
+  await expect(page.locator(".source-decision").first()).toBeVisible();
+  await page.goto("/workspace?start=device-recalls");
+  await expect(
+    page.getByLabel("Device recalls", { exact: true }),
+  ).toBeChecked();
+  await expect(
+    page.getByLabel("Drug recalls", { exact: true }),
+  ).not.toBeChecked();
+  await expect(page.locator(".source-decision")).toHaveCount(0);
 });

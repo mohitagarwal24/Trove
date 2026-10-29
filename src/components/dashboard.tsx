@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   ArrowRight,
-  Compass,
   Cable,
   FileText,
   Search,
@@ -14,6 +13,7 @@ import { useTrove } from "./trove-context";
 import { api } from "@/lib/client";
 import type { Task, PurchaseView } from "@/lib/types";
 import { Loading, Notice, Status } from "./ui";
+import { ResearchStarts } from "./research-starts";
 export function Dashboard() {
   const { user } = useTrove();
   const [tasks, setTasks] = useState<Task[]>([]),
@@ -71,39 +71,13 @@ export function Dashboard() {
     <div className="dashboard-page page-enter">
       <header className="page-heading">
         <div>
-          <h1>Your research starts here.</h1>
+          <h1>Overview</h1>
           <p>Welcome back, {user?.name.split(" ")[0]}.</p>
         </div>
         <Link href="/workspace" className="button button-primary">
           Start research <ArrowUpRight size={17} />
         </Link>
       </header>
-      <nav className="dashboard-actions" aria-label="Research actions">
-        <Link href="/workspace">
-          <Search size={22} />
-          <span>
-            <strong>Start with a question</strong>
-            <small>Find sources for your next task</small>
-          </span>
-          <ArrowRight size={18} />
-        </Link>
-        <Link href="/discover">
-          <Compass size={22} />
-          <span>
-            <strong>Browse sources</strong>
-            <small>Compare scope and price</small>
-          </span>
-          <ArrowRight size={18} />
-        </Link>
-        <Link href="/connect">
-          <Cable size={22} />
-          <span>
-            <strong>Connect your agent</strong>
-            <small>Use Trove in ChatGPT, Claude or Codex</small>
-          </span>
-          <ArrowRight size={18} />
-        </Link>
-      </nav>
       {error ? (
         <Notice kind="error">
           {error}{" "}
@@ -133,6 +107,40 @@ export function Dashboard() {
               ))}
             </section>
           )}
+          <div className="dashboard-entry">
+            <section className="dashboard-start">
+              <div className="dashboard-section-heading">
+                <h2>
+                  {tasks.length
+                    ? "Start something new"
+                    : "What are you researching?"}
+                </h2>
+                <Link href="/discover">
+                  Browse sources <ArrowUpRight size={14} />
+                </Link>
+              </div>
+              <ResearchStarts />
+            </section>
+            <aside className="dashboard-agent">
+              <Cable size={24} strokeWidth={1.5} />
+              <div>
+                <h2>
+                  {connected
+                    ? "Your agent is connected."
+                    : "Your agent, with better context."}
+                </h2>
+                <p>
+                  {connected
+                    ? "Manage access to your Trove workspace."
+                    : "Connect ChatGPT, Claude or Codex with your Trove account."}
+                </p>
+              </div>
+              <Link href="/connect" className="button button-secondary">
+                {connected ? "Manage connections" : "Connect an agent"}{" "}
+                <ArrowUpRight size={16} />
+              </Link>
+            </aside>
+          </div>
           <div className="dashboard-columns">
             <section className="dashboard-section">
               <div className="dashboard-section-heading">
@@ -167,8 +175,10 @@ export function Dashboard() {
               ) : (
                 <div className="dashboard-empty">
                   <Search size={27} strokeWidth={1.4} />
-                  <h3>Make your first connection.</h3>
-                  <p>Ask a research question to find the right sources.</p>
+                  <h3>No research yet.</h3>
+                  <p>
+                    Choose a starting point above to build your first shortlist.
+                  </p>
                   <Link href="/workspace" className="text-link">
                     Start research <ArrowRight size={14} />
                   </Link>
@@ -208,7 +218,7 @@ export function Dashboard() {
               ) : (
                 <div className="dashboard-empty">
                   <FileText size={27} strokeWidth={1.4} />
-                  <h3>A home for your sources.</h3>
+                  <h3>No purchased data yet.</h3>
                   <p>Purchased data and receipts appear here.</p>
                   <Link href="/discover" className="text-link">
                     Explore sources <ArrowRight size={14} />
@@ -217,18 +227,6 @@ export function Dashboard() {
               )}
             </section>
           </div>
-          {connected === false && (
-            <aside className="dashboard-agent">
-              <Cable size={24} />
-              <div>
-                <h2>Bring the context to your agent.</h2>
-                <p>Connect ChatGPT, Claude or Codex with your Trove account.</p>
-              </div>
-              <Link href="/connect" className="button button-secondary">
-                Connect an agent <ArrowUpRight size={16} />
-              </Link>
-            </aside>
-          )}
         </>
       )}
     </div>

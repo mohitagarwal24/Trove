@@ -8,6 +8,7 @@ related_targets:
     "src/app/landing.css",
     "src/components/sign-in.tsx",
     "src/components/dashboard.tsx",
+    "src/components/research-starts.tsx",
   ]
 ---
 
@@ -38,3 +39,14 @@ The medical/regulatory disclosure reads public catalogue metadata and links to a
 The dedicated `/sign-in` page reuses the protected-action authentication component for Google, email, registration, and ownership verification. `/dashboard` is gated by server authentication; safe internal return paths default there. Its research, purchase, attention, and token states use the existing services. Recent research opens `/workspace?task=<id>` and resumes the owner's task. `/discover` remains the catalogue and the established working routes retain their workflows.
 
 The finish evidence is `.local/convergence/manifest.json`: 22 captures across desktop, tablet, short-height, mobile, authentication, populated/empty dashboard, task resume, catalogue, purchase review, reduced motion, and graphics fallback. The independent fresh finish review returned **ship**, with no material fixes after the sticky-exit correction. The chosen written direction and code-led plan are the visual authority; no approved raster composition or quality-bar image was supplied. The system record is `docs/DESIGN.md` with extensions in `.impeccable/design.json`.
+
+
+## Startup refinement — 29 October 2026
+
+The cinematic Data Convergence identity and four-chapter scene remain. “Browse sources” is available in desktop navigation, and “Explore the data” appears beside the opening entry action. A white section between story and closing action shows up to three available offers, taking the first available offer from each distinct category returned by the public catalogue API. It disappears when no available source metadata exists.
+
+Each source begins with its actual title and a northeast arrow, followed by description, up to three fields, record limit, and exact USD batch price. Category overlines are removed. The three-column divided layout stacks on mobile. Whole-source links open `/discover?source=<id>` and the corresponding preview. Attribution states that the data is prepared from public FDA records and directs visitors to inspect original sources, sample rows, and licence. These are current catalogue metadata previews, not claims of continuously live source data or provider verification. Future legal and financial domains remain explicitly labelled in the story.
+
+The dashboard replaces its generic action strip with a white panel of three editable research starting points beside a deep-ink agent panel. The latter persists for both disconnected and connected accounts; actual connection state changes setup copy to management copy. It uses an amber icon, pale supporting text and a white secondary action. These panels stack at 1050px. Existing research, purchase, attention and connection data continue to come from actual account services. Empty research and purchase sections are compact and left aligned. No activity or metrics are fabricated.
+
+The new pass is recorded under `.impeccable/review/startup-polish/final/`, including refreshed desktop/mobile source previews after category-overline removal. Earlier convergence evidence above describes the previous review, not the latest polish disposition. See `docs/AUDIT.md` for final check results. No raster asset, new service, concept roll, or replacement font was added; seed 2e59ff18 remains the incumbent provenance. Product proposals in `docs/PRODUCT_REVIEW.md` are not promoted into shipped behavior.

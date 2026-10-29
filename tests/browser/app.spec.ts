@@ -20,7 +20,7 @@ test("catalogue filtering, public preview and authenticated purchase review", as
   await expect(page.locator(".offer-card")).toHaveCount(1);
   await page
     .locator(".offer-card")
-    .getByRole("button", { name: /^View / })
+    .getByRole("button", { name: /^Preview / })
     .click();
   await expect(page.getByRole("dialog").locator("tbody tr")).toHaveCount(2);
   await expect(page.getByRole("dialog")).toContainText("openFDA");

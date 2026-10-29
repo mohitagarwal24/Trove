@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-21T04:39:19.125518+00:00",
+  "generatedAt": "2026-10-29T17:05:41.436811+00:00",
   "title": "Design System: Trove",
   "extensions": {
     "colorMeta": {
@@ -144,34 +144,6 @@
           "oklch(95.00% 0.1081 89.64)"
         ]
       },
-      "research-paper": {
-        "role": "secondary",
-        "displayName": "Research Paper",
-        "tonalRamp": [
-          "oklch(15.00% 0.0377 86.89)",
-          "oklch(26.43% 0.0377 86.89)",
-          "oklch(37.86% 0.0377 86.89)",
-          "oklch(49.29% 0.0377 86.89)",
-          "oklch(60.71% 0.0377 86.89)",
-          "oklch(72.14% 0.0377 86.89)",
-          "oklch(83.57% 0.0377 86.89)",
-          "oklch(95.00% 0.0377 86.89)"
-        ]
-      },
-      "research-line": {
-        "role": "secondary",
-        "displayName": "Research Rule",
-        "tonalRamp": [
-          "oklch(15.00% 0.0625 87.81)",
-          "oklch(26.43% 0.0625 87.81)",
-          "oklch(37.86% 0.0625 87.81)",
-          "oklch(49.29% 0.0625 87.81)",
-          "oklch(60.71% 0.0625 87.81)",
-          "oklch(72.14% 0.0625 87.81)",
-          "oklch(83.57% 0.0625 87.81)",
-          "oklch(95.00% 0.0625 87.81)"
-        ]
-      },
       "selected-surface": {
         "role": "neutral",
         "displayName": "Selected Paper",
@@ -274,7 +246,7 @@
     "typographyMeta": {
       "display": {
         "displayName": "Manrope Display",
-        "purpose": "Main Discover heading; responsive sizes live in Layout and Typography."
+        "purpose": "32px working-page baseline, with existing compact/tablet overrides and final 28px mobile override documented in Typography; tablet growth is legacy drift."
       },
       "headline": {
         "displayName": "Section Headline",
@@ -403,7 +375,7 @@
       {
         "name": "control-transition",
         "value": "180ms ease",
-        "purpose": "Button and offer color, border and shadow feedback; research-suggestion arrows retain this duration."
+        "purpose": "Button and offer color, border and shadow feedback."
       },
       {
         "name": "comparison-arrive",
@@ -514,6 +486,11 @@
         "name": "context-bundle-arrival",
         "value": "240ms ease",
         "purpose": "At the final story stage, opacity 0 to 1 and translateY 14px to 0. Decorative context illustration, not research or payment status."
+      },
+      {
+        "name": "research-start-feedback",
+        "value": "160ms",
+        "purpose": "Shared editable research-start row background and text color feedback; no automatic task submission."
       }
     ],
     "breakpoints": [
@@ -564,9 +541,11 @@
       "dataDisclosure": "Sticky table headers inside bounded scroll containers. Values over 160 characters show 140-character previews and native details with full text; expanded text scrolls within 18rem. Receipt refs and fingerprints use details; JSON download remains complete.",
       "publicStory": "Fixed 96px header with 5.5vw gutters; four native-scroll 100svh chapters with a contained sticky scene. At 760px: 76px header, 22px header gutters, full-width copy and source fragments below. Normal-flow fallback and reduced-motion chapters precede source disclosures.",
       "signIn": "44% deep-ink story / 56% white form; 400px maximum form. Up to 760px, brand strip plus form at 24px page gutters and 420px maximum.",
-      "dashboard": "Working shell, maximum 1200px; three adjacent action links followed by two equal research/data columns with 30px gap. Both groups stack at 760px; mobile heading and primary action stack. Mobile agent callout uses a 24px icon column and minmax(0, 1fr) text column, with its action below the text.",
-      "workspace": "350px composer beside flexible output, 300px up to 1250px and one column up to 1050px. Explicit requirements and optional AI brief share a labelled mode control; category details disclose required fields and filters. Spending caps retain explicit USD and limit language.",
-      "authorization": "Outside the rail: home link above a consent panel in a centered 540px maximum-width column on Chalk Canvas. App name and callback host wrap; actions wrap at 600px. Account, requested permissions and separate payment approval stay visible."
+      "dashboard": "Working shell, maximum 1200px; white research-start panel and ink agent panel in 1.65fr / 1fr columns with 270px minimum agent width and 24px gap, stacking at 1050px. Two recent-research/data columns with 30px gap stack at 760px. Persistent agent panel reflects actual connection state; mobile icon/text grid places action below text.",
+      "workspace": "350px composer beside flexible output, 300px up to 1250px and one column up to 1050px. Explicit requirements and optional AI brief share a labelled mode control; category details disclose required fields and filters. Spending caps retain explicit USD and limit language. Shared editable research starts appear in the left-aligned welcome region, maximum 600px and padding 56px 28px, becoming 30px 4px on mobile. Selection sets explicit requirements and focuses the composer without submission.",
+      "authorization": "Outside the rail: home link above a consent panel in a centered 540px maximum-width column on Chalk Canvas. App name and callback host wrap; actions wrap at 600px. Account, requested permissions and separate payment approval stay visible.",
+      "catalogue": "Two-column offer inventory beside a white guided-start panel, using existing 294px / 260px / 320px aside widths. Below 1050px the guide follows inventory with three equal start columns; below 760px these become divided rows. Labelled Preview actions open source details.",
+      "publicSources": "Available catalogue entries form three divided columns on white between story and closing section; title plus arrow, description, fields, record limit and USD batch price. Padding 100px 5.5vw; at 760px, single column and 64px 24px padding. No category overlines. Links open the corresponding public source preview."
     },
     "assets": {
       "google-sign-in": {
@@ -605,7 +584,7 @@
       "refersTo": "search",
       "description": "Public metadata search with an inset keyboard hint.",
       "html": "<label class=\"ds-search\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input aria-label=\"Search data offers\" placeholder=\"Search datasets, suppliers, or topics…\"/><kbd>/</kbd></label>",
-      "css": ".ds-search{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;align-items:center;gap:10px;width:min(420px,100%);height:46px;padding:0 12px;background:#fff;color:#65718b;border:1px solid var(--line,#dde1eb);border-radius:9px;}.ds-search input{font-family:var(--font-body,Inter,Arial,sans-serif);min-width:0;width:100%;border:0;background:none;color:var(--ink,#20283f);font-size:12px;caret-color:var(--accent,#3155d9);}.ds-search input::placeholder{color:#626d84;}.ds-search:focus-within{border-color:#637fe6;box-shadow:0 3px 12px #3155d919;}.ds-search input:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-search kbd{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;border:1px solid #dfe1e6;border-radius:4px;padding:0 5px;color:#626d84;} @media(prefers-reduced-motion:reduce){.ds-search{animation:none!important;transition:none!important;transform:none!important;}}"
+      "css": ".ds-search{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;align-items:center;gap:10px;width:min(420px,100%);height:46px;padding:0 12px;background:#fff;color:#65718b;border:1px solid var(--line,#dde1eb);border-radius:9px;}.ds-search input{font-family:var(--font-body,Inter,Arial,sans-serif);min-width:0;width:100%;border:0;background:none;color:var(--ink,#20283f);font-size:13px;caret-color:var(--accent,#3155d9);}.ds-search input::placeholder{color:#626d84;}.ds-search:focus-within{border-color:#637fe6;box-shadow:0 3px 12px #3155d919;}.ds-search input:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-search kbd{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;border:1px solid #dfe1e6;border-radius:4px;padding:0 5px;color:#626d84;} @media(prefers-reduced-motion:reduce){.ds-search{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
       "name": "Ink navigation",
@@ -613,7 +592,7 @@
       "refersTo": "navigation-active",
       "description": "A selected route inside the dark workspace rail; desktop supports an accessible 76px icon rail, while mobile retains a full-content drawer.",
       "html": "<nav class=\"ds-rail\" aria-label=\"Example workspace\"><a class=\"ds-nav ds-current\" href=\"#discover\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m16.2 7.8-2.4 6-6 2.4 2.4-6 6-2.4z\"/></svg><span>Discover</span><span class=\"ds-count\">6</span></a><a class=\"ds-nav\" href=\"#workspace\">Research workspace</a></nav>",
-      "css": ".ds-rail{font-family:var(--font-body,Inter,Arial,sans-serif);width:200px;padding:16px;background:var(--sidebar,#171d30);border-radius:8px;}.ds-nav{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:3px;color:#c0c8dd;border-radius:8px;font-size:12px;text-decoration:none;transition:background .16s,color .16s;}.ds-nav:hover{background:#29324a;color:#fff;}.ds-current,.ds-current:hover{background:#354fbb;color:#fff;font-weight:600;}.ds-nav:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-nav>span:first-of-type{flex:1;}.ds-count{min-width:20px;padding:2px 5px;border-radius:4px;background:#ffffff1c;color:#fff;font-size:10px;text-align:center;} @media(prefers-reduced-motion:reduce){.ds-count,.ds-current,.ds-nav,.ds-rail{animation:none!important;transition:none!important;transform:none!important;}}"
+      "css": ".ds-rail{font-family:var(--font-body,Inter,Arial,sans-serif);width:200px;padding:16px;background:var(--sidebar,#171d30);border-radius:8px;}.ds-nav{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:3px;color:#c0c8dd;border-radius:8px;font-size:13px;text-decoration:none;transition:background .16s,color .16s;}.ds-nav:hover{background:#29324a;color:#fff;}.ds-current,.ds-current:hover{background:#354fbb;color:#fff;font-weight:600;}.ds-nav:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-nav>span:first-of-type{flex:1;}.ds-count{min-width:20px;padding:2px 5px;border-radius:4px;background:#ffffff1c;color:#fff;font-size:10px;text-align:center;} @media(prefers-reduced-motion:reduce){.ds-count,.ds-current,.ds-nav,.ds-rail{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
       "name": "Offer tags",
@@ -621,23 +600,23 @@
       "refersTo": "offer-tag",
       "description": "Descriptive scope tags rather than interactive filters.",
       "html": "<div class=\"ds-tags\"><span>Drug approvals</span></div>",
-      "css": ".ds-tags{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;flex-wrap:wrap;gap:5px;}.ds-tags>span{padding:3px 6px;font-size:9px;border-radius:4px;border:1px solid #e4e7ef;color:#5d6881;background:#f4f5f9;} @media(prefers-reduced-motion:reduce){.ds-tags{animation:none!important;transition:none!important;transform:none!important;}}"
+      "css": ".ds-tags{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;flex-wrap:wrap;gap:5px;}.ds-tags>span{padding:3px 6px;font-size:11px;border-radius:4px;border:1px solid #e4e7ef;color:#5d6881;background:#f4f5f9;} @media(prefers-reduced-motion:reduce){.ds-tags{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
       "name": "Selected offer card",
       "kind": "card",
       "refersTo": "offer-card",
-      "description": "A selected regulatory data offer with a provider identity and scoped-batch price.",
-      "html": "<article class=\"ds-offer\"><div class=\"ds-provider\"><strong>Northstar Regulatory</strong><small>Data provider</small></div><button class=\"ds-offer-title\">Drug approval dossiers</button><p>Application, sponsor, active ingredients and approval dates, normalized into one research-ready batch.</p><div class=\"ds-offer-tags\"><span>Drug approvals</span></div><footer><strong>$3.20</strong><span>/ scoped batch</span><button class=\"ds-offer-open\" aria-label=\"View offer\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></footer></article>",
-      "css": ".ds-offer{font-family:var(--font-body,Inter,Arial,sans-serif);width:min(300px,100%);min-height:285px;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--accent,#3155d9);border-radius:13px;background:#f1f4ff;color:var(--ink,#20283f);padding:20px 20px 0;box-shadow:inset 0 0 0 1px var(--accent,#3155d9);transition:border-color .18s,background .18s,box-shadow .18s;}@media(hover:hover){.ds-offer:hover{border-color:var(--accent,#3155d9);box-shadow:0 7px 20px #1c32670a;}}.ds-provider{font-size:11px;color:#45516d;margin-bottom:18px;}.ds-provider strong{font-weight:550;}.ds-provider small{display:block;color:#6a7489;font-size:9px;margin-top:3px;}.ds-offer-title{font-family:var(--font-heading,Manrope,Inter,Arial,sans-serif);text-align:left;padding:0;border:0;background:none;color:#263451;font-size:17px;font-weight:650;line-height:1.45;letter-spacing:-.025em;cursor:pointer;}.ds-offer-title:hover{color:var(--accent,#3155d9);}.ds-offer p{font-size:11px;line-height:1.75;color:#646f85;margin:8px 0 0;}.ds-offer-tags{display:flex;gap:5px;margin:13px 0 12px;}.ds-offer-tags span{padding:3px 6px;font-size:9px;background:#f4f5f9;border:1px solid #e4e7ef;border-radius:4px;color:#5d6881;}.ds-offer footer{display:flex;align-items:center;gap:5px;min-height:52px;border-top:1px solid #eaebee;margin-top:auto;}.ds-offer footer strong{font-size:22px;font-weight:600;color:#263451;font-variant-numeric:tabular-nums;letter-spacing:-.025em;}.ds-offer footer>span{font-size:9px;color:#68738a;}.ds-offer-open{display:grid;place-items:center;margin-left:auto;width:32px;height:32px;border-radius:7px;border:0;color:#50648f;background:none;cursor:pointer;}.ds-offer-open:hover{color:#fff;background:var(--accent,#3155d9);}.ds-offer button:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-offer button:active{transform:translateY(1px);} @media(prefers-reduced-motion:reduce){.ds-offer,.ds-offer-open,.ds-offer-tags,.ds-offer-title,.ds-provider{animation:none!important;transition:none!important;transform:none!important;}}"
+      "description": "Illustrative selected regulatory offer preview showing source hierarchy, a scoped-batch price and an explicit Preview action; example values are not runtime catalogue claims.",
+      "html": "<article class=\"ds-offer\"><div class=\"ds-provider\"><strong>Northstar Regulatory</strong><small>Data provider</small></div><button class=\"ds-offer-title\">Drug approval dossiers</button><p>Application, sponsor, active ingredients and approval dates, normalized into one research-ready batch.</p><div class=\"ds-offer-tags\"><span>Drug approvals</span></div><footer><strong>$3.20</strong><span>/ scoped batch</span><button class=\"ds-offer-open\" aria-label=\"Preview offer\"><span>Preview</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></footer></article>",
+      "css": ".ds-offer{font-family:var(--font-body,Inter,Arial,sans-serif);width:min(300px,100%);min-height:290px;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--accent,#3155d9);border-radius:12px;background:#f1f4ff;color:var(--ink,#20283f);padding:22px 22px 0;box-shadow:inset 0 0 0 1px var(--accent,#3155d9);transition:border-color .18s,background .18s,box-shadow .18s;}@media(hover:hover){.ds-offer:hover{border-color:var(--accent,#3155d9);box-shadow:0 7px 20px #1c32670a;}}.ds-provider{font-size:12px;color:#45516d;margin-bottom:18px;}.ds-provider strong{font-weight:550;}.ds-provider small{display:block;color:#6a7489;font-size:9px;margin-top:3px;}.ds-offer-title{font-family:var(--font-heading,Manrope,Inter,Arial,sans-serif);text-align:left;padding:0;border:0;background:none;color:#263451;font-size:18px;font-weight:650;line-height:1.45;letter-spacing:-.025em;cursor:pointer;}.ds-offer-title:hover{color:var(--accent,#3155d9);}.ds-offer p{font-size:13px;line-height:1.75;color:#626c82;margin:8px 0 0;}.ds-offer-tags{display:flex;gap:5px;margin:13px 0 12px;}.ds-offer-tags span{padding:3px 6px;font-size:11px;background:#f4f5f9;border:1px solid #e4e7ef;border-radius:4px;color:#5d6881;}.ds-offer footer{display:flex;align-items:center;gap:5px;min-height:52px;border-top:1px solid #eaebee;margin-top:auto;}.ds-offer footer strong{font-size:22px;font-weight:600;color:#263451;font-variant-numeric:tabular-nums;letter-spacing:-.025em;}.ds-offer footer>span{font-size:11px;color:#626c82;}.ds-offer-open{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12px;padding:0 8px;margin-left:auto;min-width:82px;height:40px;border-radius:7px;border:0;color:#3155d9;background:none;cursor:pointer;}.ds-offer-open:hover{color:#fff;background:var(--accent,#3155d9);}.ds-offer button:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-offer button:active{transform:translateY(1px);} @media(prefers-reduced-motion:reduce){.ds-offer,.ds-offer-open,.ds-offer-tags,.ds-offer-title,.ds-provider{animation:none!important;transition:none!important;transform:none!important;}}"
     },
     {
-      "name": "Amber research composer",
+      "name": "Editable research start",
       "kind": "custom",
-      "refersTo": "research-composer",
-      "description": "Question input kept distinct from the source inventory.",
-      "html": "<section class=\"ds-composer\"><h2>What are you<br/>working on?</h2><p>Find the right sources. Approve an exact price.</p><textarea aria-label=\"Your research question\" placeholder=\"Find recent drug approvals and recall reasons…\" rows=\"5\"></textarea><div class=\"ds-approval\">No purchase without your approval</div><button>Start a research task<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></section>",
-      "css": ".ds-composer{font-family:var(--font-body,Inter,Arial,sans-serif);width:min(294px,100%);padding:23px 20px 17px;border:1px solid #ead7aa;border-radius:14px;background:#fcf0d5;}.ds-composer h2{font-family:var(--font-heading,Manrope,Inter,Arial,sans-serif);margin:0 0 12px;font-size:27px;font-weight:650;letter-spacing:-.03em;line-height:1.3;color:#42351f;}.ds-composer p{margin:0;color:#745f3c;font-size:11px;line-height:1.9;}.ds-composer textarea{font-family:var(--font-body,Inter,Arial,sans-serif);display:block;width:100%;min-height:132px;resize:vertical;margin-top:19px;padding:13px;border:1px solid #decca3;border-radius:8px;background:#fffaf0;color:#403a2b;font-size:12px;line-height:1.8;caret-color:var(--accent,#3155d9);}.ds-composer textarea::placeholder{color:#75654b;}.ds-composer textarea:focus{border-color:#a2782c;}.ds-approval{margin:10px 0 14px;color:#725c37;font-size:9px;text-align:center;}.ds-composer button{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:8px;padding:10px 15px;font-size:13px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;width:100%;font-size:13px;border:1px solid var(--accent,#3155d9);background:var(--accent,#3155d9);color:#fff;box-shadow:0 3px 7px #233f9915;}.ds-composer button:hover{background:var(--accent-dark,#2441af);border-color:var(--accent-dark,#2441af);box-shadow:0 4px 12px #233f9925;}.ds-composer button:active{transform:translateY(1px);}.ds-composer button:focus-visible,.ds-composer textarea:focus-visible{outline:2px solid #5378ff;outline-offset:4px;} @media(prefers-reduced-motion:reduce){.ds-approval,.ds-composer{animation:none!important;transition:none!important;transform:none!important;}}"
+      "refersTo": "research-start",
+      "description": "Shared starting-point link selects editable workspace scope without running research or purchasing.",
+      "html": "<a class=\"ds-research-start\" href=\"/workspace?start=drug-recalls\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z\"/><path d=\"m9 12 2 2 4-4\"/></svg><span><strong>Drug recalls</strong><small>Recall reasons, severity and status</small></span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a>",
+      "css": ".ds-research-start{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;align-items:center;gap:14px;width:100%;min-width:0;padding:19px 4px;text-align:left;text-decoration:none;color:var(--ink,#20283f);border-bottom:1px solid var(--line,#dde1eb);transition:background-color 160ms,color 160ms;}.ds-research-start:hover{background:#f1f4fb;color:var(--accent,#3155d9);}.ds-research-start>svg:first-child{color:var(--accent,#3155d9);}.ds-research-start>svg:last-child{margin-left:auto;color:var(--muted,#626c82);}.ds-research-start>span{min-width:0;}.ds-research-start strong{display:block;font-size:14px;font-weight:550;}.ds-research-start small{display:block;font-size:12px;line-height:1.6;color:var(--muted,#626c82);margin-top:5px;}.ds-research-start:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}@media(prefers-reduced-motion:reduce){.ds-research-start{transition:none;}}"
     },
     {
       "name": "Comparison dock",
@@ -682,11 +661,11 @@
   ],
   "narrative": {
     "northStar": "The Technical Atlas",
-    "overview": "Trove is a working research marketplace: an ink navigation rail establishes orientation, chalk surfaces hold the source inventory, cobalt marks selection and action, and amber gives the research question its own place. The result is compact, orderly, and specific to a tool for investigating data.\n\nThe approved replacement of the former green identity retains the application and local fonts. Prepared regulatory datasets appear as ordinary paid products; source scope, original attribution, upstream reuse rights, exact USD prices, and human approval remain legible. The system uses functional line icons and geometry, with concise copy and progressive disclosure for detailed terms. Supply assumptions belong in the hackathon pitch, while the interface identifies the actual PayPal payment environment.\n\nThe approved Data Convergence public introduction expands this world into deep ink, porcelain, and amber, with larger, lighter Manrope type and real Three.js particle geometry. Its spacious Persuade mode leads into the established Operate mode for authentication and research. This is an extension of the Technical Atlas: the working application retains its navigation, compact density, and exact-price controls. The scene adds no raster asset or invented partner identity.",
+    "overview": "Trove is a working research marketplace: an ink navigation rail establishes orientation, chalk surfaces hold the source inventory, cobalt marks selection and action, and amber marks navigation highlights and public entry actions. The result is compact, orderly, and specific to a tool for investigating data.\n\nThe approved replacement of the former green identity retains the application and local fonts. Prepared regulatory datasets appear as ordinary paid products; source scope, original attribution, upstream reuse rights, exact USD prices, and human approval remain legible. The system uses functional line icons and geometry, with concise copy and progressive disclosure for detailed terms. Supply assumptions belong in the hackathon pitch, while the interface identifies the actual PayPal payment environment.\n\nThe approved Data Convergence public introduction expands this world into deep ink, porcelain, and amber, with larger, lighter Manrope type and real Three.js particle geometry. Its spacious Persuade mode leads into the established Operate mode for authentication and research. This is an extension of the Technical Atlas: the working application retains its navigation, compact density, and exact-price controls. The scene adds no raster asset or invented partner identity.",
     "keyCharacteristics": [
       "Persistent ink navigation with reachable account and agent controls.",
       "Cobalt actions and selection against quiet white inventory panels.",
-      "An amber question composer separated from source browsing.",
+      "Editable research starting points shared across dashboard, catalogue, and workspace.",
       "Manrope headings, Inter controls, and tabular financial values.",
       "Flat information surfaces with depth reserved for controls and overlays.",
       "A spacious deep-ink introduction with amber entry actions and source fragments that gather into context."
@@ -694,7 +673,7 @@
     "rules": [
       {
         "name": "The Action Cobalt Rule",
-        "body": "In the working application, use cobalt to express an action, selection, or the established heading emphasis; preserve amber for its research, navigation-highlight, and sandbox roles. Deep-ink public surfaces use amber entry actions and headline emphasis; pale public surfaces return to cobalt.",
+        "body": "In the working application, use cobalt to express an action, selection, or the established heading emphasis; preserve amber for its navigation-highlight, agent-panel icon, and sandbox roles. Deep-ink public surfaces use amber entry actions and headline emphasis; pale public surfaces return to cobalt.",
         "section": "colors"
       },
       {
@@ -719,7 +698,7 @@
       }
     ],
     "dos": [
-      "**Do** preserve ink navigation, cobalt actions, and the amber research surface across routes.",
+      "**Do** preserve ink navigation, cobalt actions, and amber navigation and public-entry highlights across routes.",
       "**Do** keep the rail callout and account controls reachable at normal zoom and short laptop heights.",
       "**Do** use local Manrope headings, Inter body copy, and tabular financial values.",
       "**Do** pair state color with text, preserve visible keyboard focus, and honor reduced motion.",

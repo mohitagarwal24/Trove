@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   Check,
@@ -23,9 +23,13 @@ import {
   initialRequirements,
 } from "./research-requirements";
 import { taskRequirementsSchema } from "@/lib/research";
+import { requirementsForStart } from "@/lib/research-starts";
+import { ResearchStarts } from "./research-starts";
 export function Workspace() {
   const params = useSearchParams();
+  const router = useRouter();
   const requestedTask = params.get("task");
+  const requestedStart = params.get("start");
   const [resumeError, setResumeError] = useState("");
   const { user, capabilities, ensureAuth, notify, offers } = useTrove();
   const [prompt, setPrompt] = useState(examplePrompts[0]);
@@ -39,18 +43,19 @@ export function Workspace() {
   const [review, setReview] = useState(false);
   const [purchases, setPurchases] = useState<PurchaseView[]>([]);
   useEffect(() => {
-    const saved = sessionStorage.getItem("trove-prompt");
-    if (saved) {
-      setPrompt(saved);
-      sessionStorage.removeItem("trove-prompt");
-    }
-  }, []);
-  useEffect(() => {
     let active = true;
     setTask(null);
     setQuote(null);
     setReview(false);
     setPurchases([]);
+    setResumeError("");
+    const start = !requestedTask && requirementsForStart(requestedStart);
+    if (start) {
+      setMode("requirements");
+      setRequirements(start);
+      setResearchError("");
+      return;
+    }
     if (!user) return;
     const key = `trove-task:${user.workspaceId}`;
     api<PurchaseView[]>("/purchases")
@@ -87,7 +92,7 @@ export function Workspace() {
     return () => {
       active = false;
     };
-  }, [user?.workspaceId, requestedTask]);
+  }, [user?.workspaceId, requestedTask, requestedStart]);
   async function run() {
     try {
       if (!(await ensureAuth())) return;
@@ -143,12 +148,16 @@ export function Workspace() {
       <section className="page-heading compact-heading">
         <div>
           <h1>Research workspace</h1>
-          <p>Describe your research. Set a budget. Review the sources.</p>
+          <p>Define the scope. Find sources that fit.</p>
         </div>
       </section>
       {resumeError && <Notice kind="error">{resumeError}</Notice>}
       <div className="workspace-layout">
-        <section className="task-composer panel">
+        <section
+          className="task-composer panel"
+          id="research-composer"
+          tabIndex={-1}
+        >
           <div className="panel-title">
             <span className="sparkle-box">
               <Sparkles size={17} />
@@ -274,8 +283,22 @@ export function Workspace() {
           {!task && !running ? (
             <div className="workspace-welcome">
               <ListFilter size={28} aria-hidden="true" />
-              <h2>Your source shortlist</h2>
-              <p>Choose requirements or describe a brief to compare sources.</p>
+              <h2>Your next question starts here.</h2>
+              <p>Set your requirements, or choose a starting point.</p>
+              <ResearchStarts
+                onChoose={(id) => {
+                  const next = requirementsForStart(id);
+                  if (!next) return;
+                  setRequirements(next);
+                  setMode("requirements");
+                  setResearchError("");
+                  router.replace(`/workspace?start=${id}`, { scroll: false });
+                  document.getElementById("research-composer")?.focus();
+                }}
+              />
+              <p className="workspace-welcome-note">
+                You review every source and price before purchasing.
+              </p>
             </div>
           ) : running ? (
             <div className="planning-state panel">
@@ -286,7 +309,9 @@ export function Workspace() {
                 prices.
               </p>
               {[
-                "Interpreting the research brief",
+                mode === "brief"
+                  ? "Interpreting the research brief"
+                  : "Reading your requirements",
                 "Checking permitted sources",
                 "Calculating a bounded quote",
               ].map((t) => (
