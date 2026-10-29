@@ -8,6 +8,14 @@ Local verification: production build and strict types pass; 72 backend tests and
 
 The dependency audit identified newly reported transitive advisories. The lockfile now resolves body-parser 2.4.0 and fast-uri 3.1.9 within existing dependency ranges, following the [body-parser advisory](https://github.com/advisories/GHSA-27r3-jxmh-p828) and [fast-uri advisory](https://github.com/advisories/GHSA-w74x-v6f9-j3xg). All 72 backend tests pass after the updates; the subsequent audit reports zero vulnerabilities. External Google, email delivery and PayPal buyer acceptance remain separate from this interface validation.
 
+The independent Impeccable review requested two fixes: remove redundant source category overlines and reconcile the design records. Both were applied; its verdict pass scored both resolved and returned **disposition: ship**, limited to those fixes. The documenter updated the token-bearing system, sidecar and affected briefs. Existing typography identity and its narrow Inter exception remain; no new rule suppressions were added. The final eight landing/flow tests pass, including same-document Back navigation for a linked source preview. Clean installation confirmed the patched package versions and passes all 72 backend tests plus strict types.
+
+## Startup-refinement hosted acceptance
+
+Application commit `51541da8fcc26d9e9c6a5f0cc3d15e199779a38b` is live at [Trove](https://trove-mohit24.onrender.com), Render deploy `dep-dbhns9c9v7es73beasj0`. [Fresh-database CI passed](https://github.com/mohitagarwal24/Trove/actions/runs/40918357014): 72 backend tests, 35 browser tests, strict types, production build and dependency audit with zero reported vulnerabilities.
+
+All 15 hosted read-only checks passed: health, nine desktop routes (including the private Dashboard redirect), four mobile routes, and a live catalogue preview with correct source and Escape dismissal. Inspected documents fit the viewport and reported no page errors. The initial smoke script assumed every guest route had an h1; it was corrected to accept the existing signed-out account/seller empty-state headings. No application change was needed for that test assumption. Hosted validation did not authenticate a buyer, send email, run a model or execute payment.
+
 # Purchase and workspace progress cleanup — 21 October 2026
 
 Removed the decorative document-progress line from the shared working shell and its percentage calculation and styles. Source reveals, reduced-motion handling, utility-bar shadow, public-story chapters and research spending-cap meter retain their existing behavior. Purchase details now present independent Payment and Delivery statuses beneath the heading instead of the five-step timeline; approval, receipts, delivery checks and the exact-price summary remain intact. The status list uses native description-list semantics and polite updates.

@@ -1,3 +1,10 @@
+# Startup refinement acceptance
+
+1. Open the landing page and choose Explore the data to bypass the story. Below the story, the available source previews must show actual catalogue titles, fields, record limits and prices. Selecting one opens that exact source in Discover; Escape closes it and removes the `source` query. Back must not leave a stale preview open.
+2. Sign in and choose Drug recalls from Overview. Workspace should select Drug recalls only, with five editable fields, ten records and a 30-day snapshot limit. Nothing is submitted or purchased by this navigation. Change the quantity to three and choose Find sources; verify the shortlist uses that scope.
+3. Open Device recalls from the catalogue’s starting points. It must open a fresh editable scope instead of resuming the previous drug-recall task. An explicit dashboard resume link must still open its original owned task.
+4. Repeat catalogue preview and dashboard entry on a 390px phone, 1000px tablet and short 1366×610 laptop. Check keyboard focus, mobile navigation and readable prices. Existing motion must stop when reduced motion is enabled.
+
 # Landing, sign-in and dashboard
 
 1. Open `/` at desktop, tablet, phone and a 1366×610 laptop size. The headline and Get started should be usable before the scene loads. Scroll through all four chapters, reverse direction, and confirm the scene stops before the light closing section. How it connects jumps to the question chapter; Skip the story reaches the closing action.

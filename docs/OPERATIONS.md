@@ -4,7 +4,7 @@ Trove runs on one Render Free web service and Neon Free PostgreSQL. PostgreSQL s
 
 Current service: https://trove-mohit24.onrender.com, Render `srv-dbaq5t3bc2fs73cc3qk0`, Singapore. Source: https://github.com/mohitagarwal24/Trove. Neon project: `lucky-wildflower-32427743`. Auto-deploy is off; deploy an explicitly validated commit.
 
-Application release `20fca36` is deployed; the [acceptance record](AUDIT.md) includes hosted motion/reduced-motion and keyboard checks alongside the preceding agent-discovery and duplicate-purchase acceptance. The preceding release verified genuine Sandbox order creation and SDK eligibility. Buyer approval/capture, signed webhook delivery, refund and payout remain manual acceptance steps. Google sign-in awaits its OAuth client credentials; password recovery awaits sender credentials.
+Application release `51541da` is deployed. The [acceptance record](AUDIT.md) contains CI and hosted verification for the current interface and research entry points. Prior acceptance verified genuine Sandbox order creation and SDK eligibility; buyer approval/capture, signed webhook delivery, refund and payout remain manual acceptance steps. Follow the [Google and Gmail setup guide](GOOGLE_AUTH_SETUP.md) for authentication and sender configuration; credentials alone do not establish successful consent or email delivery.
 
 ## Deployment
 
@@ -37,7 +37,7 @@ The GitHub workflows use `TROVE_HOSTED_URL` and the secret `CRON_SECRET`. Hourly
 
 Create a separate **personal Sandbox buyer** under Testing Tools → Sandbox Accounts. Use its generated credentials at checkout. Do not use the developer login as a buyer or real funds. These sandbox accounts do not require additional real PayPal registrations. Buyer plus business collection account suffice for checkout/refund testing.
 
-Run `npm run check:integrations` for a secret-free configuration check. A configured key does not establish successful provider acceptance. Browser research uses one model call for requirement extraction; summary uses another. Agent `discover_data` calls use no Trove model quota. Shared minute/day limits protect free quota but cannot guarantee provider availability.
+Run `npm run check:integrations` for a secret-free configuration check. A configured key does not establish successful provider acceptance. Structured browser research uses the same discovery pipeline as agents without a model call. Optional research briefs use one model call for requirement extraction; summary uses another. Agent `discover_data` calls use no Trove model quota. Shared minute/day limits protect free quota but cannot guarantee provider availability.
 
 ## Google sign-in (free)
 
