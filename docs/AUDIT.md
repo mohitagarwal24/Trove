@@ -10,6 +10,14 @@ Confirmation captures are `.local/pre-demo/captures/` with viewport/state metada
 
 The fresh independent Impeccable finish review returned **disposition: ship** with no material scoped fixes across all eleven captures plus desktop/mobile SDK OAuth connection captures. Review report: `.local/pre-demo/finish-review.md`. The ordinary-extension documentation handoff preserves the established design system; hosted release results follow when completed.
 
+## Pre-demo hosted acceptance
+
+Application commit `fc4c66fc787cf0b562f68969239e430412c9c84d` is live at [Trove](https://trove-mohit24.onrender.com), Render deploy `dep-dbkuv8ui0phs73bcaog0`. [Fresh-database CI passed](https://github.com/mohitagarwal24/Trove/actions/runs/41653656328): 74 backend tests, 37 browser tests, strict types, production build and zero dependency vulnerabilities. Hosted startup logs confirm `20261103120000_agent_activity` and successful application of all migrations. Existing records were preserved.
+
+All **21 hosted read-only checks** passed: health; ten desktop routes including Your data and the private Dashboard redirect; five mobile routes; signed-out library/evidence APIs returning 401; MCP discovery on its unauthenticated challenge; six public catalogue offers; and a live source preview with correct content/Escape dismissal. Inspected documents fit the viewport and reported no page errors. Manifest/log: `.local/pre-demo/hosted-smoke.json` and `hosted-smoke.log`. No hosted buyer login, email, model call or payment was executed.
+
+The documentation handoff preserved `docs/DESIGN.md`, `.impeccable/design.json` and detector configuration after comparing the ordinary extension with the incumbent system; it updated only the affected workspace surface record. Preexisting noncanonical heading/utility-label/landing-preview details were left outside scope. Actual Google/mail, PayPal Sandbox buyer and external-client acceptance remain to be completed before recording; `MANUAL_TESTING.md` supplies the procedure.
+
 # Startup interface refinement — 29 October 2026
 
 Refined the existing ink/cobalt/amber application around usable research entry points. Dashboard offers editable regulatory research starts and a dedicated agent connection panel; empty states are shorter. Discover uses a concise heading, more readable source descriptions and explicit Preview actions, and replaces its duplicate research form with links into Workspace. Workspace applies structured presets without submitting a task and preserves owned-task resume precedence. The cinematic landing retains its existing motion and adds real catalogue metadata, prices and deep links to source previews. Closing a linked preview or navigating Back removes the corresponding dialog state.

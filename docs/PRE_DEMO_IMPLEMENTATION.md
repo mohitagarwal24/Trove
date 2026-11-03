@@ -37,4 +37,12 @@ Automatic spending/wallets, custom named-template management, record-level incre
 - [x] Evidence export
 - [x] Research reuse
 - [x] Agent readiness
-- [ ] Acceptance and deployment
+- [x] Automated/local acceptance and hosted deployment
+
+## Release evidence
+
+Application commit `fc4c66fc787cf0b562f68969239e430412c9c84d` is live at https://trove-mohit24.onrender.com, Render deployment `dep-dbkuv8ui0phs73bcaog0`. [Fresh-database CI](https://github.com/mohitagarwal24/Trove/actions/runs/41653656328) passed 74 backend tests, 37 browser tests, build, types and dependency audit (zero reported vulnerabilities). The additive agent-activity migration applied successfully. Independent UI review returned ship; the documenter preserved the existing system and updated its affected surface record.
+
+All 21 hosted read-only checks passed: health, desktop/mobile routes, private Dashboard redirect, signed-out library/evidence protection, MCP authorization discovery, six public offers and a source preview with Escape dismissal. Inspected documents fit their viewport and reported no page errors. Hosted checks did not authenticate a buyer, send mail, invoke AI or execute payment. Local captures and detailed evidence are recorded in `docs/AUDIT.md`.
+
+Before recording, complete the separate external acceptance above using `docs/MANUAL_TESTING.md`: actual sign-in/email delivery, a fresh PayPal Sandbox buyer approval/capture/delivery/refund, and an actual external agent OAuth session. These are acceptance tasks for operator accounts, not replaced by the local controlled fixtures.
