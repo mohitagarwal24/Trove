@@ -10,6 +10,8 @@ related_targets:
     "src/components/connect.tsx",
     "src/components/authorize-connection.tsx",
     "src/components/dashboard.tsx",
+    "src/components/purchases.tsx",
+    "src/components/owned-data.tsx",
     "src/app/globals.css",
   ]
 ---
@@ -50,3 +52,17 @@ The workspace welcome region now uses left-aligned copy and the same three resea
 An explicit owned `task` parameter takes precedence over `start`; otherwise a valid start opens new scope without resuming unrelated previous research. Loading copy reflects whether requirements or an optional brief is being read. The composer/output split remains; the welcome region is limited to 600px, with 56px 28px padding on desktop and 30px 4px on mobile. The agent connection and consent implementation is preserved.
 
 The source authority is `src/lib/research-starts.ts` plus the workspace state flow. Review artifacts are under `.impeccable/review/startup-polish/final/`. Persistent custom templates, source update notifications, and the other next-work ideas in `docs/PRODUCT_REVIEW.md` remain proposals. Exact human payment approval remains required.
+
+## Research coverage and purchased-data access — 3 November 2026
+
+This ordinary Operate extension retains the Technical Atlas system and its existing component vocabulary. Source comparisons now expose requested and available record counts, required-field coverage, and whether availability was checked. Native “Scope details” disclosures reveal the required fields and source snapshot date. Persisted discovery gaps explain incomplete coverage or insufficient budget; a “Set limit to” action explicitly edits and focuses the spending-limit field. It does not rerun discovery or approve payment. Meaningful scope or cap changes show a refresh notice and disable the existing purchase-review action until sources are found again.
+
+“Reuse scope” opens an editable new draft from the owner's task, copying the brief or explicit requirements and spending cap. The copied-scope notice explains the next action; no new task or purchase is created until the user acts. The workspace retains its composer/output split and 1050px stack; up to 760px, the page heading and reuse action stack with a 16px gap.
+
+Purchases now has “Your data” and “Purchase history” navigation, with a cobalt underline identifying the current view. The dashboard's “Open library” action opens `/purchases?view=data`. The library searches accessible purchased-source metadata by dataset or provider, with a labelled search field, loading feedback, retry, clear-search recovery, honest empty guidance, and incremental loading. It does not search paid record payloads. A single white divided inventory shows the purchased title/version, seller, purchase date, exact USD price, and native disclosure of record count, fields, intended use, and source snapshot. Each source separates “Open data”, “Evidence pack”, and “Receipt” actions. An available newer published version links to its factual catalogue preview; that link makes no claim of entitlement, changed purchased content, or a required new charge.
+
+The library search has a 580px maximum width. Inventory rows place source information beside vertically arranged actions, separated by fine rules; up to 760px, rows stack and their actions wrap. Source headings use the existing 18px Manrope title treatment, while scope and supporting metadata use 12px working text. These measurements describe this surface, not new global tokens. Purchase results also expose the evidence-pack action beside the existing data download. Evidence export follows authorised purchased-result access and retains source identity, scope, rights, checks, fingerprints, and payment/receipt references.
+
+Connected apps and advanced tokens now show the actual last successful tool and timestamp, or explicitly state that none has succeeded. Activity copy uses 12px text, a 1.7 line height, and wrapping for long values. The example request has a “Copy research task” control and copied feedback. Advanced tokens remain a full-width native disclosure whose open content flows below its summary. The browser purchase-approval reminder remains present; successful tool activity does not establish an external client session or payment.
+
+The final local manifest is `.local/pre-demo/manifest.json`: 11 captures covering budget recovery, desktop/mobile field and record coverage, empty/populated library, short-height/tablet library, actual MCP activity, receipt, and purchased data. Current OAuth activity captures are `.local/research-oauth/connect-1366.png` and `connect-390.png`. The independent fresh finish review in `.local/pre-demo/finish-review.md` returned **ship** with no material fixes. These local states use isolated buyers, real prepared FDA rows, and controlled TEST_ONLY captured entitlements with no PayPal operation or ledger; they do not prove an external buyer payment. Actual successful MCP requests provide activity evidence. Hosted acceptance, real Google/email delivery, a PayPal Sandbox buyer operation, and an external client session remain separate acceptance work. No raster asset, visual-world replacement, system token, font, or detector suppression is introduced.

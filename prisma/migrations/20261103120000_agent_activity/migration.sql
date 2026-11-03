@@ -1,0 +1,1 @@
+ALTER TABLE "AgentToken" ADD COLUMN "lastUsedAt" TIMESTAMP(3), ADD COLUMN "lastTool" TEXT;

@@ -24,7 +24,9 @@ The source-preview query accepts only an offer in the public catalogue. Unknown 
 
 No reference assets were copied. Mobbin was not retried after the previously encountered access limitation. No paid services, new accounts or new runtime dependencies are required for this work.
 
-## Recommended next work
+## Repeat-research roadmap
+
+Implementation update, 3 November 2026: Your data now provides the searchable entitlement library, original result/receipt links, purchased scope and version notices. Research persists field/record coverage, gaps and minimum complete price; explicit budget recovery and Reuse scope are implemented. Connect shows successful MCP tool activity and a copyable first task. Evidence packs and the standalone verifier are additional implemented proof tools. The table below records the original proposal; custom named templates, full record-by-record update comparisons and incremental pricing remain deferred.
 
 The next investment should improve the repeat research loop. Adding more domain names or another chat interface is less useful until people can consistently find, buy and reuse a worthwhile batch.
 
@@ -36,7 +38,7 @@ The next investment should improve the repeat research loop. Adding more domain 
 | 4 | **Coverage-first comparison** | A compact comparison of required fields, matching record count, snapshot age, permitted use and exact price. Explain missing requirements alongside successful matches. | Buyers can explain why a source fits without treating a vague AI score as evidence. |
 | 5 | **First agent task walkthrough** | After OAuth consent, offer one copyable research request and show actual connection/last-use status. Keep manual token setup in advanced options. | A user reaches a successful, scoped MCP request without editing code. |
 
-These are proposals, not features represented as already shipped. The three research starting points are implemented now; persistent custom templates and update notifications are not.
+The library, coverage comparison and first-task activity are implemented. Reuse scope supplies an editable fresh draft, without custom named-template management. Source-version notices link to an actual newer offer; they do not implement full update comparisons, notifications or incremental pricing.
 
 ## Remove or defer
 

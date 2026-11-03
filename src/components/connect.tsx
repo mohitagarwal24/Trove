@@ -4,14 +4,16 @@ import { Check, Copy, KeyRound, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { api, post } from "@/lib/client";
 import { useTrove } from "./trove-context";
 import { Badge, ExternalLink, Modal, Notice } from "./ui";
+type Activity = { lastUsedAt: string | null; lastTool: string | null };
 type Connection = {
+  tokens?: Activity[];
   id: string;
   client: { name: string };
   scopes: string[];
   expiresAt: string;
   revokedAt: string | null;
 };
-type Token = {
+type Token = Activity & {
   id: string;
   name: string;
   prefix: string;
@@ -19,6 +21,8 @@ type Token = {
   expiresAt: string;
   revokedAt: string | null;
 };
+const firstTask =
+  "Find recent drug approvals and recall reasons. Keep the research under $10 and show me the price before I approve it.";
 const toolDescriptions = [
   ["get_profile", "Identify the connected Trove account"],
   ["discover_data", "Match your agent’s exact data requirements"],
@@ -187,6 +191,7 @@ export function Connect() {
                   const active =
                     !connection.revokedAt &&
                     new Date(connection.expiresAt) > new Date();
+                  const activity = connection.tokens?.[0];
                   return (
                     <div className="token-row" key={connection.id}>
                       <span className="token-icon">
@@ -198,6 +203,11 @@ export function Connect() {
                           {connection.scopes.includes("purchase")
                             ? "Research and purchase requests"
                             : "Research access"}
+                        </small>
+                        <small className="agent-activity">
+                          {activity?.lastUsedAt
+                            ? `Last successful request: ${activity.lastTool?.replaceAll("_", " ")} · ${new Date(activity.lastUsedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
+                            : "No successful tool requests yet"}
                         </small>
                       </div>
                       <Badge tone={active ? "green" : "neutral"}>
@@ -254,6 +264,11 @@ export function Connect() {
                     <small className="mono">
                       {token.prefix}•••• · {token.scopes.join(" + ")}
                     </small>
+                    <small className="agent-activity">
+                      {token.lastUsedAt
+                        ? `Last successful request: ${token.lastTool?.replaceAll("_", " ")} · ${new Date(token.lastUsedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`
+                        : "No successful tool requests yet"}
+                    </small>
                   </div>
                   <Badge tone={token.revokedAt ? "neutral" : "green"}>
                     {token.revokedAt
@@ -303,10 +318,14 @@ export function Connect() {
                 <h2>Give your agent a task</h2>
               </div>
             </div>
-            <blockquote className="example-brief">
-              “Find recent drug approvals and recall reasons. Keep the research
-              under $10 and show me the price before I approve it.”
-            </blockquote>
+            <blockquote className="example-brief">“{firstTask}”</blockquote>
+            <button
+              className="button button-secondary copy-research-task"
+              onClick={() => copy(firstTask, "task")}
+            >
+              {copyState === "task" ? <Check size={15} /> : <Copy size={15} />}
+              {copyState === "task" ? "Copied" : "Copy research task"}
+            </button>
             <div className="policy-note">
               <ShieldCheck size={17} />
               <p>Purchases require your approval in a browser.</p>

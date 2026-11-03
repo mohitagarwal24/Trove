@@ -34,6 +34,14 @@ App: https://trove-mohit24.onrender.com. Use a new private Trove account and fic
 6. Summarise with AI only if source terms permit it. This sends the purchased subset to Gemini. The response should cite sources and acknowledge coverage limits; it is not clinical advice.
 7. Request a refund with a reason. Wait for authoritative completion; new data retrieval must stop. Previously downloaded files cannot be recalled.
 
+## Coverage, library and evidence
+
+1. Set a $0.50 cap for two drug-recall records. Find sources should retain an insufficient-budget explanation, required-field coverage and available record counts after reload. Set limit edits and focuses the cap only; Find sources submits the revised request. Editing scope disables review of an old quote.
+2. Reuse scope from an owned research task. Expect the same editable requirements/cap in a new draft, no results or purchase yet, and the original task unchanged. Another account cannot copy a private task.
+3. After a genuine captured purchase, open Purchases → Your data (also linked from Dashboard). Search title/provider/category/field; inspect the original quantity, fields, version, source date and receipt. Cache expiry must not remove the entry. A newer published version links to its actual preview without buying it. An unrelated row or unrequested column update must not charge again for unchanged purchased values; an additional identical row occurrence is additional scope.
+4. Download Evidence pack from the library or purchase. Run `node scripts/verify-evidence.mjs <downloaded-file.json>`: expect consistent fingerprints. Edit one exported value and expect a nonzero verification failure. This is content consistency, not signed provenance or a PayPal settlement check. Mixed-purchase reused sources link to their original purchases; export those separately.
+5. Use two authorised external clients on the same account to retrieve the original purchase. Expect the same paid result and one purchase, with actual successful activity shown for each connection. Failed tools must not advance it. Revoke one connection and confirm it cannot retrieve; refund the purchase and confirm the library/export path is unavailable to both. Automated local tests cover the server contract; record actual external-client acceptance separately.
+
 ## Provider and account flows
 
 1. Create a separate private account, open Seller studio, enter provider details and attest distribution rights. The profile should be pending review.

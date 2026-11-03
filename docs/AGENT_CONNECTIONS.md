@@ -15,6 +15,10 @@ Connection consent permits `read` and optionally `purchase` and `offline_access`
 
 Manual scoped tokens and the stdio bridge remain available under Advanced access tokens for clients that cannot use remote OAuth. They are optional and expire after 30 days.
 
+Connect your agent offers a Copy research task action. After a successful tool request, Connected apps (or Advanced access tokens) shows the actual tool and time. A token merely existing is not proof of a working connection. Failed requests do not advance this activity; prompts and returned data are not retained in it.
+
+A workspace entitlement applies across clients. A second authorised client can retrieve the same original purchase without checkout. Use the owned purchase reference rather than trusting the agent to remember it. A revoked connection loses access; a refund revokes the entitlement for every client.
+
 ## Protocol and acceptance
 
 The server publishes RFC 9728 protected-resource discovery at `/.well-known/oauth-protected-resource/api/mcp` (and the root alias), plus authorization-server discovery at `/.well-known/oauth-authorization-server`. `/api/mcp` advertises discovery on its 401 challenge. Dynamic registration, PKCE S256 authorization codes, exact registered redirects, audience binding, token exchange, rotating refresh credentials and revocation run in Trove's existing PostgreSQL database. Registration supports public clients and registered `client_secret_post`/`client_secret_basic` clients. Trove does not fetch arbitrary client metadata URLs or support implicit/client-credentials grants.

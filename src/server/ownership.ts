@@ -19,7 +19,7 @@ type Binding = {
   title?: string;
 };
 
-function canonical(value: unknown): string {
+export function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   if (value && typeof value === "object")
     return `{${Object.entries(value)
@@ -71,10 +71,7 @@ export async function ownershipMatcher(
     include: { quote: { include: { lines: true } } },
     orderBy: { createdAt: "asc" },
   });
-  const cache = new Map<
-    string,
-    { rows: DataRow[]; fingerprint: string } | null
-  >();
+  const cache = new Map<string, DataRow[] | null>();
   async function source(id: string | undefined) {
     if (!id) return null;
     if (!cache.has(id)) {
@@ -82,10 +79,7 @@ export async function ownershipMatcher(
         where: { id },
       });
       const rows = snapshot ? decrypt<DataRow[]>(snapshot.encryptedData) : null;
-      cache.set(
-        id,
-        rows ? { rows, fingerprint: batchFingerprint(rows) } : null,
-      );
+      cache.set(id, rows);
     }
     return cache.get(id)!;
   }
@@ -95,8 +89,27 @@ export async function ownershipMatcher(
     const binding = scope.snapshot as Binding;
     const requested = await source(binding.datasetId);
     if (!requested || !binding.rowIndexes?.length) return null;
+    const valid = (rows: DataRow[], indexes: number[]) =>
+      indexes.every(
+        (i) =>
+          Number.isInteger(i) &&
+          i >= 0 &&
+          i < rows.length &&
+          scope.fields.every(
+            (field) =>
+              Object.hasOwn(rows[i], field) && rows[i][field] !== undefined,
+          ),
+      );
+    if (!scope.fields.length || !valid(requested, binding.rowIndexes))
+      return null;
+    const projectedHash = (row: DataRow) =>
+      hash(
+        canonical(
+          Object.fromEntries(scope.fields.map((field) => [field, row[field]])),
+        ),
+      );
     const requestedHashes = binding.rowIndexes.map((i) =>
-      hash(canonical(requested.rows[i])),
+      projectedHash(requested[i]),
     );
     for (const purchase of purchases) {
       for (const line of purchase.quote.lines) {
@@ -109,12 +122,16 @@ export async function ownershipMatcher(
         )
           continue;
         const original = await source(owned.datasetId);
-        if (!original || original.fingerprint !== requested.fingerprint)
+        if (
+          !original ||
+          !owned.rowIndexes?.length ||
+          !valid(original, owned.rowIndexes)
+        )
           continue;
         // Count duplicates: owning one occurrence must not grant an unpurchased second occurrence.
         const counts = new Map<string, number>();
         for (const index of owned.rowIndexes || []) {
-          const key = hash(canonical(original.rows[index]));
+          const key = projectedHash(original[index]);
           counts.set(key, (counts.get(key) || 0) + 1);
         }
         if (

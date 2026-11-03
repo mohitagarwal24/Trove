@@ -162,6 +162,9 @@ for (const width of [1366, 390]) {
     await expect(
       page.getByText("Acceptance agent", { exact: true }),
     ).toBeVisible();
+    await expect(page.locator(".agent-activity")).toContainText(
+      "discover data",
+    );
     await page.screenshot({
       path: `.local/research-oauth/connect-${width}.png`,
     });

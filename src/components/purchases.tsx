@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { OwnedData, PurchaseViews, EvidenceDownload } from "./owned-data";
 import {
   ArrowLeft,
   ArrowRight,
@@ -31,12 +33,13 @@ import {
   Status,
 } from "./ui";
 export function Purchases() {
+  const dataView = useSearchParams().get("view") === "data";
   const { user, ensureAuth, notify } = useTrove();
   const [items, setItems] = useState<PurchaseView[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   useEffect(() => {
-    if (!user) {
+    if (!user || dataView) {
       setItems([]);
       setLoading(false);
       return;
@@ -45,7 +48,8 @@ export function Purchases() {
       .then(setItems)
       .catch((e) => notify(e.message, true))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, dataView]);
+  if (dataView) return <OwnedData />;
   const captured = items.filter((p) => p.paymentState === "captured");
   const visible = items.filter(
     (p) => filter === "all" || p.paymentState === filter,
@@ -62,6 +66,7 @@ export function Purchases() {
           <ArrowRight size={16} />
         </Link>
       </section>
+      <PurchaseViews />
       {user && items.length > 0 && (
         <div className="metric-grid">
           <Metric
@@ -253,13 +258,16 @@ type Result = {
   }[];
 };
 export function PurchaseDetail({ id }: { id: string }) {
+  const initialTab = useSearchParams().get("tab");
   const { user, capabilities, ensureAuth, notify } = useTrove();
   const [purchase, setPurchase] = useState<PurchaseView | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState("result");
+  const [tab, setTab] = useState(
+    initialTab === "receipt" ? "receipt" : "result",
+  );
   const [answer, setAnswer] = useState<{ mode: string; text: string } | null>(
     null,
   );
@@ -497,6 +505,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                       <Download size={14} />
                       Download JSON
                     </button>
+                    <EvidenceDownload purchaseId={id} />
                   </div>
                   {!!p.quote.reusedSources?.length && (
                     <div className="source-result">

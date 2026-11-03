@@ -11,9 +11,9 @@ The application uses ordinary paid-product contracts and storage for these offer
 - Show a regulatory research question and the source catalogue. Explain the supply disclosure above before presenting payment.
 - Run real AI research with a bounded task allowance. Inspect selected fields, filters, records, source version and exact price. A task allowance is policy, not a PayPal wallet or mandate.
 - Approve the exact amount using a PayPal Sandbox personal buyer. Show delivery only after confirmed capture and inspect actual payment references.
-- Retrieve the same result again without another purchase. Inspect source attribution, receipt and usage terms.
+- Retrieve the same result from a second connected agent without another purchase. Open Your data and export the evidence pack. Inspect source attribution, receipt and usage terms; demonstrate the local content verifier without claiming a digital signature.
 - Show a real provider profile, pending review/upload flow and immutable offer edit. Earnings remain owed unless an actual payout item succeeds.
-- Show an agent token and eight bounded MCP tools. Explain that agents can prepare purchases but humans approve them.
+- Show an OAuth connection and nine bounded MCP tools. Explain that agents can prepare purchases but humans approve them.
 
 ## Tracks and evidence
 

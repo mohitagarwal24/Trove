@@ -47,3 +47,25 @@ export const taskRequirementsSchema = discoverySchema.pick({
   purpose: true,
 });
 export type TaskRequirements = z.infer<typeof taskRequirementsSchema>;
+
+/** Compare editable scopes by meaning, independent of PostgreSQL JSON key order. */
+export function requirementsKey(value: { purpose: string; needs: DataNeed[] }) {
+  return JSON.stringify({
+    purpose: value.purpose,
+    needs: value.needs
+      .map((need) => ({
+        category: need.category,
+        fields: [...need.fields].sort(),
+        quantity: need.quantity,
+        maxAgeDays: need.maxAgeDays,
+        filters: need.filters
+          .map((filter) => ({
+            field: filter.field,
+            operator: filter.operator,
+            value: filter.value,
+          }))
+          .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+      }))
+      .sort((a, b) => a.category.localeCompare(b.category)),
+  });
+}

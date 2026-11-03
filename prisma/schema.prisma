@@ -50,6 +50,8 @@ model Membership {
   @@unique([workspaceId, userId])
 }
 model AgentToken {
+  lastUsedAt  DateTime?
+  lastTool    String?
   id          String @id @default(cuid())
   userId      String
   workspaceId String

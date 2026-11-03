@@ -135,3 +135,77 @@ export async function verificationDelivery(page: Page) {
 test.afterAll(async () => {
   await db.$disconnect();
 });
+
+// Local display/access fixture only. It exercises actual prepared public records and
+// entitlement endpoints, but creates no PayPal order, ledger entry or real capture.
+export async function ownedDataFixture(page: Page) {
+  localDatabase();
+  const bootstrapResponse = await page.request.get("/api/bootstrap");
+  const bootstrap = await bootstrapResponse.json();
+  const source = bootstrap.offers.find(
+    (o: { offerId: string }) => o.offerId === "drug-approvals-full",
+  );
+  const response = await page.request.post("/api/quotes", {
+    headers: { Origin: new URL(bootstrapResponse.url()).origin },
+    data: { offerIds: [source.id], quantity: 2, purpose: "ai_inference" },
+  });
+  expect(response.ok()).toBeTruthy();
+  const quote = await response.json();
+  const { prepareConnector } = await import("../../src/server/connectors");
+  const { encrypt, hash } = await import("../../src/lib/crypto");
+  const prepared = await Promise.all(
+    quote.lines.map((line: Parameters<typeof prepareConnector>[0]) =>
+      prepareConnector(line),
+    ),
+  );
+  const expiresAt = new Date(Date.now() + 3600000);
+  const captureId = `TEST_ONLY_${randomUUID()}`;
+  const purchase = await db.purchase.create({
+    data: {
+      quoteId: quote.id,
+      workspaceId: bootstrap.user.workspaceId,
+      mode: "sandbox",
+      idempotencyKey: `test-owned-${randomUUID()}`,
+      paymentState: "captured",
+      fulfilmentState: "available",
+      captureId,
+      entitlement: {
+        create: { workspaceId: bootstrap.user.workspaceId, expiresAt },
+      },
+      receipt: {
+        create: {
+          document: {
+            version: 1,
+            purchaseId: "TEST_ONLY",
+            captureId,
+            mode: "sandbox",
+            currency: "USD",
+            totalCents: quote.totalCents,
+            lines: quote.lines.map(
+              (line: {
+                snapshot: object;
+                fields: string[];
+                quantity: number;
+              }) => ({
+                ...line.snapshot,
+                fields: line.fields,
+                quantity: line.quantity,
+              }),
+            ),
+          },
+        },
+      },
+      executions: {
+        create: prepared.map((result, i) => ({
+          quoteLineId: quote.lines[i].id,
+          state: "validated",
+          encrypted: encrypt(result),
+          resultHash: hash(JSON.stringify(result)),
+          checks: result.checks,
+          expiresAt,
+        })),
+      },
+    },
+  });
+  return { purchaseId: purchase.id, title: source.title, captureId };
+}

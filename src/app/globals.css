@@ -5072,3 +5072,175 @@ summary:focus-visible {
     font-size: 23px;
   }
 }
+
+/* Owned research and source decisions extend the existing working inventory. */
+.purchase-views {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 28px;
+}
+.purchase-views a {
+  padding: 0 0 15px;
+  font-size: 13px;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+}
+.purchase-views a[aria-current="page"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.purchase-views a:hover {
+  color: var(--accent);
+}
+.library-search {
+  max-width: 580px;
+  margin-bottom: 24px;
+}
+.library-search input {
+  width: 100%;
+  min-width: 0;
+}
+.owned-data-list {
+  padding: 0 24px;
+}
+.owned-source {
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+  padding: 28px 0;
+}
+.owned-source + .owned-source {
+  border-top: 1px solid var(--line);
+}
+.owned-source-info {
+  min-width: 0;
+}
+.owned-source-title {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+.owned-source h2 {
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: -0.025em;
+}
+.owned-source h2 a:hover {
+  color: var(--accent);
+}
+.owned-source-info > p,
+.owned-source-scope {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-top: 8px;
+}
+.owned-source-scope summary {
+  cursor: pointer;
+  color: var(--ink);
+}
+.owned-source-scope p {
+  max-width: 68ch;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+.source-version-link {
+  margin-top: 12px;
+  font-size: 12px;
+}
+.owned-source-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.owned-source-actions .button {
+  min-width: 155px;
+}
+.owned-source-actions .text-link {
+  font-size: 12px;
+  padding: 5px 0;
+}
+.library-more {
+  margin-top: 24px;
+}
+.source-decision .decision-coverage {
+  font-size: 12px;
+  margin-top: 9px;
+  color: var(--muted);
+}
+.decision-fields {
+  margin-top: 10px;
+  font-size: 12px;
+}
+.decision-fields summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+.source-decision .decision-fields p {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+}
+.discovery-gaps {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  margin-top: 20px;
+}
+.discovery-gaps .notice {
+  width: 100%;
+}
+.agent-activity {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.copy-research-task {
+  margin-top: 14px;
+}
+.result-ready {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+@media (max-width: 760px) {
+  .owned-data-list {
+    padding-inline: 20px;
+  }
+  .owned-source {
+    flex-direction: column;
+    gap: 20px;
+    padding-block: 24px;
+  }
+  .owned-source-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+  .owned-source-actions .button {
+    min-width: 0;
+  }
+  .purchase-views {
+    gap: 24px;
+  }
+}
+.advanced-tokens[open] {
+  display: block;
+}
+.advanced-tokens .token-list {
+  margin: 20px 0;
+}
+.token-row .agent-activity {
+  font-size: 12px;
+  line-height: 1.7;
+  margin-top: 6px;
+}
+@media (max-width: 760px) {
+  .workspace-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}

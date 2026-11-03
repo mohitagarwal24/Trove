@@ -128,6 +128,7 @@ export async function discoverData(
           acquisition: owned ? "owned" : "purchase",
           ownedPurchaseId: owned?.purchaseId || null,
           fields: offer.fields,
+          missingFields,
           sourceUrl: offer.sourceUrl,
           sourceLicenseUrl: offer.sourceLicenseUrl,
           freshnessAt: offer.freshnessAt,
@@ -170,6 +171,17 @@ export async function discoverData(
   const selected = gaps.length ? [] : chosen;
   const decisions: Decision[] = candidates.map((c) => ({
     offerId: c.offerVersionId,
+    priceCents: c.priceCents,
+    availableRecords: c.availableRecords,
+    availabilityChecked: !c.code || c.code === "INSUFFICIENT_RECORDS",
+    requestedRecords: request.needs.find((n) => n.category === c.category)!
+      .quantity,
+    requiredFields: request.needs.find((n) => n.category === c.category)!
+      .fields,
+    missingFields: c.missingFields,
+    freshnessAt: c.freshnessAt.toISOString(),
+    acquisition: c.acquisition as "owned" | "purchase",
+    ownedPurchaseId: c.ownedPurchaseId,
     title: c.title,
     selected: selected.some((s) => s.offerVersionId === c.offerVersionId),
     reason:
@@ -183,6 +195,12 @@ export async function discoverData(
           : "A lower-priced offer satisfies this category."),
   }));
   const requirements: Requirements = {
+    discovery: {
+      engine,
+      minimumCompleteTotalCents:
+        chosen.length === request.needs.length ? minimumTotalCents : null,
+      gaps,
+    },
     categories: request.needs.map((n) => n.category),
     fields: [...new Set(request.needs.flatMap((n) => n.fields))],
     purpose: request.purpose,

@@ -22,7 +22,7 @@ import {
   ResearchRequirements,
   initialRequirements,
 } from "./research-requirements";
-import { taskRequirementsSchema } from "@/lib/research";
+import { taskRequirementsSchema, requirementsKey } from "@/lib/research";
 import { requirementsForStart } from "@/lib/research-starts";
 import { ResearchStarts } from "./research-starts";
 export function Workspace() {
@@ -30,6 +30,9 @@ export function Workspace() {
   const router = useRouter();
   const requestedTask = params.get("task");
   const requestedStart = params.get("start");
+  const requestedFrom =
+    !requestedTask && !requestedStart ? params.get("from") : null;
+  const [copiedScope, setCopiedScope] = useState(false);
   const [resumeError, setResumeError] = useState("");
   const { user, capabilities, ensureAuth, notify, offers } = useTrove();
   const [prompt, setPrompt] = useState(examplePrompts[0]);
@@ -49,6 +52,7 @@ export function Workspace() {
     setReview(false);
     setPurchases([]);
     setResumeError("");
+    setCopiedScope(false);
     const start = !requestedTask && requirementsForStart(requestedStart);
     if (start) {
       setMode("requirements");
@@ -63,12 +67,27 @@ export function Workspace() {
         if (active) setPurchases(items);
       })
       .catch(() => {});
-    const id = requestedTask || sessionStorage.getItem(key);
+    const id = requestedTask || requestedFrom || sessionStorage.getItem(key);
     setResumeError("");
     if (id)
       api<Task>(`/tasks/${id}`)
         .then((item) => {
           if (active) {
+            if (requestedFrom) {
+              setCopiedScope(true);
+              setTask(null);
+              setPrompt(item.prompt);
+              setBudget((item.budgetCents / 100).toFixed(2));
+              if (item.requirements.needs) {
+                setMode("requirements");
+                setRequirements({
+                  needs: item.requirements.needs,
+                  purpose: item.requirements
+                    .purpose as typeof requirements.purpose,
+                });
+              } else setMode("brief");
+              return;
+            }
             setTask(item);
             setPrompt(item.prompt);
             if (item.planner !== "gemini" && item.requirements.needs) {
@@ -84,7 +103,7 @@ export function Workspace() {
           }
         })
         .catch(() => {
-          sessionStorage.removeItem(key);
+          if (!requestedFrom) sessionStorage.removeItem(key);
           setResumeError(
             "This research is unavailable or belongs to another workspace.",
           );
@@ -92,7 +111,7 @@ export function Workspace() {
     return () => {
       active = false;
     };
-  }, [user?.workspaceId, requestedTask, requestedStart]);
+  }, [user?.workspaceId, requestedTask, requestedStart, requestedFrom]);
   async function run() {
     try {
       if (!(await ensureAuth())) return;
@@ -116,10 +135,6 @@ export function Workspace() {
           `trove-task:${user.workspaceId}`,
           result.task.id,
         );
-      if (!result.quote)
-        notify(
-          "No permitted offer meets these requirements within budget. Nothing was purchased.",
-        );
     } catch (e) {
       setResearchError((e as Error).message);
     } finally {
@@ -142,15 +157,46 @@ export function Workspace() {
       notify((e as Error).message, true);
     }
   }
+  const scopeChanged =
+    !!task &&
+    (Math.round(Number(budget) * 100) !== task.budgetCents ||
+      (mode === "brief"
+        ? prompt.trim() !== task.prompt.trim()
+        : !!task.requirements.needs &&
+          requirementsKey(requirements) !==
+            requirementsKey({
+              needs: task.requirements.needs,
+              purpose: task.requirements.purpose,
+            })));
+  const summary = task?.requirements.discovery;
+  const decisionPrice = (decision: Task["decisions"][number]) => {
+    const cents =
+      decision.priceCents ??
+      offers.find((o) => o.id === decision.offerId)?.priceCents;
+    return cents == null ? "Quote required" : money(cents);
+  };
   const taskPurchases = purchases.filter((p) => p.taskId === task?.id);
   return (
     <div className="page-enter">
-      <section className="page-heading compact-heading">
+      <section className="page-heading compact-heading workspace-heading">
         <div>
           <h1>Research workspace</h1>
           <p>Define the scope. Find sources that fit.</p>
         </div>
+        {task && (
+          <Link
+            className="button button-secondary"
+            href={`/workspace?from=${task.id}`}
+          >
+            Reuse scope <ArrowRight size={15} />
+          </Link>
+        )}
       </section>
+      {copiedScope && (
+        <Notice>
+          Requirements copied. Edit them and find sources to start new research.
+        </Notice>
+      )}
       {resumeError && <Notice kind="error">{resumeError}</Notice>}
       <div className="workspace-layout">
         <section
@@ -226,6 +272,7 @@ export function Workspace() {
               <div className="money-input">
                 <span>$</span>
                 <input
+                  id="task-budget"
                   type="number"
                   min="0.50"
                   max="1000"
@@ -374,6 +421,12 @@ export function Workspace() {
                     <h2>Source comparison</h2>
                     <span className="count-pill">{task.decisions.length}</span>
                   </div>
+                  {scopeChanged && (
+                    <Notice>
+                      Requirements changed. Find sources again to refresh this
+                      comparison.
+                    </Notice>
+                  )}
                   <div className="source-decision-list">
                     {task.decisions.map((d) => (
                       <div
@@ -386,13 +439,41 @@ export function Workspace() {
                         </span>
                         <div>
                           <strong>{d.title}</strong>
-                          <p>{d.reason}</p>
+                          <p>{d.reason.replaceAll("_", " ")}</p>
+                          {d.requestedRecords !== undefined && (
+                            <p className="decision-coverage">
+                              {d.availabilityChecked
+                                ? `${d.requestedRecords} requested · ${d.availableRecords} available`
+                                : "Availability not checked"}{" "}
+                              ·{" "}
+                              {d.requiredFields!.length -
+                                (d.missingFields?.length || 0)}
+                              /{d.requiredFields!.length} required fields
+                              {d.acquisition === "owned" &&
+                                " · Already purchased"}
+                            </p>
+                          )}
+                          {!!d.requiredFields?.length && (
+                            <details className="decision-fields">
+                              <summary>Scope details</summary>
+                              <p>
+                                {d.requiredFields
+                                  .map((f) => f.replaceAll("_", " "))
+                                  .join(" · ")}
+                              </p>
+                              {d.freshnessAt && (
+                                <p>
+                                  Source snapshot:{" "}
+                                  {new Date(d.freshnessAt).toLocaleDateString(
+                                    "en-US",
+                                  )}
+                                </p>
+                              )}
+                            </details>
+                          )}
                         </div>
                         <span className="decision-price">
-                          {money(
-                            offers.find((o) => o.id === d.offerId)
-                              ?.priceCents || 0,
-                          )}
+                          {decisionPrice(d)}
                         </span>
                       </div>
                     ))}
@@ -402,16 +483,22 @@ export function Workspace() {
                       <div>
                         <span>
                           {task.decisions.filter((d) => d.selected).length}{" "}
-                          suitable sources
+                          suitable{" "}
+                          {task.decisions.filter((d) => d.selected).length === 1
+                            ? "source"
+                            : "sources"}
                         </span>
                         <strong>
                           {quote
                             ? money(quote.totalCents)
-                            : "Exact quote available"}
+                            : summary?.minimumCompleteTotalCents != null
+                              ? money(summary.minimumCompleteTotalCents)
+                              : "Review price"}
                         </strong>
                       </div>
                       <button
                         className="button button-primary"
+                        disabled={scopeChanged || running}
                         onClick={() =>
                           quote && new Date(quote.expiresAt) > new Date()
                             ? setReview(true)
@@ -423,10 +510,38 @@ export function Workspace() {
                       </button>
                     </div>
                   ) : (
-                    <Notice>
-                      No suitable purchase is available. Adjust the scope,
-                      permitted use, or spending limit and run a new task.
-                    </Notice>
+                    <div className="discovery-gaps">
+                      {summary?.gaps.length ? (
+                        summary.gaps.map((gap) => (
+                          <Notice key={`${gap.category}:${gap.code}`}>
+                            {gap.message}
+                          </Notice>
+                        ))
+                      ) : (
+                        <Notice>
+                          No suitable purchase is available. Adjust the scope,
+                          permitted use, or spending limit and run a new task.
+                        </Notice>
+                      )}
+                      {summary?.minimumCompleteTotalCents != null &&
+                        summary.minimumCompleteTotalCents >
+                          task.budgetCents && (
+                          <button
+                            className="button button-secondary"
+                            onClick={() => {
+                              setBudget(
+                                (
+                                  summary.minimumCompleteTotalCents! / 100
+                                ).toFixed(2),
+                              );
+                              document.getElementById("task-budget")?.focus();
+                            }}
+                          >
+                            Set limit to{" "}
+                            {money(summary.minimumCompleteTotalCents)}
+                          </button>
+                        )}
+                    </div>
                   )}
                 </div>
                 {taskPurchases.length > 0 && (

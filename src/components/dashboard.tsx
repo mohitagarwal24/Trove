@@ -188,8 +188,8 @@ export function Dashboard() {
             <section className="dashboard-section">
               <div className="dashboard-section-heading">
                 <h2>Your data</h2>
-                <Link href="/purchases">
-                  All purchases <ArrowUpRight size={14} />
+                <Link href="/purchases?view=data">
+                  Open library <ArrowUpRight size={14} />
                 </Link>
               </div>
               {available.length ? (

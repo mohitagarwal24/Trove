@@ -38,7 +38,13 @@ export type DataFilter = {
   operator: "contains" | "equals" | "after" | "before";
   value: string;
 };
+export type DiscoverySummary = {
+  engine: string;
+  minimumCompleteTotalCents: number | null;
+  gaps: { category: string; code: string; message: string }[];
+};
 export type Requirements = {
+  discovery?: DiscoverySummary;
   needs?: import("./research").DataNeed[];
   filters?: DataFilter[];
   categories: string[];
@@ -48,6 +54,15 @@ export type Requirements = {
   quantity: number;
 };
 export type Decision = {
+  priceCents?: number;
+  availableRecords?: number;
+  availabilityChecked?: boolean;
+  requestedRecords?: number;
+  requiredFields?: string[];
+  missingFields?: string[];
+  freshnessAt?: string;
+  acquisition?: "owned" | "purchase";
+  ownedPurchaseId?: string | null;
   offerId: string;
   title: string;
   selected: boolean;
@@ -157,3 +172,21 @@ export const money = (cents: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
     cents / 100,
   );
+
+export type LibraryEntry = {
+  id: string;
+  purchaseId: string;
+  title: string;
+  category: string;
+  seller: string;
+  purchasedAt: string;
+  version: number;
+  fields: string[];
+  quantity: number;
+  priceCents: number;
+  purpose: string;
+  sourceUrl: string | null;
+  freshnessAt: string;
+  currentVersion: { id: string; version: number } | null;
+};
+export type LibraryPage = { items: LibraryEntry[]; nextCursor: string | null };

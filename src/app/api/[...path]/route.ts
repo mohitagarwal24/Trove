@@ -1,3 +1,5 @@
+import { listLibrary } from "@/server/library";
+import { getEvidence } from "@/server/evidence";
 import { beginGoogle, finishGoogle, googleCookie } from "@/server/google-auth";
 import { discoverySchema, taskRequirementsSchema } from "@/lib/research";
 import { discoverData } from "@/server/discovery";
@@ -400,6 +402,16 @@ async function handler(
             expiresAt: true,
             revokedAt: true,
             client: { select: { name: true } },
+            tokens: {
+              where: {
+                userId: actor.id,
+                workspaceId: actor.workspaceId,
+                lastUsedAt: { not: null },
+              },
+              orderBy: { lastUsedAt: "desc" },
+              take: 1,
+              select: { lastUsedAt: true, lastTool: true },
+            },
           },
           orderBy: { createdAt: "desc" },
           take: 100,
@@ -468,6 +480,18 @@ async function handler(
     }
     if (path[0] === "quotes" && path[1] && method === "GET")
       return json(await getQuote(actor, path[1]));
+    if (route === "library" && method === "GET") {
+      const input = z
+        .object({
+          query: z.string().max(200).default(""),
+          cursor: z.string().max(100).optional(),
+        })
+        .parse({
+          query: request.nextUrl.searchParams.get("query") || "",
+          cursor: request.nextUrl.searchParams.get("cursor") || undefined,
+        });
+      return json(await listLibrary(actor, input.query, input.cursor));
+    }
     if (route === "purchases" && method === "GET")
       return json(
         await db.purchase.findMany({
@@ -494,6 +518,8 @@ async function handler(
         return json(await getPurchase(actor, id));
       if (path[2] === "result" && method === "GET")
         return json(await getResult(actor, id));
+      if (path[2] === "evidence" && method === "GET")
+        return json(await getEvidence(actor, id));
       if (path[2] === "answer" && method === "POST")
         return json(await draftAnswer(actor, id));
       if (path[2] === "receipt" && method === "GET") {
@@ -557,6 +583,8 @@ async function handler(
             id: true,
             name: true,
             prefix: true,
+            lastUsedAt: true,
+            lastTool: true,
             scopes: true,
             createdAt: true,
             expiresAt: true,

@@ -1,3 +1,9 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { listLibrary } from "../src/server/library";
+import { getEvidence } from "../src/server/evidence";
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -958,6 +964,8 @@ test("payout reconciliation verifies the recipient and reuses a single batch", a
 });
 test("immutable seller versions preserve existing quoted prices and data", async () => {
   const q = await quote();
+  const owned = (await createPurchase(actor, q.id, randomUUID())).purchase;
+  await approve(owned.id);
   const old = await db.offerVersion.findUniqueOrThrow({
     where: { id: offerId },
   });
@@ -976,6 +984,12 @@ test("immutable seller versions preserve existing quoted prices and data", async
   assert.deepEqual(
     (await getQuote(actor, q.id)).lines[0].snapshot,
     q.lines[0].snapshot,
+  );
+  const library = await listLibrary(actor);
+  assert.equal(
+    library.items.find((item) => item.purchaseId === owned.id)?.currentVersion
+      ?.id,
+    next.id,
   );
   offerId = next.id;
 });
@@ -1219,4 +1233,158 @@ test("normalization preserves actual dates and excludes third-party device taxon
   ]);
   assert.equal(rows[0].event_date_initiated, "2025-01-01");
   assert(!("gmdn_name" in rows[0]));
+});
+
+test("ownership follows purchased rows and fields across unrelated updates and preserves occurrence counts", async () => {
+  const first = await createQuote(actor, {
+    offerIds: [offerId],
+    quantity: 1,
+    fieldsByOffer: { [offerId]: ["brand_name"] },
+  });
+  const p = (await createPurchase(actor, first.id, randomUUID())).purchase;
+  await approve(p.id);
+  const original = await db.offerVersion.findUniqueOrThrow({
+    where: { id: offerId },
+  });
+  const source = await db.datasetSnapshot.findUniqueOrThrow({
+    where: { id: datasetId },
+  });
+  async function variant(rows: typeof sourceRows) {
+    const snapshot = await db.datasetSnapshot.create({
+      data: {
+        sellerId,
+        sourceKey: randomUUID(),
+        sourceUrl: source.sourceUrl,
+        licenseUrl: source.licenseUrl,
+        attribution: source.attribution,
+        retrievedAt: new Date(),
+        sourceUpdatedAt: source.sourceUpdatedAt,
+        contentHash: hash(
+          JSON.stringify({
+            rows,
+            updated: source.sourceUpdatedAt.toISOString(),
+          }),
+        ),
+        rowCount: rows.length,
+        encryptedData: encrypt(rows),
+      },
+    });
+    const { id: _id, createdAt: _at, ...rest } = original;
+    return db.offerVersion.create({
+      data: {
+        ...rest,
+        offerId: `scope-${randomUUID()}`,
+        datasetId: snapshot.id,
+        schema: original.schema as Prisma.InputJsonValue,
+        preview: original.preview as Prisma.InputJsonValue,
+      },
+    });
+  }
+  const rows = structuredClone(sourceRows);
+  rows[0].active_ingredients = "Unrequested column changed";
+  rows[rows.length - 1].brand_name = "Unpurchased row changed";
+  rows.push({ ...rows.at(-1)! });
+  const unrelated = await variant(rows);
+  assert.equal(
+    (
+      await createQuote(actor, {
+        offerIds: [unrelated.id],
+        quantity: 1,
+        fieldsByOffer: { [unrelated.id]: ["brand_name"] },
+      })
+    ).totalCents,
+    0,
+  );
+  rows[0].brand_name = `${rows[0].brand_name} genuinely changed`;
+  const changed = await variant(rows);
+  assert(
+    (
+      await createQuote(actor, {
+        offerIds: [changed.id],
+        quantity: 1,
+        fieldsByOffer: { [changed.id]: ["brand_name"] },
+      })
+    ).totalCents > 0,
+  );
+  const repeated = await variant([
+    sourceRows[0],
+    sourceRows[0],
+    ...sourceRows.slice(1),
+  ]);
+  assert(
+    (
+      await createQuote(actor, {
+        offerIds: [repeated.id],
+        quantity: 2,
+        fieldsByOffer: { [repeated.id]: ["brand_name"] },
+      })
+    ).totalCents > 0,
+  );
+});
+
+test("library and evidence use active workspace ownership and recover expired cache without charging", async () => {
+  const p = await purchase();
+  assert.equal((await listLibrary(actor)).items.length, 0);
+  await assert.rejects(() => getEvidence(actor, p.id), /completed purchase/);
+  await approve(p.id);
+  const calls = captureCalls;
+  const library = await listLibrary(actor, "approval");
+  assert(library.items.some((item) => item.purchaseId === p.id));
+  assert.equal((await listLibrary(other)).items.length, 0);
+  assert.equal((await listLibrary(actor, "no-such-dataset")).items.length, 0);
+  await assert.rejects(() => getEvidence(other, p.id), /not found/);
+  const evidence = await getEvidence(actor, p.id);
+  assert.equal(evidence.format, "trove.evidence.v1");
+  assert.equal(
+    evidence.payment.captureId,
+    (await getPurchase(actor, p.id)).captureId,
+  );
+  assert.equal(evidence.sources[0].rows.length, p.quote.lines[0].quantity);
+  assert.equal(
+    evidence.sources[0].content.records.length,
+    p.quote.lines[0].quantity,
+  );
+  const directory = mkdtempSync(join(tmpdir(), "trove-evidence-"));
+  try {
+    const path = join(directory, "evidence.json");
+    writeFileSync(path, JSON.stringify(evidence));
+    assert.match(
+      execFileSync(process.execPath, ["scripts/verify-evidence.mjs", path], {
+        encoding: "utf8",
+      }),
+      /Verified content/,
+    );
+    const tampered = structuredClone(evidence);
+    tampered.sources[0].rows[0][Object.keys(tampered.sources[0].rows[0])[0]] =
+      "tampered";
+    writeFileSync(path, JSON.stringify(tampered));
+    assert.throws(() =>
+      execFileSync(process.execPath, ["scripts/verify-evidence.mjs", path], {
+        stdio: "pipe",
+      }),
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+  await db.resultEntitlement.update({
+    where: { purchaseId: p.id },
+    data: { expiresAt: new Date(0) },
+  });
+  await db.providerExecution.updateMany({
+    where: { purchaseId: p.id },
+    data: { encrypted: null },
+  });
+  assert(
+    (await listLibrary(actor)).items.some((item) => item.purchaseId === p.id),
+  );
+  const restored = await getEvidence(actor, p.id);
+  assert.equal(
+    restored.sources[0].content.fingerprint,
+    evidence.sources[0].content.fingerprint,
+  );
+  assert.equal(captureCalls, calls);
+  await requestRefund(actor, p.id, "Evidence export revocation acceptance");
+  await processRefund(p.id);
+  await assert.rejects(() => getEvidence(actor, p.id), /completed purchase/);
+  assert.equal((await listLibrary(actor)).items.length, 0);
 });
