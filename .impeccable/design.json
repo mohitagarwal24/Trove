@@ -1,564 +1,406 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-29T17:05:41.436811+00:00",
+  "generatedAt": "2026-11-03T17:00:53.868216+00:00",
   "title": "Design System: Trove",
   "extensions": {
     "colorMeta": {
-      "canvas": {
-        "role": "neutral",
-        "displayName": "Chalk Canvas",
+      "primary": {
+        "role": "primary",
+        "displayName": "Primary",
         "tonalRamp": [
-          "oklch(15.00% 0.0041 271.37)",
-          "oklch(26.43% 0.0041 271.37)",
-          "oklch(37.86% 0.0041 271.37)",
-          "oklch(49.29% 0.0041 271.37)",
-          "oklch(60.71% 0.0041 271.37)",
-          "oklch(72.14% 0.0041 271.37)",
-          "oklch(83.57% 0.0041 271.37)",
-          "oklch(95.00% 0.0041 271.37)"
-        ]
+          "oklch(15% 0.00585 271.18)",
+          "oklch(27% 0.00585 271.18)",
+          "oklch(39% 0.00585 271.18)",
+          "oklch(51% 0.00585 271.18)",
+          "oklch(63% 0.00585 271.18)",
+          "oklch(75% 0.00585 271.18)",
+          "oklch(87% 0.00585 271.18)",
+          "oklch(95% 0.00585 271.18)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Primary Hover",
+        "tonalRamp": [
+          "oklch(15% 0.00806 255.55)",
+          "oklch(27% 0.00806 255.55)",
+          "oklch(39% 0.00806 255.55)",
+          "oklch(51% 0.00806 255.55)",
+          "oklch(63% 0.00806 255.55)",
+          "oklch(75% 0.00806 255.55)",
+          "oklch(87% 0.00806 255.55)",
+          "oklch(95% 0.00806 255.55)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "surface": {
         "role": "neutral",
-        "displayName": "White Surface",
+        "displayName": "Surface",
         "tonalRamp": [
-          "oklch(15.00% 0.0000 89.88)",
-          "oklch(26.43% 0.0000 89.88)",
-          "oklch(37.86% 0.0000 89.88)",
-          "oklch(49.29% 0.0000 89.88)",
-          "oklch(60.71% 0.0000 89.88)",
-          "oklch(72.14% 0.0000 89.88)",
-          "oklch(83.57% 0.0000 89.88)",
-          "oklch(95.00% 0.0000 89.88)"
-        ]
+          "oklch(15% 0.00000 89.88)",
+          "oklch(27% 0.00000 89.88)",
+          "oklch(39% 0.00000 89.88)",
+          "oklch(51% 0.00000 89.88)",
+          "oklch(63% 0.00000 89.88)",
+          "oklch(75% 0.00000 89.88)",
+          "oklch(87% 0.00000 89.88)",
+          "oklch(95% 0.00000 89.88)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "sidebar": {
         "role": "neutral",
-        "displayName": "Navigation Ink",
+        "displayName": "Sidebar",
         "tonalRamp": [
-          "oklch(15.00% 0.0379 269.96)",
-          "oklch(26.43% 0.0379 269.96)",
-          "oklch(37.86% 0.0379 269.96)",
-          "oklch(49.29% 0.0379 269.96)",
-          "oklch(60.71% 0.0379 269.96)",
-          "oklch(72.14% 0.0379 269.96)",
-          "oklch(83.57% 0.0379 269.96)",
-          "oklch(95.00% 0.0379 269.96)"
-        ]
-      },
-      "ink": {
-        "role": "neutral",
-        "displayName": "Reading Ink",
-        "tonalRamp": [
-          "oklch(15.00% 0.0441 268.83)",
-          "oklch(26.43% 0.0441 268.83)",
-          "oklch(37.86% 0.0441 268.83)",
-          "oklch(49.29% 0.0441 268.83)",
-          "oklch(60.71% 0.0441 268.83)",
-          "oklch(72.14% 0.0441 268.83)",
-          "oklch(83.57% 0.0441 268.83)",
-          "oklch(95.00% 0.0441 268.83)"
-        ]
+          "oklch(15% 0.00000 89.88)",
+          "oklch(27% 0.00000 89.88)",
+          "oklch(39% 0.00000 89.88)",
+          "oklch(51% 0.00000 89.88)",
+          "oklch(63% 0.00000 89.88)",
+          "oklch(75% 0.00000 89.88)",
+          "oklch(87% 0.00000 89.88)",
+          "oklch(95% 0.00000 89.88)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "muted": {
         "role": "neutral",
-        "displayName": "Slate Text",
+        "displayName": "Muted",
         "tonalRamp": [
-          "oklch(15.00% 0.0367 265.89)",
-          "oklch(26.43% 0.0367 265.89)",
-          "oklch(37.86% 0.0367 265.89)",
-          "oklch(49.29% 0.0367 265.89)",
-          "oklch(60.71% 0.0367 265.89)",
-          "oklch(72.14% 0.0367 265.89)",
-          "oklch(83.57% 0.0367 265.89)",
-          "oklch(95.00% 0.0367 265.89)"
-        ]
+          "oklch(15% 0.01212 261.77)",
+          "oklch(27% 0.01212 261.77)",
+          "oklch(39% 0.01212 261.77)",
+          "oklch(51% 0.01212 261.77)",
+          "oklch(63% 0.01212 261.77)",
+          "oklch(75% 0.01212 261.77)",
+          "oklch(87% 0.01212 261.77)",
+          "oklch(95% 0.01212 261.77)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
-      "faint": {
+      "supporting": {
         "role": "neutral",
-        "displayName": "Secondary Slate",
+        "displayName": "Supporting",
         "tonalRamp": [
-          "oklch(15.00% 0.0378 266.65)",
-          "oklch(26.43% 0.0378 266.65)",
-          "oklch(37.86% 0.0378 266.65)",
-          "oklch(49.29% 0.0378 266.65)",
-          "oklch(60.71% 0.0378 266.65)",
-          "oklch(72.14% 0.0378 266.65)",
-          "oklch(83.57% 0.0378 266.65)",
-          "oklch(95.00% 0.0378 266.65)"
-        ]
+          "oklch(15% 0.02327 257.51)",
+          "oklch(27% 0.02327 257.51)",
+          "oklch(39% 0.02327 257.51)",
+          "oklch(51% 0.02327 257.51)",
+          "oklch(63% 0.02327 257.51)",
+          "oklch(75% 0.02327 257.51)",
+          "oklch(87% 0.02327 257.51)",
+          "oklch(95% 0.02327 257.51)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "line": {
         "role": "neutral",
-        "displayName": "Cool Rule",
+        "displayName": "Line",
         "tonalRamp": [
-          "oklch(15.00% 0.0143 268.48)",
-          "oklch(26.43% 0.0143 268.48)",
-          "oklch(37.86% 0.0143 268.48)",
-          "oklch(49.29% 0.0143 268.48)",
-          "oklch(60.71% 0.0143 268.48)",
-          "oklch(72.14% 0.0143 268.48)",
-          "oklch(83.57% 0.0143 268.48)",
-          "oklch(95.00% 0.0143 268.48)"
-        ]
+          "oklch(15% 0.00290 264.54)",
+          "oklch(27% 0.00290 264.54)",
+          "oklch(39% 0.00290 264.54)",
+          "oklch(51% 0.00290 264.54)",
+          "oklch(63% 0.00290 264.54)",
+          "oklch(75% 0.00290 264.54)",
+          "oklch(87% 0.00290 264.54)",
+          "oklch(95% 0.00290 264.54)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
+      },
+      "panel-line": {
+        "role": "neutral",
+        "displayName": "Panel Line",
+        "tonalRamp": [
+          "oklch(15% 0.00520 247.88)",
+          "oklch(27% 0.00520 247.88)",
+          "oklch(39% 0.00520 247.88)",
+          "oklch(51% 0.00520 247.88)",
+          "oklch(63% 0.00520 247.88)",
+          "oklch(75% 0.00520 247.88)",
+          "oklch(87% 0.00520 247.88)",
+          "oklch(95% 0.00520 247.88)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
+      },
+      "field-line": {
+        "role": "neutral",
+        "displayName": "Field Line",
+        "tonalRamp": [
+          "oklch(15% 0.00871 247.92)",
+          "oklch(27% 0.00871 247.92)",
+          "oklch(39% 0.00871 247.92)",
+          "oklch(51% 0.00871 247.92)",
+          "oklch(63% 0.00871 247.92)",
+          "oklch(75% 0.00871 247.92)",
+          "oklch(87% 0.00871 247.92)",
+          "oklch(95% 0.00871 247.92)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "accent": {
         "role": "primary",
-        "displayName": "Atlas Cobalt",
+        "displayName": "Accent",
         "tonalRamp": [
-          "oklch(15.00% 0.2059 266.85)",
-          "oklch(26.43% 0.2059 266.85)",
-          "oklch(37.86% 0.2059 266.85)",
-          "oklch(49.29% 0.2059 266.85)",
-          "oklch(60.71% 0.2059 266.85)",
-          "oklch(72.14% 0.2059 266.85)",
-          "oklch(83.57% 0.2059 266.85)",
-          "oklch(95.00% 0.2059 266.85)"
-        ]
-      },
-      "accent-dark": {
-        "role": "primary",
-        "displayName": "Deep Cobalt",
-        "tonalRamp": [
-          "oklch(15.00% 0.1782 266.88)",
-          "oklch(26.43% 0.1782 266.88)",
-          "oklch(37.86% 0.1782 266.88)",
-          "oklch(49.29% 0.1782 266.88)",
-          "oklch(60.71% 0.1782 266.88)",
-          "oklch(72.14% 0.1782 266.88)",
-          "oklch(83.57% 0.1782 266.88)",
-          "oklch(95.00% 0.1782 266.88)"
-        ]
-      },
-      "highlight": {
-        "role": "secondary",
-        "displayName": "Amber Marker",
-        "tonalRamp": [
-          "oklch(15.00% 0.1081 89.64)",
-          "oklch(26.43% 0.1081 89.64)",
-          "oklch(37.86% 0.1081 89.64)",
-          "oklch(49.29% 0.1081 89.64)",
-          "oklch(60.71% 0.1081 89.64)",
-          "oklch(72.14% 0.1081 89.64)",
-          "oklch(83.57% 0.1081 89.64)",
-          "oklch(95.00% 0.1081 89.64)"
-        ]
+          "oklch(15% 0.15096 260.74)",
+          "oklch(27% 0.15096 260.74)",
+          "oklch(39% 0.15096 260.74)",
+          "oklch(51% 0.15096 260.74)",
+          "oklch(63% 0.15096 260.74)",
+          "oklch(75% 0.15096 260.74)",
+          "oklch(87% 0.15096 260.74)",
+          "oklch(95% 0.15096 260.74)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "selected-surface": {
         "role": "neutral",
-        "displayName": "Selected Paper",
+        "displayName": "Selected Surface",
         "tonalRamp": [
-          "oklch(15.00% 0.0150 273.85)",
-          "oklch(26.43% 0.0150 273.85)",
-          "oklch(37.86% 0.0150 273.85)",
-          "oklch(49.29% 0.0150 273.85)",
-          "oklch(60.71% 0.0150 273.85)",
-          "oklch(72.14% 0.0150 273.85)",
-          "oklch(83.57% 0.0150 273.85)",
-          "oklch(95.00% 0.0150 273.85)"
-        ]
+          "oklch(15% 0.00623 255.47)",
+          "oklch(27% 0.00623 255.47)",
+          "oklch(39% 0.00623 255.47)",
+          "oklch(51% 0.00623 255.47)",
+          "oklch(63% 0.00623 255.47)",
+          "oklch(75% 0.00623 255.47)",
+          "oklch(87% 0.00623 255.47)",
+          "oklch(95% 0.00623 255.47)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
+      },
+      "scope-surface": {
+        "role": "neutral",
+        "displayName": "Scope Surface",
+        "tonalRamp": [
+          "oklch(15% 0.00287 264.54)",
+          "oklch(27% 0.00287 264.54)",
+          "oklch(39% 0.00287 264.54)",
+          "oklch(51% 0.00287 264.54)",
+          "oklch(63% 0.00287 264.54)",
+          "oklch(75% 0.00287 264.54)",
+          "oklch(87% 0.00287 264.54)",
+          "oklch(95% 0.00287 264.54)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "success": {
         "role": "semantic",
-        "displayName": "Success Ink",
+        "displayName": "Success",
         "tonalRamp": [
-          "oklch(15.00% 0.0837 163.25)",
-          "oklch(26.43% 0.0837 163.25)",
-          "oklch(37.86% 0.0837 163.25)",
-          "oklch(49.29% 0.0837 163.25)",
-          "oklch(60.71% 0.0837 163.25)",
-          "oklch(72.14% 0.0837 163.25)",
-          "oklch(83.57% 0.0837 163.25)",
-          "oklch(95.00% 0.0837 163.25)"
-        ]
+          "oklch(15% 0.05929 161.83)",
+          "oklch(27% 0.05929 161.83)",
+          "oklch(39% 0.05929 161.83)",
+          "oklch(51% 0.05929 161.83)",
+          "oklch(63% 0.05929 161.83)",
+          "oklch(75% 0.05929 161.83)",
+          "oklch(87% 0.05929 161.83)",
+          "oklch(95% 0.05929 161.83)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "success-surface": {
         "role": "semantic",
-        "displayName": "Success Paper",
+        "displayName": "Success Surface",
         "tonalRamp": [
-          "oklch(15.00% 0.0149 158.25)",
-          "oklch(26.43% 0.0149 158.25)",
-          "oklch(37.86% 0.0149 158.25)",
-          "oklch(49.29% 0.0149 158.25)",
-          "oklch(60.71% 0.0149 158.25)",
-          "oklch(72.14% 0.0149 158.25)",
-          "oklch(83.57% 0.0149 158.25)",
-          "oklch(95.00% 0.0149 158.25)"
-        ]
+          "oklch(15% 0.00990 155.10)",
+          "oklch(27% 0.00990 155.10)",
+          "oklch(39% 0.00990 155.10)",
+          "oklch(51% 0.00990 155.10)",
+          "oklch(63% 0.00990 155.10)",
+          "oklch(75% 0.00990 155.10)",
+          "oklch(87% 0.00990 155.10)",
+          "oklch(95% 0.00990 155.10)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "error": {
         "role": "semantic",
-        "displayName": "Error Ink",
+        "displayName": "Error",
         "tonalRamp": [
-          "oklch(15.00% 0.1189 29.83)",
-          "oklch(26.43% 0.1189 29.83)",
-          "oklch(37.86% 0.1189 29.83)",
-          "oklch(49.29% 0.1189 29.83)",
-          "oklch(60.71% 0.1189 29.83)",
-          "oklch(72.14% 0.1189 29.83)",
-          "oklch(83.57% 0.1189 29.83)",
-          "oklch(95.00% 0.1189 29.83)"
-        ]
+          "oklch(15% 0.11453 28.99)",
+          "oklch(27% 0.11453 28.99)",
+          "oklch(39% 0.11453 28.99)",
+          "oklch(51% 0.11453 28.99)",
+          "oklch(63% 0.11453 28.99)",
+          "oklch(75% 0.11453 28.99)",
+          "oklch(87% 0.11453 28.99)",
+          "oklch(95% 0.11453 28.99)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
+      },
+      "error-surface": {
+        "role": "semantic",
+        "displayName": "Error Surface",
+        "tonalRamp": [
+          "oklch(15% 0.01005 32.52)",
+          "oklch(27% 0.01005 32.52)",
+          "oklch(39% 0.01005 32.52)",
+          "oklch(51% 0.01005 32.52)",
+          "oklch(63% 0.01005 32.52)",
+          "oklch(75% 0.01005 32.52)",
+          "oklch(87% 0.01005 32.52)",
+          "oklch(95% 0.01005 32.52)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "night": {
         "role": "neutral",
-        "displayName": "Deep Ink",
+        "displayName": "Night",
         "tonalRamp": [
-          "oklch(15.00% 0.0335 267.72)",
-          "oklch(26.43% 0.0335 267.72)",
-          "oklch(37.86% 0.0335 267.72)",
-          "oklch(49.29% 0.0335 267.72)",
-          "oklch(60.71% 0.0335 267.72)",
-          "oklch(72.14% 0.0335 267.72)",
-          "oklch(83.57% 0.0335 267.72)",
-          "oklch(95.00% 0.0335 267.72)"
-        ]
+          "oklch(15% 0.00515 248.10)",
+          "oklch(27% 0.00515 248.10)",
+          "oklch(39% 0.00515 248.10)",
+          "oklch(51% 0.00515 248.10)",
+          "oklch(63% 0.00515 248.10)",
+          "oklch(75% 0.00515 248.10)",
+          "oklch(87% 0.00515 248.10)",
+          "oklch(95% 0.00515 248.10)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
-      "porcelain": {
+      "landing-ground": {
         "role": "neutral",
-        "displayName": "Porcelain",
+        "displayName": "Landing Ground",
         "tonalRamp": [
-          "oklch(15.00% 0.0054 274.97)",
-          "oklch(26.43% 0.0054 274.97)",
-          "oklch(37.86% 0.0054 274.97)",
-          "oklch(49.29% 0.0054 274.97)",
-          "oklch(60.71% 0.0054 274.97)",
-          "oklch(72.14% 0.0054 274.97)",
-          "oklch(83.57% 0.0054 274.97)",
-          "oklch(95.00% 0.0054 274.97)"
-        ]
+          "oklch(15% 0.00106 197.14)",
+          "oklch(27% 0.00106 197.14)",
+          "oklch(39% 0.00106 197.14)",
+          "oklch(51% 0.00106 197.14)",
+          "oklch(63% 0.00106 197.14)",
+          "oklch(75% 0.00106 197.14)",
+          "oklch(87% 0.00106 197.14)",
+          "oklch(95% 0.00106 197.14)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
+      },
+      "landing-line": {
+        "role": "neutral",
+        "displayName": "Landing Line",
+        "tonalRamp": [
+          "oklch(15% 0.00256 228.79)",
+          "oklch(27% 0.00256 228.79)",
+          "oklch(39% 0.00256 228.79)",
+          "oklch(51% 0.00256 228.79)",
+          "oklch(63% 0.00256 228.79)",
+          "oklch(75% 0.00256 228.79)",
+          "oklch(87% 0.00256 228.79)",
+          "oklch(95% 0.00256 228.79)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       },
       "landing-muted": {
         "role": "neutral",
-        "displayName": "Story Slate",
+        "displayName": "Landing Muted",
         "tonalRamp": [
-          "oklch(15.00% 0.0349 265.18)",
-          "oklch(26.43% 0.0349 265.18)",
-          "oklch(37.86% 0.0349 265.18)",
-          "oklch(49.29% 0.0349 265.18)",
-          "oklch(60.71% 0.0349 265.18)",
-          "oklch(72.14% 0.0349 265.18)",
-          "oklch(83.57% 0.0349 265.18)",
-          "oklch(95.00% 0.0349 265.18)"
-        ]
+          "oklch(15% 0.01122 252.88)",
+          "oklch(27% 0.01122 252.88)",
+          "oklch(39% 0.01122 252.88)",
+          "oklch(51% 0.01122 252.88)",
+          "oklch(63% 0.01122 252.88)",
+          "oklch(75% 0.01122 252.88)",
+          "oklch(87% 0.01122 252.88)",
+          "oklch(95% 0.01122 252.88)"
+        ],
+        "rampPurpose": "Derived panel preview only; not application tokens."
       }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Manrope Display",
-        "purpose": "32px working-page baseline, with existing compact/tablet overrides and final 28px mobile override documented in Typography; tablet growth is legacy drift."
+        "displayName": "Public display",
+        "purpose": "Landing promise; responsive 44\u201382px range."
       },
       "headline": {
-        "displayName": "Section Headline",
-        "purpose": "Manrope section hierarchy."
+        "displayName": "Working heading",
+        "purpose": "Application page identity; 27px mobile."
       },
-      "title": {
-        "displayName": "Offer Title",
-        "purpose": "Source inventory titles."
-      },
-      "body": {
-        "displayName": "Inter Body",
-        "purpose": "Retained operate-mode body and information text."
-      },
-      "label": {
-        "displayName": "Inter Form Label",
-        "purpose": "Visible 12px field labels at 1.5 line height."
-      },
-      "identifier": {
-        "displayName": "Monospace Identifier",
-        "purpose": "Hashes, tokens, configuration and keyboard hints."
-      },
-      "action": {
-        "displayName": "Inter Action",
-        "purpose": "Standard 13px button labels; compact buttons use 12px."
-      },
-      "google-sign-in": {
-        "displayName": "Google Sans Medium",
-        "purpose": "Provider-brand Continue with Google label only; self-hosted 4KB text subset, OFL license in public/fonts/GOOGLE-SANS-OFL.txt."
-      },
-      "landing-display": {
-        "displayName": "Public Manrope Display",
-        "purpose": "Lighter, balanced chapter headings on deep ink; responsive public sizes remain distinct from working-page headings."
-      },
-      "landing-body": {
-        "displayName": "Public Story Body",
-        "purpose": "16px supporting chapter copy at 1.8 line height; becomes 13px on mobile."
-      },
-      "landing-action": {
-        "displayName": "Public Entry Action",
-        "purpose": "13px Inter at weight 650 for the amber public entry link."
+      "evidence": {
+        "displayName": "Evidence text",
+        "purpose": "Source rights and delivery checks."
       }
     },
     "shadows": [
       {
-        "name": "primary",
-        "value": "0 3px 7px #233f9915",
-        "purpose": "Primary control at rest."
+        "name": "control",
+        "value": "0 1px 2px #00000010",
+        "purpose": "Primary working control."
       },
       {
-        "name": "primary-hover",
-        "value": "0 4px 12px #233f9925",
-        "purpose": "Primary control hover."
+        "name": "control-hover",
+        "value": "0 2px 5px #00000014",
+        "purpose": "Primary working control hover."
       },
       {
-        "name": "search-focus",
-        "value": "0 3px 12px #3155d919",
-        "purpose": "Focused search field."
+        "name": "menu",
+        "value": "0 8px 22px #10182014",
+        "purpose": "Floating account menu."
       },
       {
-        "name": "account-menu",
-        "value": "0 12px 35px #10182d26",
-        "purpose": "Upward account menu."
-      },
-      {
-        "name": "comparison-dock",
-        "value": "0 12px 32px #18233a30",
-        "purpose": "Selection summary above working content."
+        "name": "comparison",
+        "value": "0 8px 30px #18243a20",
+        "purpose": "Selection tray."
       },
       {
         "name": "dialog",
-        "value": "0 28px 100px #0b122230",
-        "purpose": "Modal surface."
-      },
-      {
-        "name": "offer-hover",
-        "value": "0 7px 20px #1c32670a",
-        "purpose": "Fine-pointer offer hover without card movement."
-      },
-      {
-        "name": "scrolled-utility-bar",
-        "value": "0 5px 18px #1822400a",
-        "purpose": "Document scroll feedback above 12px; position and height remain fixed."
-      },
-      {
-        "name": "google-sign-in-hover",
-        "value": "0 2px 6px #20212412",
-        "purpose": "Restrained provider-brand action feedback."
-      },
-      {
-        "name": "public-entry-hover",
-        "value": "0 6px 20px #050a1a42",
-        "purpose": "Amber entry link feedback on deep ink."
-      },
-      {
-        "name": "source-fragment",
-        "value": "0 18px 40px #02081830",
-        "purpose": "Document disclosure above the decorative particle field."
+        "value": "0 16px 65px #11182026",
+        "purpose": "Blocking dialog above a blurred translucent overlay."
       }
     ],
     "motion": [
       {
-        "name": "motion-feedback",
-        "value": "140ms",
-        "purpose": "Selection-control feedback, count fades, overlay and backdrop entrances, and primary-action and offer arrows."
+        "name": "feedback",
+        "value": "160ms",
+        "purpose": "Working hover and state feedback."
       },
       {
-        "name": "motion-arrive",
-        "value": "220ms",
-        "purpose": "Comparison dock, selection checkmark, category underline, dialog entrance, and mobile drawer opening."
+        "name": "arrive",
+        "value": "260ms",
+        "purpose": "Working overlay and selection arrival."
       },
       {
-        "name": "motion-exit",
+        "name": "exit",
         "value": "110ms",
-        "purpose": "Dialog content and overlay exit, mobile drawer closing, and press transforms."
+        "purpose": "Working overlay exit."
       },
       {
         "name": "ease-arrive",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Dock, checkmark, underline, dialog, menu, drawer-opening, and primary-action/offer-arrow easing."
+        "purpose": "Exponential arrival easing."
       },
       {
         "name": "ease-exit",
         "value": "cubic-bezier(0.4, 0, 1, 1)",
-        "purpose": "Mobile drawer and dialog content closing easing."
-      },
-      {
-        "name": "control-transition",
-        "value": "180ms ease",
-        "purpose": "Button and offer color, border and shadow feedback."
-      },
-      {
-        "name": "comparison-arrive",
-        "value": "220ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Dock settles upward from a 10px offset with opacity; shadow remains constant. Financial values and layout-driving properties update immediately."
-      },
-      {
-        "name": "selection-confirm",
-        "value": "220ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Draw the existing checkmark from stroke-dashoffset 24 to 0 without changing card geometry."
-      },
-      {
-        "name": "comparison-count",
-        "value": "140ms ease-out",
-        "purpose": "Fade the updated selection count while its polite live status remains available."
-      },
-      {
-        "name": "category-mark",
-        "value": "220ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Selected underline expands from scaleX(0.3) to scaleX(1), anchored left."
-      },
-      {
-        "name": "drawer-open",
-        "value": "220ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Mobile navigation slides into view."
-      },
-      {
-        "name": "drawer-close",
-        "value": "110ms cubic-bezier(0.4, 0, 1, 1)",
-        "purpose": "Mobile navigation slides out of view."
-      },
-      {
-        "name": "dialog-enter",
-        "value": "220ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Dialog opacity and scale from 0.985 to 1. Focus returns to the opener unless another open dialog has focus."
-      },
-      {
-        "name": "overlay-enter",
-        "value": "140ms ease-out",
-        "purpose": "Dialog overlay and mobile backdrop fade in."
-      },
-      {
-        "name": "overlay-exit",
-        "value": "110ms ease-in",
-        "purpose": "Dialog overlay fades out."
-      },
-      {
-        "name": "account-menu",
-        "value": "160ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Account menu settles upward from a 4px offset with opacity."
-      },
-      {
-        "name": "action-arrow",
-        "value": "140ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Primary-action and offer arrows shift 3px on hover for fine pointers."
-      },
-      {
-        "name": "reduced-motion",
-        "value": "animation: none; transition: none; scroll-behavior: auto",
-        "purpose": "Disable CSS animations, transitions, smooth scrolling and decorative press/hover transforms. Cancel active Web Animations and disconnect reveal observation when the preference changes; preserve immediate marks, colors, live status and focus."
-      },
-      {
-        "name": "field-and-icon-feedback",
-        "value": "140ms",
-        "purpose": "Field border/fill/shadow, icon-button color/fill/shadow, and purchase-row background."
-      },
-      {
-        "name": "navigation-feedback",
-        "value": "160ms",
-        "purpose": "Rail navigation background and color."
-      },
-      {
-        "name": "page-arrival",
-        "value": "240ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Route opacity from 0.6 to 1 without geometry changes."
-      },
-      {
-        "name": "row-unfold",
-        "value": "360ms cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Only source inventory and decision rows: opacity 0.86 to 1, bottom clip 8px to 0. Threshold 0.08, bottom root margin -16px. Visible by default; focused rows skip reveal; no card translation."
-      },
-      {
-        "name": "dialog-exit",
-        "value": "110ms cubic-bezier(0.4, 0, 1, 1)",
-        "purpose": "Content fades with 4px downward translation."
-      },
-      {
-        "name": "scroll-feedback",
-        "value": "220ms shadow transition",
-        "purpose": "Utility-bar shadow follows scrolling beyond 12px while preserving bar position and geometry."
-      },
-      {
-        "name": "convergence-render-interval",
-        "value": "32ms",
-        "purpose": "Minimum interval between scene renders; 2200 desktop or 700 mobile points with DPR caps of 1.5 or 1.25. Offscreen/hidden work pauses and all resources dispose on cleanup."
-      },
-      {
-        "name": "convergence-scroll",
-        "value": "native scroll progress 0–1",
-        "purpose": "Particles gather using smoothstep from progress 0.05 to 0.75; subtle decorative pointer rotation. Reduced motion skips the geometry import, and failure/context loss uses normal-flow chapters."
-      },
-      {
-        "name": "public-entry-arrow",
-        "value": "180ms ease; translate(2px, -2px)",
-        "purpose": "Northeast entry arrow feedback; removed for reduced motion."
-      },
-      {
-        "name": "context-bundle-arrival",
-        "value": "240ms ease",
-        "purpose": "At the final story stage, opacity 0 to 1 and translateY 14px to 0. Decorative context illustration, not research or payment status."
-      },
-      {
-        "name": "research-start-feedback",
-        "value": "160ms",
-        "purpose": "Shared editable research-start row background and text color feedback; no automatic task submission."
+        "purpose": "Exit easing."
       }
     ],
     "breakpoints": [
       {
-        "name": "single-offer",
-        "value": "460px"
-      },
-      {
-        "name": "mobile-drawer",
-        "value": "760px"
-      },
-      {
-        "name": "stack-asides",
-        "value": "1050px"
-      },
-      {
-        "name": "compact-desktop",
-        "value": "1250px"
-      },
-      {
-        "name": "wide-desktop",
-        "value": "1600px"
-      },
-      {
-        "name": "compact-rail-height",
-        "value": "820px"
-      },
-      {
-        "name": "short-rail-height",
-        "value": "700px"
-      },
-      {
-        "name": "public-compact-desktop",
+        "name": "working-gutters",
         "value": "1100px"
       },
       {
-        "name": "public-wide-scene",
-        "value": "1500px"
+        "name": "public-compact",
+        "value": "1000px"
+      },
+      {
+        "name": "working-stack",
+        "value": "950px"
+      },
+      {
+        "name": "mobile",
+        "value": "760px"
       }
     ],
-    "tonalRampNote": "Eight-step OKLCH ramps are synthesized panel previews, not additional shipped UI tokens. Normative colors remain in docs/DESIGN.md frontmatter.",
-    "layoutBehavior": {
-      "rail": "232px default; 208px at max-width 1250px; 100dvh with scrollable middle and pinned account. Height compression at 820px and 700px applies above 760px width.",
-      "mobileDrawer": "At max-width 760px: min(288px, 86vw), modal dialog, main-shell inert, closed drawer inert, focus trap, Escape dismissal, body lock and focus restoration.",
-      "connect": "Maximum 1160px. Trove-account OAuth client setup and connected apps use 1.5fr / 0.9fr columns, 260px minimum on the latter, 22px gap; columns stack at 1050px. Full-width advanced-token disclosure follows, then example task and collapsed tool reference. Connected-app rows wrap at 600px.",
-      "account": "Maximum 1000px. Paired profile and Google panels, full-width security/data panels; paired password fields. One column at 760px.",
-      "dialog": "Fixed heading plus scrollable body; maximum calc(100dvh - 48px), or calc(100dvh - 24px) up to 760px. Heading/body padding follows docs/DESIGN.md.",
-      "dataDisclosure": "Sticky table headers inside bounded scroll containers. Values over 160 characters show 140-character previews and native details with full text; expanded text scrolls within 18rem. Receipt refs and fingerprints use details; JSON download remains complete.",
-      "publicStory": "Fixed 96px header with 5.5vw gutters; four native-scroll 100svh chapters with a contained sticky scene. At 760px: 76px header, 22px header gutters, full-width copy and source fragments below. Normal-flow fallback and reduced-motion chapters precede source disclosures.",
-      "signIn": "44% deep-ink story / 56% white form; 400px maximum form. Up to 760px, brand strip plus form at 24px page gutters and 420px maximum.",
-      "dashboard": "Working shell, maximum 1200px; white research-start panel and ink agent panel in 1.65fr / 1fr columns with 270px minimum agent width and 24px gap, stacking at 1050px. Two recent-research/data columns with 30px gap stack at 760px. Persistent agent panel reflects actual connection state; mobile icon/text grid places action below text.",
-      "workspace": "350px composer beside flexible output, 300px up to 1250px and one column up to 1050px. Explicit requirements and optional AI brief share a labelled mode control; category details disclose required fields and filters. Spending caps retain explicit USD and limit language. Shared editable research starts appear in the left-aligned welcome region, maximum 600px and padding 56px 28px, becoming 30px 4px on mobile. Selection sets explicit requirements and focuses the composer without submission.",
-      "authorization": "Outside the rail: home link above a consent panel in a centered 540px maximum-width column on Chalk Canvas. App name and callback host wrap; actions wrap at 600px. Account, requested permissions and separate payment approval stay visible.",
-      "catalogue": "Two-column offer inventory beside a white guided-start panel, using existing 294px / 260px / 320px aside widths. Below 1050px the guide follows inventory with three equal start columns; below 760px these become divided rows. Labelled Preview actions open source details.",
-      "publicSources": "Available catalogue entries form three divided columns on white between story and closing section; title plus arrow, description, fields, record limit and USD batch price. Padding 100px 5.5vw; at 760px, single column and 64px 24px padding. No category overlines. Links open the corresponding public source preview."
+    "accessibility": {
+      "focus": "2px blue outline, 4px offset; public offset 5px.",
+      "reducedMotion": "Disable continuous/spatial effects; native chapters and static connection fallback remain.",
+      "canvas": "24/12 lines, 1.5 pixel-ratio cap; pauses offscreen and while document is hidden."
     },
-    "assets": {
-      "google-sign-in": {
-        "icon": "public/brand/google-g.png",
-        "source": "https://developers.google.com/identity/branding-guidelines",
-        "usage": "Official full-color Google G, unchanged aspect ratio, displayed at 20px. Origin metadata remains embedded in the PNG.",
-        "font": "public/fonts/google-sans.ttf",
-        "license": "public/fonts/GOOGLE-SANS-OFL.txt"
-      },
-      "convergence": {
-        "source": "src/components/convergence-scene.ts",
-        "usage": "Native Three.js points, lines, and layered document frames, lazily imported by the public landing; no new raster asset."
-      }
+    "provenance": {
+      "authority": "User-pinned Attio screenshots and source-led replacement contract.",
+      "reference": ".local/ui-revamp/references/attio-branding.json",
+      "tokens": "Built globals.css and landing.css; reference values are not copied as token authority.",
+      "review": "Initial fresh finish review returned fix; four code corrections are present. Same-reviewer recapture verdict pending at documentation handoff."
     }
   },
   "components": [
@@ -566,152 +408,111 @@
       "name": "Primary button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Cobalt action for research and approval flows.",
-      "html": "<button class=\"ds-primary\">Start a research task<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button>",
-      "css": ".ds-primary{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:8px;padding:10px 15px;font-size:13px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;background:var(--accent,#3155d9);color:#fff;border:1px solid var(--accent,#3155d9);box-shadow:0 3px 7px #233f9915;}.ds-primary:hover:not(:disabled){background:var(--accent-dark,#2441af);border-color:var(--accent-dark,#2441af);box-shadow:0 4px 12px #233f9925;}.ds-primary:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-primary:active:not(:disabled){transform:translateY(1px);}.ds-primary:disabled{opacity:.48;cursor:not-allowed;} @media(prefers-reduced-motion:reduce){.ds-primary{animation:none!important;transition:none!important;transform:none!important;}}"
+      "description": "The next explicit working decision.",
+      "html": "<button class=\"ds-primary\">Find sources</button>",
+      "css": ".ds-primary{font:500 12px/1.35 Inter,Arial,sans-serif;min-height:40px;padding:10px 14px;border-radius:7px;cursor:pointer;transition:background-color .16s,border-color .16s,box-shadow .16s,transform .12s;background:var(--accent,#202124);color:var(--surface,#fff);border:1px solid var(--accent,#202124);box-shadow:0 1px 2px #00000010}.ds-primary:hover{background:#383b3f;border-color:#383b3f;box-shadow:0 2px 5px #00000014}.ds-primary:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}.ds-primary:active{transform:translateY(1px)}.ds-primary:disabled{opacity:.48;cursor:not-allowed}"
     },
     {
       "name": "Secondary button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Quiet supporting action with a pale cobalt hover.",
-      "html": "<button class=\"ds-secondary\">Bring your own agent<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button>",
-      "css": ".ds-secondary{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:8px;padding:10px 15px;font-size:13px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;background:#fff;color:#34415f;border:1px solid #d4dbe9;}.ds-secondary:hover:not(:disabled){background:#edf1ff;border-color:#9aabd9;}.ds-secondary:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-secondary:active:not(:disabled){transform:translateY(1px);}.ds-secondary:disabled{opacity:.48;cursor:not-allowed;} @media(prefers-reduced-motion:reduce){.ds-secondary{animation:none!important;transition:none!important;transform:none!important;}}"
+      "description": "Edit, return or inspect without advancing a purchase.",
+      "html": "<button class=\"ds-secondary\">Edit requirements</button>",
+      "css": ".ds-secondary{font:500 12px/1.35 Inter,Arial,sans-serif;min-height:40px;padding:10px 14px;border-radius:7px;cursor:pointer;transition:background-color .16s,border-color .16s,box-shadow .16s,transform .12s;background:#fff;color:#454a51;border:1px solid #dce0e5}.ds-secondary:hover{background:#f6f7f8;border-color:#bdc5cf}.ds-secondary:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}.ds-secondary:active{transform:translateY(1px)}"
     },
     {
-      "name": "Catalogue search",
-      "kind": "input",
-      "refersTo": "search",
-      "description": "Public metadata search with an inset keyboard hint.",
-      "html": "<label class=\"ds-search\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input aria-label=\"Search data offers\" placeholder=\"Search datasets, suppliers, or topics…\"/><kbd>/</kbd></label>",
-      "css": ".ds-search{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;align-items:center;gap:10px;width:min(420px,100%);height:46px;padding:0 12px;background:#fff;color:#65718b;border:1px solid var(--line,#dde1eb);border-radius:9px;}.ds-search input{font-family:var(--font-body,Inter,Arial,sans-serif);min-width:0;width:100%;border:0;background:none;color:var(--ink,#20283f);font-size:13px;caret-color:var(--accent,#3155d9);}.ds-search input::placeholder{color:#626d84;}.ds-search:focus-within{border-color:#637fe6;box-shadow:0 3px 12px #3155d919;}.ds-search input:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-search kbd{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;border:1px solid #dfe1e6;border-radius:4px;padding:0 5px;color:#626d84;} @media(prefers-reduced-motion:reduce){.ds-search{animation:none!important;transition:none!important;transform:none!important;}}"
-    },
-    {
-      "name": "Ink navigation",
-      "kind": "nav",
-      "refersTo": "navigation-active",
-      "description": "A selected route inside the dark workspace rail; desktop supports an accessible 76px icon rail, while mobile retains a full-content drawer.",
-      "html": "<nav class=\"ds-rail\" aria-label=\"Example workspace\"><a class=\"ds-nav ds-current\" href=\"#discover\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m16.2 7.8-2.4 6-6 2.4 2.4-6 6-2.4z\"/></svg><span>Discover</span><span class=\"ds-count\">6</span></a><a class=\"ds-nav\" href=\"#workspace\">Research workspace</a></nav>",
-      "css": ".ds-rail{font-family:var(--font-body,Inter,Arial,sans-serif);width:200px;padding:16px;background:var(--sidebar,#171d30);border-radius:8px;}.ds-nav{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:3px;color:#c0c8dd;border-radius:8px;font-size:13px;text-decoration:none;transition:background .16s,color .16s;}.ds-nav:hover{background:#29324a;color:#fff;}.ds-current,.ds-current:hover{background:#354fbb;color:#fff;font-weight:600;}.ds-nav:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-nav>span:first-of-type{flex:1;}.ds-count{min-width:20px;padding:2px 5px;border-radius:4px;background:#ffffff1c;color:#fff;font-size:10px;text-align:center;} @media(prefers-reduced-motion:reduce){.ds-count,.ds-current,.ds-nav,.ds-rail{animation:none!important;transition:none!important;transform:none!important;}}"
-    },
-    {
-      "name": "Offer tags",
-      "kind": "chip",
-      "refersTo": "offer-tag",
-      "description": "Descriptive scope tags rather than interactive filters.",
-      "html": "<div class=\"ds-tags\"><span>Drug approvals</span></div>",
-      "css": ".ds-tags{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;flex-wrap:wrap;gap:5px;}.ds-tags>span{padding:3px 6px;font-size:11px;border-radius:4px;border:1px solid #e4e7ef;color:#5d6881;background:#f4f5f9;} @media(prefers-reduced-motion:reduce){.ds-tags{animation:none!important;transition:none!important;transform:none!important;}}"
-    },
-    {
-      "name": "Selected offer card",
-      "kind": "card",
-      "refersTo": "offer-card",
-      "description": "Illustrative selected regulatory offer preview showing source hierarchy, a scoped-batch price and an explicit Preview action; example values are not runtime catalogue claims.",
-      "html": "<article class=\"ds-offer\"><div class=\"ds-provider\"><strong>Northstar Regulatory</strong><small>Data provider</small></div><button class=\"ds-offer-title\">Drug approval dossiers</button><p>Application, sponsor, active ingredients and approval dates, normalized into one research-ready batch.</p><div class=\"ds-offer-tags\"><span>Drug approvals</span></div><footer><strong>$3.20</strong><span>/ scoped batch</span><button class=\"ds-offer-open\" aria-label=\"Preview offer\"><span>Preview</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></footer></article>",
-      "css": ".ds-offer{font-family:var(--font-body,Inter,Arial,sans-serif);width:min(300px,100%);min-height:290px;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--accent,#3155d9);border-radius:12px;background:#f1f4ff;color:var(--ink,#20283f);padding:22px 22px 0;box-shadow:inset 0 0 0 1px var(--accent,#3155d9);transition:border-color .18s,background .18s,box-shadow .18s;}@media(hover:hover){.ds-offer:hover{border-color:var(--accent,#3155d9);box-shadow:0 7px 20px #1c32670a;}}.ds-provider{font-size:12px;color:#45516d;margin-bottom:18px;}.ds-provider strong{font-weight:550;}.ds-provider small{display:block;color:#6a7489;font-size:9px;margin-top:3px;}.ds-offer-title{font-family:var(--font-heading,Manrope,Inter,Arial,sans-serif);text-align:left;padding:0;border:0;background:none;color:#263451;font-size:18px;font-weight:650;line-height:1.45;letter-spacing:-.025em;cursor:pointer;}.ds-offer-title:hover{color:var(--accent,#3155d9);}.ds-offer p{font-size:13px;line-height:1.75;color:#626c82;margin:8px 0 0;}.ds-offer-tags{display:flex;gap:5px;margin:13px 0 12px;}.ds-offer-tags span{padding:3px 6px;font-size:11px;background:#f4f5f9;border:1px solid #e4e7ef;border-radius:4px;color:#5d6881;}.ds-offer footer{display:flex;align-items:center;gap:5px;min-height:52px;border-top:1px solid #eaebee;margin-top:auto;}.ds-offer footer strong{font-size:22px;font-weight:600;color:#263451;font-variant-numeric:tabular-nums;letter-spacing:-.025em;}.ds-offer footer>span{font-size:11px;color:#626c82;}.ds-offer-open{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12px;padding:0 8px;margin-left:auto;min-width:82px;height:40px;border-radius:7px;border:0;color:#3155d9;background:none;cursor:pointer;}.ds-offer-open:hover{color:#fff;background:var(--accent,#3155d9);}.ds-offer button:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-offer button:active{transform:translateY(1px);} @media(prefers-reduced-motion:reduce){.ds-offer,.ds-offer-open,.ds-offer-tags,.ds-offer-title,.ds-provider{animation:none!important;transition:none!important;transform:none!important;}}"
-    },
-    {
-      "name": "Editable research start",
-      "kind": "custom",
-      "refersTo": "research-start",
-      "description": "Shared starting-point link selects editable workspace scope without running research or purchasing.",
-      "html": "<a class=\"ds-research-start\" href=\"/workspace?start=drug-recalls\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z\"/><path d=\"m9 12 2 2 4-4\"/></svg><span><strong>Drug recalls</strong><small>Recall reasons, severity and status</small></span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a>",
-      "css": ".ds-research-start{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;align-items:center;gap:14px;width:100%;min-width:0;padding:19px 4px;text-align:left;text-decoration:none;color:var(--ink,#20283f);border-bottom:1px solid var(--line,#dde1eb);transition:background-color 160ms,color 160ms;}.ds-research-start:hover{background:#f1f4fb;color:var(--accent,#3155d9);}.ds-research-start>svg:first-child{color:var(--accent,#3155d9);}.ds-research-start>svg:last-child{margin-left:auto;color:var(--muted,#626c82);}.ds-research-start>span{min-width:0;}.ds-research-start strong{display:block;font-size:14px;font-weight:550;}.ds-research-start small{display:block;font-size:12px;line-height:1.6;color:var(--muted,#626c82);margin-top:5px;}.ds-research-start:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}@media(prefers-reduced-motion:reduce){.ds-research-start{transition:none;}}"
-    },
-    {
-      "name": "Comparison dock",
-      "kind": "custom",
-      "refersTo": "comparison-dock",
-      "description": "A dark selection summary and amber review action before quote approval.",
-      "html": "<section class=\"ds-dock\" aria-label=\"Offer comparison\"><div><strong>2 offers selected</strong><span>$6.00 total</span></div><button class=\"ds-clear\">Clear</button><button class=\"ds-review\">Compare &amp; review<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></section>",
-      "css": ".ds-dock{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 15px;background:#202c4d;color:#fff;border:1px solid #3e4f77;border-radius:12px;box-shadow:0 12px 32px #18233a30;animation:ds-arrive var(--motion-arrive,220ms) var(--ease-arrive,cubic-bezier(.16,1,.3,1));}.ds-dock>div{display:flex;align-items:center;gap:12px;flex:1;}.ds-dock strong{font-size:11px;font-weight:600;}.ds-dock span{color:#c3cde4;font-size:10px;font-variant-numeric:tabular-nums;}.ds-clear{font-family:var(--font-body,Inter,Arial,sans-serif);background:none;border:0;color:#d6def2;text-decoration:underline;text-underline-offset:3px;padding:5px;font-size:11px;cursor:pointer;}.ds-clear:hover{color:#fff;}.ds-review{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:8px;padding:10px 15px;font-size:13px;font-weight:550;line-height:1.35;cursor:pointer;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;background:#f5d683;color:#302b1d;border:1px solid #f5d683;}.ds-review:hover{background:#ffe6a5;}.ds-review:active{transform:translateY(1px);}.ds-dock button:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}@keyframes ds-arrive{from{opacity:0;translate:0 10px;}to{opacity:1;translate:0 0;}} @media(prefers-reduced-motion:reduce){.ds-clear,.ds-dock,.ds-review{animation:none!important;transition:none!important;transform:none!important;}}"
+      "name": "Text action",
+      "kind": "button",
+      "description": "Quiet utility action beside the work.",
+      "html": "<button class=\"ds-text\">Clear selection</button>",
+      "css": ".ds-text{font:400 12px Inter,Arial,sans-serif;background:transparent;border:0;color:var(--muted,#62666d);text-decoration:underline;text-underline-offset:3px;padding:5px;cursor:pointer}.ds-text:hover{color:#3869b9}.ds-text:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}"
     },
     {
       "name": "Form field",
       "kind": "input",
       "refersTo": "form-field",
-      "description": "Visible label and readable value with quiet hover/focus feedback.",
-      "html": "<label class=\"ds-field\">Name<input type=\"text\" value=\"Research team\" /></label>",
-      "css": ".ds-field{font-family:var(--font-body,Inter,Arial,sans-serif);display:grid;gap:8px;color:#4b5263;font-size:12px;font-weight:550;line-height:1.5;}.ds-field input{font-family:var(--font-body,Inter,Arial,sans-serif);min-height:44px;padding:11px 12px;border:1px solid var(--line,#dde1eb);border-radius:7px;background:#f9f9fa;color:var(--ink,#20283f);font-size:13px;font-weight:400;line-height:1.6;transition:border-color 140ms,background-color 140ms,box-shadow 140ms;}.ds-field input:hover{border-color:#a9b4cc;}.ds-field input:focus{background:#fff;border-color:var(--accent,#3155d9);}.ds-field input:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}@media(prefers-reduced-motion:reduce){.ds-field input{transition:none;}}"
+      "description": "Labelled scope values and account fields.",
+      "html": "<label class=\"ds-field\">Record limit<input value=\"10\" inputmode=\"numeric\"></label>",
+      "css": ".ds-field{display:grid;gap:8px;font:500 12px Inter,Arial,sans-serif;color:#454b53}.ds-field input{font:400 13px Inter,Arial,sans-serif;color:var(--ink,#202124);background:#fff;min-height:42px;padding:11px;border:1px solid #dce1e6;border-radius:7px}.ds-field input:hover{border-color:#b7c0ca}.ds-field input:focus{border-color:#7e9dc9;box-shadow:0 0 0 2px #4276d112;outline:none}.ds-field input:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}@media(max-width:760px){.ds-field input{font-size:16px}}"
     },
     {
-      "name": "Scrollable dialog",
+      "name": "Rail navigation",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "Current route on the pale navigation rail.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace\"><a href=\"#discover\" aria-current=\"page\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><circle cx=\"10\" cy=\"10\" r=\"6\"/><path d=\"m15 15 5 5\"/></svg>Discover data</a><a href=\"#purchases\">Your data</a></nav>",
+      "css": ".ds-nav{width:190px;padding:10px;background:var(--sidebar,#fafafa);font:400 12px Inter,Arial,sans-serif}.ds-nav a{display:flex;align-items:center;gap:9px;padding:11px 10px;border-radius:6px;color:#62676f;text-decoration:none}.ds-nav a:hover{background:#eceef1;color:var(--ink,#202124)}.ds-nav a[aria-current]{background:#e9ebee;color:var(--ink,#202124);font-weight:500}.ds-nav a:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}"
+    },
+    {
+      "name": "Source field tag",
+      "kind": "chip",
+      "refersTo": "offer-tag",
+      "description": "Compact descriptive metadata, not an action.",
+      "html": "<span class=\"ds-tag\">Brand name</span>",
+      "css": ".ds-tag{display:inline-block;font:400 10px/1.5 Inter,Arial,sans-serif;background:#f0f2f5;color:#626b78;border:1px solid #e8ebef;border-radius:4px;padding:3px 6px}"
+    },
+    {
+      "name": "Working panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat evidence group with a clear title.",
+      "html": "<section class=\"ds-panel\"><h2>Source coverage</h2><p>Review fields and available records before approving the scope.</p></section>",
+      "css": ".ds-panel{font:400 12px/1.7 Inter,Arial,sans-serif;background:var(--surface,#fff);color:var(--ink,#202124);border:1px solid #e4e7ea;border-radius:10px;padding:23px;max-width:400px}.ds-panel h2{font-size:16px;font-weight:500;letter-spacing:-.025em;margin:0 0 12px}.ds-panel p{margin:0;color:#626b78}"
+    },
+    {
+      "name": "Scope summary",
       "kind": "custom",
-      "refersTo": "dialog",
-      "description": "Fixed title and close control above a bounded scrollable body.",
-      "html": "<section class=\"ds-dialog\" role=\"dialog\" aria-labelledby=\"ds-dialog-title\"><header class=\"ds-dialog-heading\"><h2 id=\"ds-dialog-title\">Publish a dataset</h2><button aria-label=\"Close dialog\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m18 6-12 12M6 6l12 12\"/></svg></button></header><div class=\"ds-dialog-body\"><p>Set the data, source terms and batch price.</p></div></section>",
-      "css": ".ds-dialog{font-family:var(--font-body,Inter,Arial,sans-serif);display:flex;flex-direction:column;width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:hidden;border:1px solid #dde0e5;border-radius:16px;background:var(--surface,#fff);color:var(--ink,#20283f);box-shadow:0 28px 100px #0b122230;}.ds-dialog-heading{display:flex;align-items:start;justify-content:space-between;gap:16px;flex:0 0 auto;padding:24px 26px 20px;border-bottom:1px solid var(--line,#dde1eb);}.ds-dialog-heading h2{font-family:var(--font-heading,Manrope,Inter,Arial,sans-serif);font-size:22px;line-height:1.35;letter-spacing:-.025em;margin:0;}.ds-dialog-heading button{display:grid;place-items:center;width:29px;height:29px;border:0;border-radius:6px;background:none;color:#606c87;cursor:pointer;transition:color 140ms,background-color 140ms;}.ds-dialog-heading button:hover{background:#e9edfa;color:var(--accent,#3155d9);}.ds-dialog-heading button:focus-visible{outline:2px solid #5378ff;outline-offset:4px;}.ds-dialog-body{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:24px 26px 26px;font-size:13px;}.ds-dialog-body p{margin:0;}@media(max-width:760px){.ds-dialog{max-height:calc(100dvh - 24px);}.ds-dialog-heading{padding:20px 20px 16px;}.ds-dialog-heading h2{font-size:21px;}.ds-dialog-body{padding:20px;}}@media(prefers-reduced-motion:reduce){.ds-dialog-heading button{transition:none;}}"
+      "refersTo": "scope-summary",
+      "description": "Editable compact scope after a genuine research request.",
+      "html": "<section class=\"ds-scope\"><div><strong>Drug approval research</strong><span>4 fields \u00b7 within 30 days \u00b7 $5.00 limit</span></div><button>Edit requirements</button></section>",
+      "css": ".ds-scope{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:21px 24px;background:#f7f8fa;border:1px solid #e4e8ed;border-radius:8px;font-family:Inter,Arial,sans-serif}.ds-scope>div{display:grid;gap:8px;min-width:0}.ds-scope strong{font-size:14px;font-weight:500;color:var(--ink,#202124);overflow-wrap:anywhere}.ds-scope span{font-size:11px;color:#626b78}.ds-scope button{font:500 12px/1.35 Inter,Arial,sans-serif;min-height:40px;padding:10px 14px;border-radius:7px;cursor:pointer;transition:background-color .16s,border-color .16s,box-shadow .16s,transform .12s;font-size:11px;min-height:34px;background:#fff;border:1px solid #dce0e5;color:#454a51}.ds-scope button:hover{background:#f6f7f8;border-color:#bdc5cf}.ds-scope button:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}@media(max-width:760px){.ds-scope{flex-direction:column;align-items:flex-start;padding:19px}}"
     },
     {
-      "name": "Public entry action",
-      "kind": "button",
-      "refersTo": "landing-action",
-      "description": "Amber entry link for the deep-ink public introduction; the pale closing section returns to cobalt.",
-      "html": "<div class=\"ds-public-action-surface\"><a class=\"ds-public-action\" href=\"/sign-in\">Get started<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a></div>",
-      "css": ".ds-public-action-surface{background:var(--night,#101626);padding:24px;}.ds-public-action{font-family:var(--font-body,Inter,Arial,sans-serif);display:inline-flex;gap:24px;align-items:center;justify-content:center;min-height:48px;padding:13px 20px;border-radius:8px;background:var(--highlight,#f5d683);color:var(--night,#101626);font-size:13px;font-weight:650;text-decoration:none;transition:background 180ms,box-shadow 180ms;}.ds-public-action:hover{background:#ffe5a7;box-shadow:0 6px 20px #050a1a42;color:var(--night,#101626);}.ds-public-action svg{transition:transform 180ms;}.ds-public-action:hover svg{transform:translate(2px,-2px);}.ds-public-action:focus-visible{outline:2px solid var(--highlight,#f5d683);outline-offset:6px;}@media(prefers-reduced-motion:reduce){.ds-public-action,.ds-public-action svg{transition:none;}.ds-public-action:hover svg{transform:none;}}"
-    },
-    {
-      "name": "Public source disclosure",
+      "name": "Source selection row",
       "kind": "custom",
-      "refersTo": "source-fragment",
-      "description": "Native source disclosure independent of animated geometry; the medical domain is available while legal and financial domains are explicitly future directions.",
-      "html": "<div class=\"ds-source-surface\"><details class=\"ds-source-fragment\"><summary><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><path d=\"M14 2v6h6M8 13h8M8 17h6\"/></svg><span>Medical &amp; regulatory<small>Available today</small></span><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></summary><div class=\"ds-source-detail\"><strong>Regulatory research sources</strong><p>Browse the catalogue for source scope and availability.</p><a href=\"/discover\">View available sources<svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a></div></details></div>",
-      "css": ".ds-source-surface{background:var(--night,#101626);padding:24px;}.ds-source-fragment{font-family:var(--font-body,Inter,Arial,sans-serif);width:265px;max-width:100%;border:1px solid #8ba0cd42;border-radius:12px;background:#182239;color:#e4eafb;box-shadow:0 18px 40px #02081830;transition:border-color 180ms;}.ds-source-fragment:hover,.ds-source-fragment[open]{border-color:#8ba3df;}.ds-source-fragment summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:18px;font-size:12px;font-weight:550;min-height:76px;}.ds-source-fragment summary::-webkit-details-marker{display:none;}.ds-source-fragment summary>svg:first-child{color:#9ab0fc;flex-shrink:0;}.ds-source-fragment summary>span{flex:1;}.ds-source-fragment small{display:block;margin-top:5px;font-size:10px;color:#b2bfd8;font-weight:400;}.ds-source-fragment summary>svg:last-child{color:#a6b6d8;}.ds-source-detail{padding:0 18px 18px;border-top:1px solid #c7d3ef1c;font-size:11px;line-height:1.75;}.ds-source-detail strong{display:block;margin-top:14px;font-size:12px;font-weight:550;}.ds-source-detail p{color:#bac6de;margin:12px 0;}.ds-source-detail a{display:flex;gap:6px;align-items:center;color:var(--highlight,#f5d683);margin-top:10px;text-decoration:none;}.ds-source-detail a:hover{color:#fff;}.ds-source-fragment summary:focus-visible,.ds-source-detail a:focus-visible{outline:2px solid var(--highlight,#f5d683);outline-offset:6px;}@media(prefers-reduced-motion:reduce){.ds-source-fragment{transition:none;}}"
+      "description": "Ruled catalogue row with an actual source and exact price.",
+      "html": "<button class=\"ds-source\" aria-pressed=\"true\"><span><strong>FDA drug approvals</strong><small>Public regulatory records</small></span><span>$0.30</span></button>",
+      "css": ".ds-source{display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;min-height:67px;text-align:left;padding:15px 24px;border:0;border-bottom:1px solid #e3e5e6;background:#fff;color:var(--ink,#202124);font-family:Inter,Arial,sans-serif;cursor:pointer}.ds-source strong{display:block;font-size:12px;font-weight:500}.ds-source small{display:block;font-size:10px;color:#626b78;margin-top:4px}.ds-source>span:last-child{font-size:13px;font-variant-numeric:tabular-nums}.ds-source:hover{background:#f5f7fa}.ds-source[aria-pressed=true]{background:#f0f4fa;box-shadow:inset 2px 0 #5884c9}.ds-source:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}"
     }
   ],
   "narrative": {
-    "northStar": "The Technical Atlas",
-    "overview": "Trove is a working research marketplace: an ink navigation rail establishes orientation, chalk surfaces hold the source inventory, cobalt marks selection and action, and amber marks navigation highlights and public entry actions. The result is compact, orderly, and specific to a tool for investigating data.\n\nThe approved replacement of the former green identity retains the application and local fonts. Prepared regulatory datasets appear as ordinary paid products; source scope, original attribution, upstream reuse rights, exact USD prices, and human approval remain legible. The system uses functional line icons and geometry, with concise copy and progressive disclosure for detailed terms. Supply assumptions belong in the hackathon pitch, while the interface identifies the actual PayPal payment environment.\n\nThe approved Data Convergence public introduction expands this world into deep ink, porcelain, and amber, with larger, lighter Manrope type and real Three.js particle geometry. Its spacious Persuade mode leads into the established Operate mode for authentication and research. This is an extension of the Technical Atlas: the working application retains its navigation, compact density, and exact-price controls. The scene adds no raster asset or invented partner identity.",
+    "northStar": "The Source Workspace",
+    "overview": "Trove places source evidence and the next decision inside a quiet, precise interface. White fields, pale neutral navigation, fine rules and compact Inter typography adapt the user\u2019s chosen Attio references to a working research marketplace. The Trove name, mark, actual catalogue and account flows remain the identity and content.\n\nThe public page gives product evidence room to breathe; the application uses the same material at higher density. Restrained blue identifies focus and selected scope, while charcoal carries primary actions. The dark connection passage is a bounded procedural illustration, never a financial status display.",
     "keyCharacteristics": [
-      "Persistent ink navigation with reachable account and agent controls.",
-      "Cobalt actions and selection against quiet white inventory panels.",
-      "Editable research starting points shared across dashboard, catalogue, and workspace.",
-      "Manrope headings, Inter controls, and tabular financial values.",
-      "Flat information surfaces with depth reserved for controls and overlays.",
-      "A spacious deep-ink introduction with amber entry actions and source fragments that gather into context."
+      "White and pale gray surfaces separated by fine rules.",
+      "Charcoal primary actions and restrained blue focus and selection.",
+      "Locally hosted Inter across public and working surfaces.",
+      "Divided source inventory, explicit scope and tabular USD amounts.",
+      "Native scrolling, readable fallback content and reduced-motion support."
     ],
     "rules": [
       {
-        "name": "The Action Cobalt Rule",
-        "body": "In the working application, use cobalt to express an action, selection, or the established heading emphasis; preserve amber for its navigation-highlight, agent-panel icon, and sandbox roles. Deep-ink public surfaces use amber entry actions and headline emphasis; pale public surfaces return to cobalt.",
+        "name": "The Action Hierarchy Rule",
+        "body": "Charcoal carries primary decisions; blue supports focus, links and selection. Status colors communicate actual state and always retain text.",
         "section": "colors"
       },
       {
         "name": "The Stable Amount Rule",
-        "body": "Financial values retain tabular numerals and an explicit USD context; changes in value must not shift a comparison column's rhythm.",
+        "body": "Use tabular numerals and explicit USD context for prices, limits and totals.",
         "section": "typography"
       },
       {
-        "name": "The Reachable Rail Rule",
-        "body": "Preserve the scrollable middle and pinned account footer; never make navigation depend on a tall viewport or reduced browser zoom.",
-        "section": "layout"
-      },
-      {
-        "name": "The Flat Inventory Rule",
-        "body": "Keep inventory card geometry fixed on hover; use border, a restrained ambient shadow, and selection treatments to communicate interaction.",
-        "section": "elevation"
-      },
-      {
-        "name": "The Readable Story Rule",
-        "body": "Keep every story chapter, source disclosure, entry action, and skip route usable when animated geometry is unavailable or motion is reduced.",
+        "name": "The Ruled Surface Rule",
+        "body": "Use pale fills and fine borders to group ordinary content. Reserve stronger shadows for floating controls and overlays.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "**Do** preserve ink navigation, cobalt actions, and amber navigation and public-entry highlights across routes.",
-      "**Do** keep the rail callout and account controls reachable at normal zoom and short laptop heights.",
-      "**Do** use local Manrope headings, Inter body copy, and tabular financial values.",
-      "**Do** pair state color with text, preserve visible keyboard focus, and honor reduced motion.",
-      "**Do** keep exact-price approval, the actual payment environment, permissions, and source provenance visible where relevant.",
-      "**Do** keep the public story readable in normal flow when motion is reduced or graphics are unavailable.",
-      "**Do** label future domains explicitly and keep available-source details tied to actual catalogue metadata."
+      "Do retain readable source rights, attribution, scope and independent payment and delivery states at the point of decision.",
+      "Do show human field and purpose labels while preserving submitted API values.",
+      "Do stack actions beneath content when a narrow viewport needs the reading width.",
+      "Do preserve visible focus, native disclosures and static reduced-motion content."
     ],
     "donts": [
-      "**Don't** restore green as the brand theme; reserve green for success states.",
-      "**Don't** invent partner logos, testimonials, provider verification, AI calls, or payment success.",
-      "**Don't** remove quote scope, licence, expiry, included commission, or the user's exact-price approval step for visual simplicity.",
-      "**Don't** propagate inherited decorative eyebrows or the smallest legacy metadata sizes as new design primitives.",
-      "**Don't** add card hover lifts, hard offset shadows, or a thick decorative border to the Connect example brief."
+      "Don\u2019t transfer reference logos, CRM content, testimonials or customer metrics into Trove.",
+      "Don\u2019t restore the superseded ink rail, cobalt primary actions, amber marketing accents or Manrope display system.",
+      "Don\u2019t use ornamental eyebrows or miniature evidence text as reusable primitives.",
+      "Don\u2019t illustrate a successful model request, payment or entitlement as though it happened."
     ]
   }
 }

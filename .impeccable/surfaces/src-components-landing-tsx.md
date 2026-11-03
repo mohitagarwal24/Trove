@@ -1,52 +1,36 @@
 ---
 version: 1
-slug: "src-components-landing-tsx"
-primary_target: "src/components/landing.tsx"
-related_targets:
-  [
-    "src/components/convergence-scene.ts",
-    "src/app/landing.css",
-    "src/components/sign-in.tsx",
-    "src/components/dashboard.tsx",
-    "src/components/research-starts.tsx",
-  ]
+slug: src-components-landing-tsx
+primary_target: src/components/landing.tsx
+related_targets: [src/components/convergence-scene.ts, src/app/landing.css, src/components/sign-in.tsx, src/components/dashboard.tsx, src/components/research-starts.tsx]
 ---
 
-# Data Convergence
+# Public source story, sign-in and dashboard
 
-Mode: Persuade for public landing, Operate for sign-in/dashboard. Code-led implementation, explicitly authorized by the user's selected implementation plan. User pinned Data Convergence and broader-domain vision; no new concept roll or image-comp approval applies. Existing concept provenance: seed 2e59ff18, retained for incumbent application identity.
+Mode: Persuade for the public page; Operate for authentication and the dashboard. The selected reference supplies visual restraint and product-led pacing; Trove supplies its own content and working source evidence.
 
 ## Direction contract
 
-THESIS: Scattered source fragments assemble into traceable research context for a user's agent; native scrolling explains the process.
+THESIS: Make actual source inventory and the next research decision clear before asking visitors to start.
 
-OWN-WORLD: Deep ink #101626, porcelain #f3f4f8, cobalt #3155d9, amber #f5d683; incumbent Manrope and Inter. Crisp document surfaces and actual particle geometry, no borrowed illustrations or invented partners.
+OWN-WORLD: White and pale gray, graphite Inter, charcoal actions, fine neutral rules and restrained functional blue. A dark procedural source-connection passage provides contrast inside the quiet public frame.
 
-STORY: Sources → question → approved scope → agent-ready context. Medical/regulatory examples use public real metadata; legal and financial objects state Future domains. The story illustrates the workflow, never simulates a transaction or research response.
+STORY: Concise promise → actual source browser → find/approve/reuse/connect chapters → source-connection passage → direct entry. Sign-in uses a focused white form; the dashboard offers editable starts, actual recent research/data, and a single agent callout.
 
-FIRST VIEWPORT: Fixed minimal header, left-aligned large headline and immediate action, spacious right-hand particle constellation with document fragments. A continuous sticky scene passes four scroll chapters. Header and skip-story links remain available. Mobile uses a shorter scene with legible foreground text; reduced motion and graphics failure show every chapter in normal flow.
+FIRST VIEWPORT: Sticky compact navigation, centered restrained display text and a real catalogue browser. The application dashboard uses a light rail and divided white inventory; mobile agent copy spans the available text column and its action follows beneath it.
 
-FORM: User-selected Data Convergence plan takes precedence over a new concept lottery. Signature interaction: scattered particles and source fragments converge into one research bundle as the visitor scrolls. The application keeps its incumbent technical-atlas forms and navigation.
+FORM: Code-led replacement in the existing application. The signature is source selection and actual native chapter progression, not a sticky particle takeover. No borrowed CRM screenshots, invented partners or raster artwork.
 
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+## Built behavior
 
-## Shipped behavior and evidence
+The source browser reads available offers from `/bootstrap`, filters real categories, and updates an inspector with actual source title, description, fields, attribution, record limit and exact price. Catalogue detail links use `/discover?source=<id>`. Missing metadata retains honest loading/unavailable copy. Legal and financial categories remain explicitly Future domains.
 
-The public `/` story retains all four chapters in the document while the native scroll position gathers actual Three.js points and line frames. The scene is lazy-loaded after visible accessible copy, uses a 32ms render interval, caps pixel ratio, lowers particle count on mobile, pauses offscreen or when the document is hidden, and disposes its resources. Reduced motion avoids the geometry import; graphics failure and context loss show all chapters in ordinary flow with native source disclosures. The sticky scene is contained inside the story so its final bundle does not overlap the pale closing section. The fixed header and skip links stay available.
+Native anchors and actual scroll position drive the sticky chapter index; it becomes a horizontal strip below the mobile header. The bounded connection illustration uses 2D canvas (24 lines desktop, 12 mobile; pixel ratio capped at 1.5), pauses offscreen/hidden and disposes resources. Reduced motion skips the drawing import and shows the static fallback. All chapters remain in ordinary document flow. No Three.js dependency remains.
 
-The medical/regulatory disclosure reads public catalogue metadata and links to available sources and original attribution when present. Legal and financial disclosures explicitly say Future domains. No raster artwork was added. The source fragments and connected bundle illustrate the research path; they do not report a real transaction or research result.
+Sign-in reuses genuine Google/email/registration/ownership-verification flows with safe return routing. The focused white recovery surface preserves existing recovery and error states. The server-authenticated dashboard reads actual account tasks, purchases and connections. Recent tasks resume through `/workspace?task=<id>`. Editable starts do not run research or approve payment; the agent action follows connection state. Repeated rail promotion is removed.
 
-The dedicated `/sign-in` page reuses the protected-action authentication component for Google, email, registration, and ownership verification. `/dashboard` is gated by server authentication; safe internal return paths default there. Its research, purchase, attention, and token states use the existing services. Recent research opens `/workspace?task=<id>` and resumes the owner's task. `/discover` remains the catalogue and the established working routes retain their workflows.
+## Authority and status
 
-The finish evidence is `.local/convergence/manifest.json`: 22 captures across desktop, tablet, short-height, mobile, authentication, populated/empty dashboard, task resume, catalogue, purchase review, reduced motion, and graphics fallback. The independent fresh finish review returned **ship**, with no material fixes after the sticky-exit correction. The chosen written direction and code-led plan are the visual authority; no approved raster composition or quality-bar image was supplied. The system record is `docs/DESIGN.md` with extensions in `.impeccable/design.json`.
+The user’s Attio screenshots and `.impeccable/surfaces/trove-reference-revamp.md` replace the previous Technical Atlas/Data Convergence world. This is the existing working app, with its real services and routes. No seed roll or approved raster comp applies. Source styles are `src/app/globals.css` and `src/app/landing.css`; durable tokens are recorded in `docs/DESIGN.md` with extensions in `.impeccable/design.json`.
 
-
-## Startup refinement — 29 October 2026
-
-The cinematic Data Convergence identity and four-chapter scene remain. “Browse sources” is available in desktop navigation, and “Explore the data” appears beside the opening entry action. A white section between story and closing action shows up to three available offers, taking the first available offer from each distinct category returned by the public catalogue API. It disappears when no available source metadata exists.
-
-Each source begins with its actual title and a northeast arrow, followed by description, up to three fields, record limit, and exact USD batch price. Category overlines are removed. The three-column divided layout stacks on mobile. Whole-source links open `/discover?source=<id>` and the corresponding preview. Attribution states that the data is prepared from public FDA records and directs visitors to inspect original sources, sample rows, and licence. These are current catalogue metadata previews, not claims of continuously live source data or provider verification. Future legal and financial domains remain explicitly labelled in the story.
-
-The dashboard replaces its generic action strip with a white panel of three editable research starting points beside a deep-ink agent panel. The latter persists for both disconnected and connected accounts; actual connection state changes setup copy to management copy. It uses an amber icon, pale supporting text and a white secondary action. These panels stack at 1050px. Existing research, purchase, attention and connection data continue to come from actual account services. Empty research and purchase sections are compact and left aligned. No activity or metrics are fabricated.
-
-The new pass is recorded under `.impeccable/review/startup-polish/final/`, including refreshed desktop/mobile source previews after category-overline removal. Earlier convergence evidence above describes the previous review, not the latest polish disposition. See `docs/AUDIT.md` for final check results. No raster asset, new service, concept roll, or replacement font was added; seed 2e59ff18 remains the incumbent provenance. Product proposals in `docs/PRODUCT_REVIEW.md` are not promoted into shipped behavior.
+The initial fresh finish review at `.local/ui-revamp/finish-review.md` returned **fix**. Its four corrections are implemented: mobile dashboard reading width, human field/purpose labels, removal of the source inspector’s decorative overline, and readable rights/check text. Same-reviewer recapture verdict and the final regression suite are pending at this documentation handoff. Do not inherit an earlier pass’s ship verdict. Current review evidence is under `.impeccable/review/reference-revamp/`; payment-result captures use controlled TEST_ONLY local entitlements and actual prepared FDA rows, not an external PayPal success.

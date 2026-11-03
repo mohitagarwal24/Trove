@@ -19,9 +19,8 @@ import {
   X,
 } from "lucide-react";
 import type { Offer, QuoteView } from "@/lib/types";
-import { money } from "@/lib/types";
+import { money, purposeLabel } from "@/lib/types";
 import { api, post } from "@/lib/client";
-import { ResearchStarts } from "./research-starts";
 import { useTrove } from "./trove-context";
 import { Badge, DataTable, EmptyState, Modal } from "./ui";
 import { QuoteReview } from "./quote-review";
@@ -177,14 +176,10 @@ export function Discover() {
       <section className="page-heading">
         <div>
           <h1>Discover data</h1>
-          <p>Find the right source. Know exactly what you’re buying.</p>
+          <p>Browse sources for your next research task.</p>
         </div>
-        <Link
-          className="button button-secondary heading-action"
-          href="/connect"
-        >
-          Bring your own agent
-          <ArrowUpRight size={16} />
+        <Link className="button button-secondary" href="/workspace">
+          Start research <ArrowUpRight size={16} />
         </Link>
       </section>
       <div className="discovery-layout">
@@ -299,24 +294,6 @@ export function Discover() {
             />
           )}
         </div>
-        <aside className="research-aside">
-          <section className="catalog-guide">
-            <h2>Start with a question.</h2>
-            <p>Choose a starting point and refine what you need.</p>
-            <ResearchStarts />
-            <Link href="/workspace" className="text-link">
-              Open research workspace <ArrowRight size={15} />
-            </Link>
-          </section>
-          <div className="catalog-reassurance">
-            <ShieldCheck size={19} strokeWidth={1.5} />
-            <p>
-              Preview the data first.
-              <br />
-              Approve the exact price.
-            </p>
-          </div>
-        </aside>
       </div>
       {selected.length > 0 && (
         <div className="comparison-tray" aria-label="Offer comparison">
@@ -443,7 +420,7 @@ export function OfferDetail({
       open={!!offer}
       onOpenChange={(open) => !open && onClose()}
       title={offer?.title || "Offer details"}
-      description="Source details and sample records."
+
       wide
     >
       {offer && (
@@ -502,7 +479,7 @@ export function OfferDetail({
             {offer.fields.map((f) => (
               <span key={f}>
                 <Check size={12} />
-                {f}
+                {f.replaceAll("_", " ")}
               </span>
             ))}
           </div>
@@ -511,7 +488,7 @@ export function OfferDetail({
             {offer.prohibited.map((f) => (
               <span key={f}>
                 <X size={12} />
-                {f}
+                {f.replaceAll("_", " ")}
               </span>
             ))}
           </div>
@@ -520,7 +497,10 @@ export function OfferDetail({
             <div>
               <strong>Usage licence</strong>
               <p>{offer.license}</p>
-              <small>Permitted purposes: {offer.purposes.join(", ")}</small>
+              <small>
+                Permitted purposes:{" "}
+                {offer.purposes.map(purposeLabel).join(", ")}
+              </small>
             </div>
           </div>
           <h4>

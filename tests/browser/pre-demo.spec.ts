@@ -61,6 +61,13 @@ test("research gaps persist, cap recovery is explicit, and reused scope creates 
     path: `${captures}/02-coverage-desktop.png`,
     fullPage: true,
   });
+  await expect(page.getByLabel("Records per category")).toHaveCount(0);
+  await expect(page.locator(".scope-summary")).toContainText(
+    "2 records per category",
+  );
+  await page
+    .getByRole("button", { name: "Edit requirements", exact: true })
+    .click();
   await page.getByLabel("Records per category").fill("3");
   await expect(
     page.getByRole("button", { name: "Review purchase plan", exact: true }),

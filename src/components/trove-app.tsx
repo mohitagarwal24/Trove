@@ -250,8 +250,15 @@ export function TroveApp() {
   return (
     <AppContext.Provider value={context}>
       <div
-        className={`app-shell${collapsed && !smallScreen ? " sidebar-collapsed" : ""}`}
+        className={`app-shell${pathname === "/reset-password" ? " recovery-shell" : ""}${collapsed && !smallScreen ? " sidebar-collapsed" : ""}`}
       >
+        {pathname === "/reset-password" && (
+          <header className="sign-in-brand">
+            <Link href="/" aria-label="Trove home">
+              <Logo />
+            </Link>
+          </header>
+        )}
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
@@ -292,7 +299,9 @@ export function TroveApp() {
                     ? "Seller workspace"
                     : "Personal workspace"}
                 </strong>
-                <small>{user?.email || "Sign in or create an account"}</small>
+                <small>
+                  {user ? "Research workspace" : "Sign in to save your work"}
+                </small>
               </span>
             </div>
             <div className="nav-label">WORKSPACE</div>
@@ -341,20 +350,6 @@ export function TroveApp() {
                 </Link>
               ))}
             </nav>
-            <div className="sidebar-bottom">
-              <div className="agent-callout">
-                <div className="callout-icon">
-                  <Cable size={20} />
-                </div>
-                <strong>Your agent. Better informed.</strong>
-                <p>
-                  Bring Trove’s data marketplace to the tools you already use.
-                </p>
-                <Link href="/connect">
-                  Connect an agent <ArrowUpRight size={14} />
-                </Link>
-              </div>
-            </div>
           </div>
           <div className="profile-container" ref={profileRef}>
             <button
@@ -451,12 +446,13 @@ export function TroveApp() {
               <strong>{title}</strong>
             </div>
             <div className="topbar-actions">
-              {caps.paymentEnvironment === "sandbox" && (
-                <span className="environment">
-                  <span />
-                  Sandbox
-                </span>
-              )}
+              {caps.paymentEnvironment === "sandbox" &&
+                pathname.startsWith("/purchases") && (
+                  <span className="environment">
+                    <span />
+                    Sandbox
+                  </span>
+                )}
               <span className="topbar-divider" />
               <Link
                 href="/connect"

@@ -1,44 +1,36 @@
 ---
 version: 1
-slug: "src-components-discover-tsx"
-primary_target: "src/components/discover.tsx"
-related_targets: ["src/app/globals.css","src/components/trove-app.tsx","src/components/research-starts.tsx"]
+slug: src-components-discover-tsx
+primary_target: src/components/discover.tsx
+related_targets: [src/app/globals.css, src/components/trove-app.tsx, src/components/research-starts.tsx, src/components/ui.tsx, src/components/seller-studio.tsx]
 ---
 
 # Catalogue and shared application shell
 
-Mode: Operate. Refine the existing ink/cobalt/amber identity across existing routes; simplify copy and implement real account and purchase flows. User delegated the visual direction and approved direct implementation with Chrome/Playwright inspection.
+Mode: Operate. A quiet source inventory with explicit selection and real previews; the shared shell carries the same restrained system across existing routes.
 
 ## Direction contract
 
-THESIS: A technical atlas index for research sources: readable inventory, persistent orientation, and guided entry into editable research requirements.
+THESIS: Give source names, scope and exact prices readable space while keeping orientation and next actions compact.
 
-OWN-WORLD: Ink navigation, chalk content, cobalt selection and actions, amber navigation highlights. Manrope headings, Inter controls, tabular amounts. Crisp rules and generous space between functional groups.
+OWN-WORLD: Light neutral rail, white canvas, fine gray rules, Inter headings and controls, charcoal primary actions and restrained blue focus/selection. Tabular financial values remain stable.
 
-STORY: Find a source, inspect its scope, compare an exact price, or bring a research question. Real source provenance and human approval remain explicit.
+STORY: Search/filter inventory → inspect source scope, sample data, rights and attribution → compare selection → review an immutable exact-price quote → explicit approval.
 
-FIRST VIEWPORT: An expanded 232px ink rail with a persistent desktop option for a 76px icon rail, 64px utility bar, a horizontal heading, searchable two-column offer inventory, and a white guide with three concrete research starting points. The agent connection panel and account controls fit a 768px laptop height. The icon rail keeps labelled route icons and the account menu reachable; mobile always opens the full-content drawer regardless of the desktop preference. Selection updates a shared comparison dock; its arrival is the signature interaction, with a short upward settling motion and a reduced-motion alternative.
+FIRST VIEWPORT: A light rail (216px, or 68px collapsed), compact (60px) utility bar, (30px) page heading, searchable divided two-column inventory. The mobile full-content drawer is (248px); inventory becomes one column and heading becomes (27px). The old right-side promotional guide is removed. The comparison tray carries selected sources above the page edge.
 
-FORM: Technical atlas index, fourth grounded direction; seed 2e59ff18. Other grounded sources: scientific data appendix, procurement desk, field notebook, airline navigation chart, standards binder, library periodical index. User delegates selection. Challenger verdicts: concourse board competitive in density; folio declined (comparison discipline retained); developer console competitive in control clarity; character catalogue declined (distinct provider identities retained); ticket wallet competitive in provenance; garden map declined (strong region separation retained). No borrowed illustration or literal ornament.
+FORM: Existing catalogue and shared controls implemented directly; source content and underlying permissions remain authoritative. Source field and purpose identifiers become readable display labels without changing API values.
 
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+## Built behavior
 
+Catalogue search, category filters, source preview, scope, rights, exact price and comparison remain connected to the existing backend. Unknown source IDs disclose no private detail. Shared primary buttons are charcoal; secondary controls and dialogs are white with fine borders. Fields use (13px) desktop values and (16px) mobile values; their supporting labels remain adjacent. Shared account, seller, consent, token, receipt, refund and purchase flows remain reachable.
 
-## Approved shared refinement
+Expanded navigation uses a scrollable middle and separate account footer for short laptops. Desktop collapse retains labelled route icons and account access; the mobile drawer keeps full navigation regardless of desktop preference. The account menu and focused dialogs preserve native focus and viewport-bounded scrolling. Search and tables retain narrow-width containment. Real source-rights details and delivery-check support text use (12px) type with wrapping. Human names are shown in seller field selection and source purpose lists while the submitted values remain unchanged.
 
-The all-route refinement keeps the incumbent visual world and real service behavior. Shared controls use 44px minimum height and 13px labels; forms use 12px labels and 13px values. Fixed dialog headings stay above a scrollable body within viewport bounds. Account pairs profile/Google panels and password fields before stacking on mobile. Connect leads with Trove-account OAuth client setup and connected-app columns, stacked up to 1050px, with manual tokens inside an advanced disclosure. The research and connection flow extension is recorded in `src-components-workspace-tsx.md`. The official Google G and Google Sans Medium belong only to provider sign-in; local Manrope/Inter remain Trove’s typography.
+Motion uses brief hover/selection/overlay feedback with reduced-motion alternatives. Content remains visible by default; the public chapter index is functional progress, while the old decorative shell progress line remains absent. Sandbox payment disclosure remains visible where relevant; no provider verification, model output or payment state is fabricated.
 
-Long purchased values, receipt references, fingerprints, and source terms use progressive disclosure while retaining full data and download content. Owned zero-price plans lead directly to purchased data. Redundant introductions, decorative heading icons and empty-state workflow steps are removed. Purchase details replace the five-step progress panel with compact, independent Payment and Delivery badges beneath the heading, using a wrapping native definition list with polite live updates. Shared table scroll containers establish a relative positioning context to contain absolute accessibility labels at narrow widths.
+## Authority and status
 
-Motion extends existing comparison feedback with route opacity arrival, quiet button/row hover, a scrolled utility-bar shadow, and a first-intersection opacity/clip reveal only for source and decision rows. Card geometry and tabular amounts remain stable. Default content stays visible, focused rows skip reveal, and reduced motion cancels active Web Animations and CSS transitions. Keep the rail callout and account controls reachable at normal zoom and short laptop heights. Do not restore green branding or invent provider verification, AI results or payment success.
+The user’s Attio screenshots and `.impeccable/surfaces/trove-reference-revamp.md` replace the previous Technical Atlas/Data Convergence world. This is the existing working app, with its real services and routes. No seed roll or approved raster comp applies. Source styles are `src/app/globals.css` and `src/app/landing.css`; durable tokens are recorded in `docs/DESIGN.md` with extensions in `.impeccable/design.json`.
 
-The decorative document-scroll progress line is removed from the shared shell. Functional landing chapter progression and the spending meter retain their existing behavior.
-
-
-## Startup refinement — 29 October 2026
-
-The catalogue heading is now “Discover data” with concise supporting copy. Cards give source titles and descriptions more room, larger desktop type, wrapping metadata, and an explicit Preview action. The catalogue guide replaces the duplicate question composer with Drug approvals, Drug recalls, and Device recalls links. Each opens `/workspace?start=<id>` with editable requirements; neither research nor payment starts automatically. The guide remains white, while amber retains the established navigation and public-entry roles.
-
-Public landing previews can link to `/discover?source=<id>`. Only public catalogue offers are resolved; unknown IDs expose no details. Dismissal removes the source parameter. Sample rows, source attribution, licence, scope and exact-price review remain in their existing detail and quote surfaces. Up to 1050px the guide follows inventory with three equal start columns; up to 760px they return to divided rows.
-
-Shared changes use 13px navigation/search text, 36px main-content top padding, 18px desktop offer titles, 13px desktop descriptions, and 12px card corners. Existing responsive overrides remain documented as actual cascade in `docs/DESIGN.md`, including tablet heading growth as legacy drift rather than a new scale prescription. Review artifacts are under `.impeccable/review/startup-polish/final/`; final release disposition belongs to `docs/AUDIT.md`.
+The initial fresh finish review at `.local/ui-revamp/finish-review.md` returned **fix**. Its four corrections are implemented: mobile dashboard reading width, human field/purpose labels, removal of the source inspector’s decorative overline, and readable rights/check text. Same-reviewer recapture verdict and the final regression suite are pending at this documentation handoff. Do not inherit an earlier pass’s ship verdict. Current review evidence is under `.impeccable/review/reference-revamp/`; payment-result captures use controlled TEST_ONLY local entitlements and actual prepared FDA rows, not an external PayPal success.

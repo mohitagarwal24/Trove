@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Clock3, LockKeyhole, ShieldCheck } from "lucide-react";
 import type { PurchaseView, QuoteView } from "@/lib/types";
-import { money } from "@/lib/types";
+import { purposeLabel, money } from "@/lib/types";
 import { post } from "@/lib/client";
 import { useTrove } from "./trove-context";
 import { Badge, Modal, Notice } from "./ui";
@@ -127,7 +127,7 @@ export function QuoteReview({
                   )}
                   <span className="quote-license">
                     <ShieldCheck size={12} />
-                    {quote.purpose.replaceAll("_", " ")}
+                    {purposeLabel(quote.purpose)}
                   </span>
                 </div>
                 <strong>{money(line.priceCents)}</strong>

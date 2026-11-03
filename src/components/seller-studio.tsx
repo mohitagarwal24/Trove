@@ -13,7 +13,7 @@ import {
 import { api, post } from "@/lib/client";
 import { categories, type DataRow } from "@/lib/catalogue";
 import type { Offer } from "@/lib/types";
-import { money } from "@/lib/types";
+import { money, purposeLabel } from "@/lib/types";
 import { useTrove } from "./trove-context";
 import {
   Badge,
@@ -380,7 +380,9 @@ export function SellerStudio() {
                         )
                       }
                     />
-                    {f}
+                    {f
+                      .replaceAll("_", " ")
+                      .replace(/^./, (c) => c.toUpperCase())}
                   </label>
                 ))}
               </div>
@@ -402,7 +404,7 @@ export function SellerStudio() {
                       )
                     }
                   />
-                  {p.replaceAll("_", " ")}
+                  {purposeLabel(p)}
                 </label>
               ))}
             </fieldset>

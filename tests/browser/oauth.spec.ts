@@ -192,7 +192,7 @@ test("direct browser research creates a real quote without model access or pre-f
   await page
     .getByRole("button", { name: "Choose requirements", exact: true })
     .click();
-  await expect(page.getByText(/limit, not a balance/)).toBeVisible();
+  await expect(page.getByText(/No upfront deposit/)).toBeVisible();
   await page.getByLabel("Records per category").fill("2");
   await page.getByLabel("Snapshot age (days)").fill("3650");
   expect(
@@ -205,9 +205,11 @@ test("direct browser research creates a real quote without model access or pre-f
   await page.screenshot({ path: ".local/research-oauth/research-desktop.png" });
   await page.getByRole("button", { name: "Find sources", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Spending cap", exact: true }),
+    page.getByRole("region", { name: "Current research scope", exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("Source search", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Source comparison", exact: true }),
+  ).toBeVisible();
   expect(await (await page.request.get("/api/purchases")).json()).toEqual([]);
   expect((await (await page.request.get("/api/tasks")).json()).length).toBe(1);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -276,7 +278,7 @@ test("a failed brief offers an explicit direct-search path without silently inte
   await page.getByLabel("Snapshot age (days)").fill("3650");
   await page.getByRole("button", { name: "Find sources", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Spending cap", exact: true }),
+    page.getByRole("region", { name: "Current research scope", exact: true }),
   ).toBeVisible();
   expect(await (await page.request.get("/api/purchases")).json()).toEqual([]);
 });

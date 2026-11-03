@@ -125,14 +125,12 @@ export function Dashboard() {
               <Cable size={24} strokeWidth={1.5} />
               <div>
                 <h2>
-                  {connected
-                    ? "Your agent is connected."
-                    : "Your agent, with better context."}
+                  {connected ? "Your agent is connected." : "Bring your agent."}
                 </h2>
                 <p>
                   {connected
                     ? "Manage access to your Trove workspace."
-                    : "Connect ChatGPT, Claude or Codex with your Trove account."}
+                    : "ChatGPT, Claude, and Codex. One Trove account."}
                 </p>
               </div>
               <Link href="/connect" className="button button-secondary">
@@ -175,10 +173,8 @@ export function Dashboard() {
               ) : (
                 <div className="dashboard-empty">
                   <Search size={27} strokeWidth={1.4} />
-                  <h3>No research yet.</h3>
-                  <p>
-                    Choose a starting point above to build your first shortlist.
-                  </p>
+                  <h3>Your first research starts above.</h3>
+                  <p>Saved research will appear here.</p>
                   <Link href="/workspace" className="text-link">
                     Start research <ArrowRight size={14} />
                   </Link>
@@ -218,7 +214,7 @@ export function Dashboard() {
               ) : (
                 <div className="dashboard-empty">
                   <FileText size={27} strokeWidth={1.4} />
-                  <h3>No purchased data yet.</h3>
+                  <h3>A home for your research data.</h3>
                   <p>Purchased data and receipts appear here.</p>
                   <Link href="/discover" className="text-link">
                     Explore sources <ArrowRight size={14} />

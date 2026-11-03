@@ -341,7 +341,7 @@ export function Authentication({
     <section className="sign-in-form" aria-labelledby="sign-in-title">
       <header>
         <h1 id="sign-in-title">{title}</h1>
-        <p>{description || "A clearer place to begin your research."}</p>
+        {description && <p>{description}</p>}
       </header>
       {content}
     </section>

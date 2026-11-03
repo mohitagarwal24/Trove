@@ -12,20 +12,17 @@ test("public story exposes honest domains, working source disclosures and a dire
 }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "Bring the missing",
+    "Better sources.",
   );
-  await expect(page.locator(".story-chapter")).toHaveCount(4);
-  await expect(page.getByText("Future domains", { exact: true })).toHaveCount(
-    2,
-  );
-  await page.locator(".fragment-legal summary").click();
-  await expect(page.locator(".fragment-legal")).toContainText(
-    "not currently in the catalogue",
-  );
-  await page.locator(".fragment-medical summary").click();
-  await expect(page.locator(".fragment-medical a").first()).toHaveAttribute(
-    "href",
-    "/discover",
+  await expect(page.locator(".landing-chapter")).toHaveCount(4);
+  await expect(page.getByText("Future domains", { exact: true })).toBeVisible();
+  await expect(page.locator(".landing-source-table > button")).toHaveCount(6);
+  const source = page.locator(".landing-source-table > button").nth(1);
+  const sourceTitle = await source.locator("strong").innerText();
+  await source.click();
+  await expect(source).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".landing-source-inspector h2")).toHaveText(
+    sourceTitle,
   );
   const violations = (
     await new AxeBuilder({ page }).analyze()
@@ -49,20 +46,20 @@ test("landing scene follows scroll in both directions and survives reduced motio
     "data-graphics",
     /ready|fallback/,
   );
-  await page.locator(".chapter-3").scrollIntoViewIfNeeded();
-  await expect(page.locator(".convergence-story")).toHaveAttribute(
+  await page.locator("#step-connect").scrollIntoViewIfNeeded();
+  await expect(page.locator(".landing-chapters")).toHaveAttribute(
     "data-stage",
     "3",
   );
   await page.locator("#landing-exit").scrollIntoViewIfNeeded();
-  const sceneBounds = await page.locator(".convergence-stage").boundingBox();
+  const sceneBounds = await page.locator(".landing-context").boundingBox();
   const exitBounds = await page.locator("#landing-exit").boundingBox();
   expect(sceneBounds!.y + sceneBounds!.height).toBeLessThanOrEqual(
     exitBounds!.y + 1,
   );
 
   await page.evaluate(() => scrollTo(0, 0));
-  await expect(page.locator(".convergence-story")).toHaveAttribute(
+  await expect(page.locator(".landing-chapters")).toHaveAttribute(
     "data-stage",
     "0",
   );
@@ -71,10 +68,7 @@ test("landing scene follows scroll in both directions and survives reduced motio
     "data-graphics",
     "reduced",
   );
-  await expect(page.locator(".convergence-stage")).toHaveCSS(
-    "position",
-    "relative",
-  );
+  await expect(page.locator(".connection-static")).toHaveCSS("opacity", "1");
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
@@ -83,7 +77,7 @@ test("landing scene follows scroll in both directions and survives reduced motio
       type: string,
       ...args: unknown[]
     ) {
-      if (type.startsWith("webgl")) return null;
+      if (type === "2d") return null;
       return original.apply(this, [type, ...args] as never);
     } as typeof original;
   });
@@ -114,7 +108,7 @@ test("verified email login reaches a private dashboard and preserves safe return
     page.getByRole("heading", { name: "Overview", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("No research yet.", { exact: true }),
+    page.getByText("Your first research starts above.", { exact: true }),
   ).toBeVisible();
   await page.goto("/sign-in?returnTo=https://outside.example");
   await expect(page).toHaveURL(/\/dashboard$/);
@@ -226,7 +220,7 @@ test("live catalogue previews open their source and dismiss cleanly", async ({
   const preview = page.locator(".landing-source-list > a").first();
   await expect(preview).toBeVisible();
   const href = await preview.getAttribute("href");
-  const title = await preview.locator("h3").innerText();
+  const title = await page.locator(".landing-source-inspector h2").innerText();
   await preview.click();
   await expect(page).toHaveURL(new RegExp(href!.replace("?", "\\?")));
   await expect(page.getByRole("dialog")).toContainText(title);
@@ -286,4 +280,48 @@ test("research starting points select editable scope without submitting or charg
     page.getByLabel("Drug recalls", { exact: true }),
   ).not.toBeChecked();
   await expect(page.locator(".source-decision")).toHaveCount(0);
+});
+
+test("connection drawing pauses offscreen and stops for reduced motion", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const state = window as typeof window & { connectionDraws: number };
+    state.connectionDraws = 0;
+    const clear = CanvasRenderingContext2D.prototype.clearRect;
+    CanvasRenderingContext2D.prototype.clearRect = function (...args) {
+      if (this.canvas.closest(".connection-art")) state.connectionDraws++;
+      return clear.apply(this, args);
+    };
+  });
+  await page.goto("/");
+  await expect(page.locator(".landing")).toHaveAttribute(
+    "data-graphics",
+    "ready",
+  );
+  const draws = () =>
+    page.evaluate(
+      () =>
+        (window as typeof window & { connectionDraws: number }).connectionDraws,
+    );
+  expect(await draws()).toBe(0);
+  await page.locator(".connection-art").scrollIntoViewIfNeeded();
+  await expect.poll(draws).toBeGreaterThan(0);
+  await page.evaluate(() => scrollTo(0, 0));
+  await expect(page.locator(".landing-chapters")).toHaveAttribute(
+    "data-stage",
+    "0",
+  );
+  // Let the queued final frame settle before measuring the offscreen pause.
+  await page.waitForTimeout(100);
+  const paused = await draws();
+  await page.waitForTimeout(150);
+  expect(await draws()).toBe(paused);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.locator(".connection-art").scrollIntoViewIfNeeded();
+  await expect(page.locator(".landing")).toHaveAttribute(
+    "data-graphics",
+    "reduced",
+  );
+  expect(await draws()).toBe(paused);
 });

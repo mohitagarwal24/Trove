@@ -8,7 +8,7 @@
         "rule": "overused-font",
         "value": "inter",
         "createdAt": "2026-10-19T06:10:45.697Z",
-        "reason": "Agent intentionally retained existing Inter for Operate-mode body and controls; independent finish review accepted it for readability. Manrope carries display typography; decision documented in docs/DESIGN.md."
+        "reason": "Agent chose Inter to match the user-pinned Attio reference; Firecrawl branding extraction identifies Inter body and Inter Display headings. The previous Manrope heading system has been replaced."
       }
     ]
   }

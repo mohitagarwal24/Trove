@@ -8,7 +8,7 @@ The initial catalogue contains six prepared regulatory-data products backed by r
 
 ## Website and workspace
 
-The public home page tells Trove’s Data Convergence story. Choose Get started to sign in or create an account, then enter `/dashboard` for recent research, purchased data and agent access. The catalogue is at `/discover`; existing purchase and integration links remain valid. Regulatory products are available today; legal and financial scenes are explicitly future domains. The cinematic scene loads only on the landing page and provides reduced-motion and graphics-failure alternatives.
+The public home page introduces Trove through a real source browser, a scroll-linked research workflow, and an animated source-connection scene. Choose Get started to sign in or create an account, then enter `/dashboard` for recent research, purchased data and agent access. The catalogue is at `/discover`; existing purchase and integration links remain valid. Regulatory products are available today; legal and financial data are explicitly future domains. The cinematic scene loads only on the landing page and provides reduced-motion and graphics-failure alternatives.
 
 Your data in Purchases is a searchable library of active workspace entitlements, with original scope, receipts and notices of newer published versions. Evidence packs export purchased rows, provenance, checks, receipt references and SHA-256 content fingerprints. Verify a downloaded pack locally with `node scripts/verify-evidence.mjs <evidence.json>`; this checks content consistency, not a digital signature or external settlement. Reused sources in a mixed purchase are referenced; export their original purchases separately.
 

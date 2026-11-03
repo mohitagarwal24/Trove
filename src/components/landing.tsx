@@ -2,459 +2,504 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowDown,
   ArrowRight,
   ArrowUpRight,
-  FileText,
-  Scale,
-  ChartNoAxesCombined,
-  Fingerprint,
-  Layers3,
   Check,
+  Database,
+  FileText,
+  Fingerprint,
   Cable,
 } from "lucide-react";
 import { Logo } from "./ui";
 import { api } from "@/lib/client";
 import type { Offer, UserView } from "@/lib/types";
 import { money } from "@/lib/types";
-const chapters = [
+
+const steps = [
   {
-    title: (
-      <>
-        Bring the missing
-        <br />
-        pieces <em>together.</em>
-      </>
-    ),
-    copy: "Find research data. Approve the price. Give your agent better context.",
+    id: "find",
+    label: "Find the right sources",
+    title: "A better starting point.",
+    copy: "Set the fields, freshness, and scope you need. Compare sources against your actual requirements.",
   },
   {
-    title: (
-      <>
-        A question.
-        <br />
-        <em>A direction.</em>
-      </>
-    ),
-    copy: "Tell Trove what your agent needs. Find sources that fit the task.",
+    id: "approve",
+    label: "Approve the scope",
+    title: "Your research. Your decision.",
+    copy: "Review the records, licence, and total price before you approve a purchase.",
   },
   {
-    title: (
-      <>
-        More context.
-        <br />
-        <em>Less guesswork.</em>
-      </>
-    ),
-    copy: "See the scope, the source, and the price. You decide what comes next.",
+    id: "reuse",
+    label: "Keep what you buy",
+    title: "Good data stays yours.",
+    copy: "Return to your purchased scope without paying again. Buy an updated version when you need it.",
   },
   {
-    title: (
-      <>
-        Good sources.
-        <br />
-        <em>Stronger beginnings.</em>
-      </>
-    ),
-    copy: "Put the right data to work in your agent. Keep a clear path back to its source.",
+    id: "connect",
+    label: "Work with your agent",
+    title: "Context, wherever you work.",
+    copy: "Connect your Trove account to ChatGPT, Claude, or Codex through MCP.",
   },
 ];
+const fieldLabel = (s: string) => s.replaceAll("_", " ");
+
 export function Landing() {
-  const story = useRef<HTMLElement>(null),
+  const [sources, setSources] = useState<Offer[]>([]);
+  const [selected, setSelected] = useState(0);
+  const [category, setCategory] = useState("All sources");
+  const [signedIn, setSignedIn] = useState(false);
+  const [active, setActive] = useState("find");
+  const [graphics, setGraphics] = useState("loading");
+  const scene = useRef<HTMLElement>(null),
     canvas = useRef<HTMLCanvasElement>(null),
     progress = useRef(0);
-  const [stage, setStage] = useState(0),
-    [mode, setMode] = useState("loading"),
-    [offer, setOffer] = useState<Offer | null>(null),
-    [sources, setSources] = useState<Offer[]>([]),
-    [signedIn, setSignedIn] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
     api<{ offers: Offer[]; user: UserView | null }>("/bootstrap", {
       signal: controller.signal,
     })
       .then((data) => {
-        setSources(
-          data.offers
-            .filter(
-              (item, index, all) =>
-                item.available &&
-                all.findIndex(
-                  (other) =>
-                    other.available && other.category === item.category,
-                ) === index,
-            )
-            .slice(0, 3),
-        );
-        setOffer(
-          data.offers.find((o) => o.category === "Drug recalls") ||
-            data.offers[0] ||
-            null,
-        );
+        setSources(data.offers.filter((o) => o.available));
         setSignedIn(!!data.user);
       })
       .catch(() => {});
     return () => controller.abort();
   }, []);
   useEffect(() => {
-    const preference = matchMedia("(prefers-reduced-motion: reduce)");
-    let disposed = false,
-      cleanup: (() => void) | undefined,
-      generation = 0,
-      frame = 0;
+    const chapters = steps.map((s) => document.getElementById(`step-${s.id}`));
+    let frame = 0;
     const update = () => {
       frame = 0;
-      if (!story.current) return;
-      const r = story.current.getBoundingClientRect(),
-        range = Math.max(1, r.height - innerHeight);
-      progress.current = Math.max(0, Math.min(1, -r.top / range));
-      story.current.style.setProperty("--gather", String(progress.current));
-      setStage(Math.min(3, Math.floor(progress.current * 3.99)));
+      const current = [...chapters]
+        .reverse()
+        .find(
+          (el) => el && el.getBoundingClientRect().top <= innerHeight * 0.45,
+        );
+      setActive(current?.id.replace("step-", "") || "find");
+      if (scene.current) {
+        const r = scene.current.getBoundingClientRect();
+        progress.current = Math.max(
+          0,
+          Math.min(1, (innerHeight - r.top) / (innerHeight + r.height)),
+        );
+      }
     };
     const scroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
     };
+    addEventListener("scroll", scroll, { passive: true });
+    addEventListener("resize", scroll);
+    update();
+    return () => {
+      cancelAnimationFrame(frame);
+      removeEventListener("scroll", scroll);
+      removeEventListener("resize", scroll);
+    };
+  }, []);
+  useEffect(() => {
+    const preference = matchMedia("(prefers-reduced-motion: reduce)");
+    let disposed = false,
+      generation = 0,
+      cleanup: (() => void) | undefined;
     const configure = async () => {
       const run = ++generation;
       cleanup?.();
       cleanup = undefined;
       if (preference.matches) {
-        setMode("reduced");
+        setGraphics("reduced");
         return;
       }
-      setMode("loading");
       try {
         const { mountConvergence } = await import("./convergence-scene");
         if (disposed || run !== generation || !canvas.current) return;
         cleanup = mountConvergence(
           canvas.current,
           () => progress.current,
-          () => {
-            cleanup?.();
-            setMode("fallback");
-          },
+          () => setGraphics("fallback"),
         );
-        setMode("ready");
+        setGraphics("ready");
       } catch {
-        if (!disposed && run === generation) setMode("fallback");
+        if (!disposed && run === generation) setGraphics("fallback");
       }
     };
-    window.addEventListener("scroll", scroll, { passive: true });
-    window.addEventListener("resize", scroll);
-    preference.addEventListener("change", configure);
     configure();
-    update();
+    preference.addEventListener("change", configure);
     return () => {
       disposed = true;
       generation++;
-      cancelAnimationFrame(frame);
       cleanup?.();
-      window.removeEventListener("scroll", scroll);
-      window.removeEventListener("resize", scroll);
       preference.removeEventListener("change", configure);
     };
   }, []);
   const destination = signedIn ? "/dashboard" : "/sign-in";
+  const filtered = sources.filter(
+    (o) => category === "All sources" || o.category === category,
+  );
+  const offer = filtered[selected] || filtered[0];
   return (
-    <div className="landing" data-graphics={mode}>
-      <a href="#landing-exit" className="skip-link">
+    <div className="landing" data-graphics={graphics}>
+      <a className="skip-link" href="#landing-exit">
         Skip the story
       </a>
       <header className="landing-nav">
-        <Link href="/" aria-label="Trove home">
-          <Logo />
-        </Link>
-        <nav aria-label="Main navigation">
-          <Link href="/discover" className="landing-about">
-            Browse sources
+        <div className="landing-nav-inner">
+          <Link href="/" aria-label="Trove home">
+            <Logo />
           </Link>
-          <Link href="#chapter-question" className="landing-about">
-            How it connects
-          </Link>
-          <Link href={destination}>{signedIn ? "Dashboard" : "Sign in"}</Link>
-          <Link href={destination} className="landing-cta">
-            {signedIn ? "Open workspace" : "Get started"}
-            <ArrowUpRight size={16} />
-          </Link>
-        </nav>
-      </header>
-      <main>
-        <section
-          ref={story}
-          className="convergence-story"
-          data-stage={stage}
-          aria-label="From scattered sources to connected context"
-        >
-          <div className="convergence-stage">
-            <canvas
-              ref={canvas}
-              aria-hidden="true"
-              className="convergence-canvas"
-            />
-            <div className="scene-guide" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </div>
-            <div className="source-fragments">
-              <details className="source-fragment fragment-medical">
-                <summary>
-                  <span className="fragment-icon">
-                    <FileText size={19} />
-                  </span>
-                  <span>
-                    Medical & regulatory<small>Available today</small>
-                    {offer && (
-                      <small className="fragment-record">
-                        {offer.fields
-                          .slice(0, 2)
-                          .map((f) => f.replaceAll("_", " "))
-                          .join(" · ")}
-                      </small>
-                    )}
-                  </span>
-                  <ArrowUpRight size={14} />
-                  <span className="fragment-hover-source" aria-hidden="true">
-                    {offer?.sourceAttribution || "Public regulatory sources"}
-                  </span>
-                </summary>
-                <div className="fragment-detail">
-                  <strong>
-                    {offer?.title || "Regulatory research sources"}
-                  </strong>
-                  <p>
-                    {offer
-                      ? `${offer.recordLimit} records per scoped batch · ${offer.fields
-                          .slice(0, 2)
-                          .map((f) => f.replaceAll("_", " "))
-                          .join(", ")}`
-                      : "Browse the catalogue for source scope and availability."}
-                  </p>
-                  <Link href="/discover">
-                    View available sources <ArrowUpRight size={13} />
-                  </Link>
-                  {offer?.sourceUrl && (
-                    <a href={offer.sourceUrl} target="_blank" rel="noreferrer">
-                      Original source <ArrowUpRight size={13} />
-                    </a>
-                  )}
-                </div>
-              </details>
-              <details className="source-fragment fragment-legal">
-                <summary>
-                  <span className="fragment-icon">
-                    <Scale size={19} />
-                  </span>
-                  <span>
-                    Legal intelligence<small>Future domains</small>
-                  </span>
-                  <ArrowUpRight size={14} />
-                </summary>
-                <div className="fragment-detail">
-                  <p>
-                    Case law, decisions, and filings. A future direction for
-                    Trove; not currently in the catalogue.
-                  </p>
-                </div>
-              </details>
-              <details className="source-fragment fragment-finance">
-                <summary>
-                  <span className="fragment-icon">
-                    <ChartNoAxesCombined size={19} />
-                  </span>
-                  <span>
-                    Financial research<small>Future domains</small>
-                  </span>
-                  <ArrowUpRight size={14} />
-                </summary>
-                <div className="fragment-detail">
-                  <p>
-                    Market disclosures and financial records. A future direction
-                    for Trove; not currently in the catalogue.
-                  </p>
-                </div>
-              </details>
-              <div className="context-bundle" aria-hidden="true">
-                <Layers3 size={26} />
-                <div>
-                  <strong>Context, connected.</strong>
-                  <span>Scoped. Source-linked. Yours to approve.</span>
-                </div>
-                <Check size={18} />
-              </div>
-            </div>
-            <div className="story-progress" aria-hidden="true">
-              <span>
-                {
-                  [
-                    "Scattered sources",
-                    "A question creates direction",
-                    "Context takes shape",
-                    "Ready for your agent",
-                  ][stage]
-                }
-              </span>
-              <div>
-                {chapters.map((_, i) => (
-                  <b key={i} className={stage === i ? "active" : ""} />
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="story-chapters">
-            {chapters.map((chapter, i) => (
-              <section className={`story-chapter chapter-${i}`} key={i}>
-                <div className="chapter-content">
-                  {i === 0 ? (
-                    <h1>{chapter.title}</h1>
-                  ) : (
-                    <h2>{chapter.title}</h2>
-                  )}
-                  <p>{chapter.copy}</p>
-                  {i === 0 ? (
-                    <>
-                      <Link href={destination} className="landing-cta">
-                        {signedIn ? "Open dashboard" : "Get started"}
-                        <ArrowUpRight size={18} />
-                      </Link>
-                      <Link href="/discover" className="story-catalogue">
-                        Explore the data <ArrowRight size={16} />
-                      </Link>
-                      <a href="#landing-exit" className="story-skip">
-                        Skip the story <ArrowRight size={14} />
-                      </a>
-                    </>
-                  ) : i === 1 ? (
-                    <blockquote>
-                      “Find recent drug recalls and the reasons behind them.”
-                    </blockquote>
-                  ) : i === 2 ? (
-                    <div className="story-approval">
-                      <Fingerprint size={20} />
-                      <span>
-                        Source and scope first.
-                        <br />
-                        <strong>
-                          Nothing purchased without your approval.
-                        </strong>
-                      </span>
-                    </div>
-                  ) : (
-                    <Link href={destination} className="landing-cta">
-                      {signedIn ? "Open dashboard" : "Start your research"}
-                      <ArrowUpRight size={18} />
-                    </Link>
-                  )}
-                </div>
-                {i === 0 && (
-                  <a className="story-scroll" href="#chapter-question">
-                    <ArrowDown size={15} />
-                    Scroll to connect the dots
-                  </a>
-                )}
-                {i === 1 && (
-                  <span id="chapter-question" className="chapter-anchor" />
-                )}
-              </section>
-            ))}
-          </div>
-        </section>
-        {!!sources.length && (
-          <section
-            className="landing-sources"
-            aria-labelledby="landing-sources-title"
-          >
-            <div className="landing-sources-heading">
-              <div>
-                <h2 id="landing-sources-title">
-                  See what you’re working with.
-                </h2>
-                <p>
-                  Real regulatory records. Clear scope. A price you approve.
-                </p>
-              </div>
-              <Link href="/discover">
-                Explore the catalogue <ArrowUpRight size={17} />
-              </Link>
-            </div>
-            <div className="landing-source-list">
-              {sources.map((source) => (
-                <Link
-                  className="landing-source"
-                  key={source.id}
-                  href={`/discover?source=${encodeURIComponent(source.id)}`}
-                >
-                  <div className="landing-source-top">
-                    <h3>{source.title}</h3>
-                    <ArrowUpRight size={18} />
-                  </div>
-                  <p>{source.description}</p>
-                  <div className="landing-source-fields">
-                    {source.fields.slice(0, 3).map((field) => (
-                      <span key={field}>{field.replaceAll("_", " ")}</span>
-                    ))}
-                  </div>
-                  <div className="landing-source-price">
-                    <span>Up to {source.recordLimit} records</span>
-                    <strong>
-                      {money(source.priceCents)} <small>USD / batch</small>
-                    </strong>
-                  </div>
-                </Link>
-              ))}
-            </div>
-            <p className="landing-source-attribution">
-              Prepared from public FDA records. Inspect the original source,
-              sample rows and licence before purchasing.
-            </p>
-          </section>
-        )}
-        <section className="landing-exit" id="landing-exit">
-          <div>
-            <Cable size={31} strokeWidth={1.3} />
-            <h2>
-              Your agent.
-              <br />
-              <em>Better informed.</em>
-            </h2>
-            <p>A clearer path from the source to your next step.</p>
+          <nav aria-label="Main navigation">
+            <a className="landing-about" href="#sources">
+              Sources
+            </a>
+            <a className="landing-about" href="#how-it-works">
+              How it works
+            </a>
+            <Link className="landing-about" href="/connect">
+              For agents
+            </Link>
+          </nav>
+          <div className="landing-nav-actions">
+            <Link href={destination} className="landing-signin">
+              {signedIn ? "Dashboard" : "Sign in"}
+            </Link>
             <Link href={destination} className="landing-cta">
-              {signedIn ? "Open dashboard" : "Get started"}
-              <ArrowUpRight size={18} />
+              {signedIn ? "Open workspace" : "Get started"}
+              <ArrowUpRight size={15} />
             </Link>
           </div>
-          <div className="landing-principles">
-            <article>
-              <FileText size={21} />
-              <h3>Know the source.</h3>
-              <p>Inspect scope, provenance, and licence before you buy.</p>
-            </article>
-            <article>
-              <Fingerprint size={21} />
-              <h3>Stay in control.</h3>
-              <p>Review an exact price. Approve each purchase yourself.</p>
-            </article>
-            <article>
-              <Cable size={21} />
-              <h3>Use your own agent.</h3>
-              <p>Connect Codex or Claude with scoped, revocable access.</p>
-            </article>
+        </div>
+      </header>
+      <main>
+        <section className="landing-hero landing-frame">
+          <h1>
+            Better sources.
+            <br />
+            <span>Sharper research.</span>
+          </h1>
+          <p>
+            Find the data your agent is missing.
+            <br />
+            Choose the scope. Approve the price. Put it to work.
+          </p>
+          <div className="landing-actions">
+            <Link href={destination} className="landing-cta">
+              Get started <ArrowRight size={16} />
+            </Link>
+            <a href="#sources" className="landing-text-link">
+              Explore sources <ArrowDownIcon />
+            </a>
+          </div>
+          <div className="hero-connectors" aria-hidden="true">
+            <span>Research question</span>
+            <i />
+            <span>Source discovery</span>
+            <i />
+            <span>Better context</span>
           </div>
         </section>
+        <section
+          id="sources"
+          className="landing-frame landing-catalogue"
+          aria-labelledby="source-heading"
+        >
+          <div className="landing-section-label">
+            <span id="source-heading">Explore the source layer</span>
+            <Link href="/discover">
+              Open catalogue <ArrowUpRight size={14} />
+            </Link>
+          </div>
+          <div className="landing-browser">
+            <div
+              className="landing-source-categories"
+              aria-label="Source categories"
+            >
+              {["All sources", ...new Set(sources.map((o) => o.category))].map(
+                (c) => (
+                  <button
+                    key={c}
+                    onClick={() => {
+                      setCategory(c);
+                      setSelected(0);
+                    }}
+                    aria-pressed={category === c}
+                  >
+                    {c}
+                    <span>
+                      {c === "All sources"
+                        ? sources.length
+                        : sources.filter((o) => o.category === c).length}
+                    </span>
+                  </button>
+                ),
+              )}
+              <div className="source-category-note">
+                <Database size={17} />
+                <span>
+                  Medical & regulatory
+                  <br />
+                  <small>Available today</small>
+                </span>
+              </div>
+            </div>
+            <div className="landing-source-main">
+              <div
+                className="landing-source-table"
+                aria-label="Available sources"
+              >
+                <div className="source-table-head">
+                  <span>Source</span>
+                  <span>Scope</span>
+                  <span>Price</span>
+                </div>
+                {filtered.length ? (
+                  filtered.map((o, index) => (
+                    <button
+                      key={o.id}
+                      aria-pressed={offer?.id === o.id}
+                      onClick={() => setSelected(index)}
+                    >
+                      <span>
+                        <FileText size={16} />
+                        <span>
+                          <strong>{o.title}</strong>
+                          <small>{o.seller.name}</small>
+                        </span>
+                      </span>
+                      <span>{o.recordLimit} records</span>
+                      <span>
+                        {money(o.priceCents)}
+                        <ArrowUpRight size={13} />
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="landing-source-loading">
+                    Browse the catalogue to see current availability.
+                  </p>
+                )}
+              </div>
+              {offer && (
+                <div className="landing-source-inspector" key={offer.id}>
+                  <div>
+                    <h2>{offer.title}</h2>
+                    <p>{offer.description}</p>
+                  </div>
+                  <div className="landing-field-list">
+                    {offer.fields.slice(0, 5).map((f) => (
+                      <span key={f}>
+                        <Check size={12} />
+                        {fieldLabel(f)}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="landing-source-list">
+                    <Link
+                      href={`/discover?source=${encodeURIComponent(offer.id)}`}
+                    >
+                      Preview source <ArrowUpRight size={15} />
+                    </Link>
+                    <span>{offer.sourceAttribution}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="landing-domain-note">
+            <span>Built for research that needs a source.</span>
+            <span>
+              Legal & financial data <small>Future domains</small>
+            </span>
+          </div>
+        </section>
+        <section id="how-it-works" className="landing-frame landing-workflow">
+          <div className="landing-intro">
+            <h2>
+              Let your agent ask.
+              <br />
+              <span>Give it something worth knowing.</span>
+            </h2>
+          </div>
+          <div
+            className="landing-chapters"
+            data-stage={steps.findIndex((s) => s.id === active)}
+          >
+            <nav
+              className="landing-chapter-index"
+              aria-label="Research workflow"
+            >
+              {steps.map((s) => (
+                <a
+                  key={s.id}
+                  href={`#step-${s.id}`}
+                  aria-current={active === s.id ? "step" : undefined}
+                >
+                  {s.label}
+                </a>
+              ))}
+            </nav>
+            <div className="landing-chapter-content">
+              {steps.map((step, index) => (
+                <article
+                  id={`step-${step.id}`}
+                  className="landing-chapter"
+                  key={step.id}
+                >
+                  <div className="landing-chapter-copy">
+                    <span className="chapter-number">0{index + 1}</span>
+                    <h3>
+                      {step.title} <span>{step.copy}</span>
+                    </h3>
+                  </div>
+                  <div className={`landing-product-scene scene-${step.id}`}>
+                    {index === 0 ? (
+                      <div className="landing-scope-surface">
+                        <div className="surface-toolbar">
+                          <FileText size={15} />
+                          Research requirements
+                        </div>
+                        <div className="scope-row">
+                          <span>Domain</span>
+                          <strong>Drug recalls</strong>
+                        </div>
+                        <div className="scope-row">
+                          <span>Required fields</span>
+                          <strong>Classification, reason, source</strong>
+                        </div>
+                        <div className="scope-row">
+                          <span>Freshness</span>
+                          <strong>Within 30 days</strong>
+                        </div>
+                        <Link href="/workspace?start=drug-recalls">
+                          Set your requirements <ArrowRight size={14} />
+                        </Link>
+                      </div>
+                    ) : index === 1 ? (
+                      <div className="approval-scene">
+                        <div className="approval-scope">
+                          <Fingerprint size={26} strokeWidth={1} />
+                          <strong>Only the scope you choose.</strong>
+                          <span>Records · Fields · Permitted use</span>
+                        </div>
+                        <div className="approval-check">
+                          <Check size={18} />
+                          <span>
+                            Review first.
+                            <br />
+                            <strong>Approve when you’re ready.</strong>
+                          </span>
+                        </div>
+                      </div>
+                    ) : index === 2 ? (
+                      <div className="reuse-scene">
+                        <div>
+                          <Database size={22} />
+                          <strong>Your data library</strong>
+                          <span>Purchased scope & source version</span>
+                        </div>
+                        <div className="reuse-route">
+                          <span>Same purchased scope</span>
+                          <strong>Reuse</strong>
+                          <Check size={15} />
+                        </div>
+                        <div className="reuse-route">
+                          <span>Updated source version</span>
+                          <strong>Review price</strong>
+                          <ArrowRight size={15} />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="agent-scene">
+                        <div className="agent-clients">
+                          <span>ChatGPT</span>
+                          <span>Claude</span>
+                          <span>Codex</span>
+                        </div>
+                        <div className="agent-route">
+                          <i />
+                          <Cable size={22} />
+                          <i />
+                        </div>
+                        <div className="agent-trove">
+                          <Logo small />
+                          <span>Your sources. Your account.</span>
+                        </div>
+                        <Link href="/connect">
+                          Connect through MCP <ArrowUpRight size={14} />
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+        <section
+          ref={scene}
+          className="landing-context"
+          aria-labelledby="context-heading"
+        >
+          <div className="landing-frame context-frame">
+            <h2 id="context-heading">
+              Every piece.
+              <br />
+              <span>A clearer picture.</span>
+            </h2>
+            <p>
+              Source, scope, and provenance.
+              <br />
+              Together with the data you put to work.
+            </p>
+            <div className="connection-art" aria-hidden="true">
+              <canvas ref={canvas} />
+              <div className="connection-static" />
+              <span className="context-center">
+                <Logo small />
+              </span>
+              <span className="context-node node-a">Source</span>
+              <span className="context-node node-b">Scope</span>
+              <span className="context-node node-c">Provenance</span>
+              <span className="context-node node-d">Your agent</span>
+            </div>
+            <div className="context-principles">
+              <span>
+                <Fingerprint size={19} />
+                Traceable to its source.
+              </span>
+              <span>
+                <Check size={19} />
+                Approved by you.
+              </span>
+              <span>
+                <Database size={19} />
+                Ready to use again.
+              </span>
+            </div>
+          </div>
+        </section>
+        <section id="landing-exit" className="landing-frame landing-finale">
+          <h2>
+            Your next question.
+            <br />
+            <span>A stronger starting point.</span>
+          </h2>
+          <Link href={destination} className="landing-cta">
+            Get started <ArrowUpRight size={16} />
+          </Link>
+        </section>
       </main>
-      <footer className="landing-footer">
-        <Link href="/" aria-label="Trove home">
-          <Logo small />
-        </Link>
-        <span>Many sources. A clearer starting point.</span>
-        <nav aria-label="Legal">
+      <footer className="landing-frame landing-footer">
+        <Logo small />
+        <div>
+          <Link href="/discover">Sources</Link>
+          <Link href="/connect">Connect an agent</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
-          <Link href="/discover">
-            Catalogue <ArrowUpRight size={13} />
-          </Link>
-        </nav>
+        </div>
+        <span>© {new Date().getFullYear()} Trove</span>
       </footer>
     </div>
   );
+}
+function ArrowDownIcon() {
+  return <ArrowRight className="arrow-down" size={15} />;
 }

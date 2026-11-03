@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   Check,
@@ -16,7 +16,7 @@ import { examplePrompts } from "@/lib/examples";
 import type { QuoteView, Task, PurchaseView } from "@/lib/types";
 import { money } from "@/lib/types";
 import { useTrove } from "./trove-context";
-import { Badge, Notice, Status } from "./ui";
+import { Notice, Status } from "./ui";
 import { QuoteReview } from "./quote-review";
 import {
   ResearchRequirements,
@@ -24,14 +24,13 @@ import {
 } from "./research-requirements";
 import { taskRequirementsSchema, requirementsKey } from "@/lib/research";
 import { requirementsForStart } from "@/lib/research-starts";
-import { ResearchStarts } from "./research-starts";
 export function Workspace() {
   const params = useSearchParams();
-  const router = useRouter();
   const requestedTask = params.get("task");
   const requestedStart = params.get("start");
   const requestedFrom =
     !requestedTask && !requestedStart ? params.get("from") : null;
+  const [editingScope, setEditingScope] = useState(true);
   const [copiedScope, setCopiedScope] = useState(false);
   const [resumeError, setResumeError] = useState("");
   const { user, capabilities, ensureAuth, notify, offers } = useTrove();
@@ -48,6 +47,7 @@ export function Workspace() {
   useEffect(() => {
     let active = true;
     setTask(null);
+    setEditingScope(true);
     setQuote(null);
     setReview(false);
     setPurchases([]);
@@ -89,6 +89,7 @@ export function Workspace() {
               return;
             }
             setTask(item);
+            setEditingScope(false);
             setPrompt(item.prompt);
             if (item.planner !== "gemini" && item.requirements.needs) {
               setMode("requirements");
@@ -129,6 +130,10 @@ export function Workspace() {
         },
       );
       setTask(result.task);
+      setEditingScope(false);
+      requestAnimationFrame(() =>
+        document.getElementById("source-comparison")?.focus(),
+      );
       setQuote(result.quote);
       if (user)
         sessionStorage.setItem(
@@ -181,7 +186,11 @@ export function Workspace() {
       <section className="page-heading compact-heading workspace-heading">
         <div>
           <h1>Research workspace</h1>
-          <p>Define the scope. Find sources that fit.</p>
+          <p>
+            {task && !editingScope
+              ? "Sources matched to your requirements."
+              : "What data do you need?"}
+          </p>
         </div>
         {task && (
           <Link
@@ -198,224 +207,212 @@ export function Workspace() {
         </Notice>
       )}
       {resumeError && <Notice kind="error">{resumeError}</Notice>}
-      <div className="workspace-layout">
-        <section
-          className="task-composer panel"
-          id="research-composer"
-          tabIndex={-1}
-        >
-          <div className="panel-title">
-            <span className="sparkle-box">
-              <Sparkles size={17} />
-            </span>
-            <h2>
-              {mode === "brief"
-                ? "Your research brief"
-                : "Your data requirements"}
-            </h2>
-          </div>
-          <div
-            className="research-mode"
-            role="group"
-            aria-label="Research input"
+      <div
+        className={`workspace-layout ${task && !editingScope ? "results-focused" : "scope-focused"}`}
+      >
+        {task && !editingScope && (
+          <section
+            className="scope-summary"
+            aria-label="Current research scope"
           >
+            <div>
+              <span className="section-eyebrow">Research scope</span>
+              <strong>{task.prompt}</strong>
+              <span>
+                {task.requirements.needs
+                  ?.map(
+                    (n) =>
+                      `${n.fields.length} fields · within ${n.maxAgeDays} days`,
+                  )
+                  .join(" / ") || "Research brief"}{" "}
+                · {money(task.budgetCents)} limit
+              </span>
+            </div>
             <button
-              aria-pressed={mode === "requirements"}
+              className="button button-secondary button-small"
               onClick={() => {
-                setMode("requirements");
-                setResearchError("");
+                setEditingScope(true);
+                requestAnimationFrame(() =>
+                  document.getElementById("research-composer")?.focus(),
+                );
               }}
             >
-              Choose requirements
+              Edit requirements
             </button>
-            <button
-              aria-pressed={mode === "brief"}
-              disabled={!capabilities.ai}
-              onClick={() => {
-                setMode("brief");
-                setResearchError("");
-              }}
+          </section>
+        )}
+        {(editingScope || !task) && (
+          <section
+            className="task-composer panel"
+            id="research-composer"
+            tabIndex={-1}
+          >
+            <div className="panel-title">
+              <span className="sparkle-box">
+                <Sparkles size={17} />
+              </span>
+              <h2>
+                {mode === "brief"
+                  ? "Your research brief"
+                  : "Your data requirements"}
+              </h2>
+            </div>
+            <div
+              className="research-mode"
+              role="group"
+              aria-label="Research input"
             >
-              Describe a brief
-            </button>
-          </div>
-          {mode === "requirements" ? (
-            <ResearchRequirements
-              value={requirements}
-              onChange={setRequirements}
-            />
-          ) : (
-            <>
-              <label htmlFor="task-prompt">
-                What would you like to find out?
-              </label>
-              <textarea
-                id="task-prompt"
-                rows={7}
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe the information you need…"
+              <button
+                aria-pressed={mode === "requirements"}
+                onClick={() => {
+                  setMode("requirements");
+                  setResearchError("");
+                }}
+              >
+                Choose requirements
+              </button>
+              <button
+                aria-pressed={mode === "brief"}
+                disabled={!capabilities.ai}
+                onClick={() => {
+                  setMode("brief");
+                  setResearchError("");
+                }}
+              >
+                Describe a brief
+              </button>
+            </div>
+            {mode === "requirements" ? (
+              <ResearchRequirements
+                value={requirements}
+                onChange={setRequirements}
               />
-              <div className="composer-examples">
-                {examplePrompts.map((p, i) => (
-                  <button key={i} onClick={() => setPrompt(p)}>
-                    {["Approvals", "Drug recalls", "Device recalls"][i]}
-                    <ArrowRight size={11} />
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          <div className="form-row">
-            <label>
-              Task spending limit
-              <div className="money-input">
-                <span>$</span>
-                <input
-                  id="task-budget"
-                  type="number"
-                  min="0.50"
-                  max="1000"
-                  step="0.50"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                />
-                <span>USD</span>
-              </div>
-            </label>
-          </div>
-          <div className="policy-note">
-            <ShieldCheck size={16} />
-            <p>
-              This is a limit, not a balance. Pay with PayPal when you approve a
-              purchase.
-            </p>
-          </div>
-          {researchError && (
-            <Notice kind="error">
-              {researchError}
-              {mode === "brief" && (
-                <button
-                  className="text-link"
-                  onClick={() => setMode("requirements")}
-                >
-                  Choose requirements to continue <ArrowRight size={14} />
-                </button>
-              )}
-            </Notice>
-          )}
-          <button
-            className="button button-primary research-submit"
-            onClick={run}
-            disabled={
-              running ||
-              (mode === "brief"
-                ? prompt.trim().length < 10 || !capabilities.ai
-                : !taskRequirementsSchema.safeParse(requirements).success) ||
-              !Number.isFinite(Number(budget)) ||
-              Number(budget) < 0.5 ||
-              Number(budget) > 1000
-            }
-          >
-            {running ? (
-              <span className="button-spinner" />
             ) : (
-              <Sparkles size={16} />
-            )}{" "}
-            {running ? "Comparing permitted sources…" : "Find sources"}
-            <ArrowRight size={16} />
-          </button>
-        </section>
+              <>
+                <label htmlFor="task-prompt">
+                  What would you like to find out?
+                </label>
+                <textarea
+                  id="task-prompt"
+                  rows={7}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Describe the information you need…"
+                />
+                <div className="composer-examples">
+                  {examplePrompts.map((p, i) => (
+                    <button key={i} onClick={() => setPrompt(p)}>
+                      {["Approvals", "Drug recalls", "Device recalls"][i]}
+                      <ArrowRight size={11} />
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="form-row">
+              <label>
+                Task spending limit
+                <div className="money-input">
+                  <span>$</span>
+                  <input
+                    id="task-budget"
+                    type="number"
+                    min="0.50"
+                    max="1000"
+                    step="0.50"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                  />
+                  <span>USD</span>
+                </div>
+              </label>
+            </div>
+            <div className="policy-note">
+              <ShieldCheck size={16} />
+              <p>
+                Pay with PayPal after reviewing your purchase. No upfront
+                deposit.
+              </p>
+            </div>
+            {researchError && (
+              <Notice kind="error">
+                {researchError}
+                {mode === "brief" && (
+                  <button
+                    className="text-link"
+                    onClick={() => setMode("requirements")}
+                  >
+                    Choose requirements to continue <ArrowRight size={14} />
+                  </button>
+                )}
+              </Notice>
+            )}
+            <button
+              className="button button-primary research-submit"
+              onClick={run}
+              disabled={
+                running ||
+                (mode === "brief"
+                  ? prompt.trim().length < 10 || !capabilities.ai
+                  : !taskRequirementsSchema.safeParse(requirements).success) ||
+                !Number.isFinite(Number(budget)) ||
+                Number(budget) < 0.5 ||
+                Number(budget) > 1000
+              }
+            >
+              {running ? (
+                <span className="button-spinner" />
+              ) : (
+                <Sparkles size={16} />
+              )}{" "}
+              {running ? "Comparing permitted sources…" : "Find sources"}
+              <ArrowRight size={16} />
+            </button>
+          </section>
+        )}
         <section className="task-output">
           {!task && !running ? (
             <div className="workspace-welcome">
-              <ListFilter size={28} aria-hidden="true" />
-              <h2>Your next question starts here.</h2>
-              <p>Set your requirements, or choose a starting point.</p>
-              <ResearchStarts
-                onChoose={(id) => {
-                  const next = requirementsForStart(id);
-                  if (!next) return;
-                  setRequirements(next);
-                  setMode("requirements");
-                  setResearchError("");
-                  router.replace(`/workspace?start=${id}`, { scroll: false });
-                  document.getElementById("research-composer")?.focus();
-                }}
-              />
-              <p className="workspace-welcome-note">
-                You review every source and price before purchasing.
+              <div className="research-outline" aria-hidden="true">
+                <ListFilter size={24} />
+                <span />
+                <FileCheck2 size={24} />
+              </div>
+              <h2>
+                Requirements in.
+                <br />
+                <span>Relevant sources out.</span>
+              </h2>
+              <p>
+                Choose the data you need. Your source comparison will appear
+                here.
               </p>
+              <div className="workspace-reassurance">
+                <ShieldCheck size={15} />
+                You approve every purchase.
+              </div>
             </div>
           ) : running ? (
-            <div className="planning-state panel">
-              <Sparkles className="pulse" size={28} />
-              <h2>Finding a suitable path.</h2>
-              <p>
-                Checking available fields, declared freshness, licences, and
-                prices.
-              </p>
-              {[
-                mode === "brief"
-                  ? "Interpreting the research brief"
-                  : "Reading your requirements",
-                "Checking permitted sources",
-                "Calculating a bounded quote",
-              ].map((t) => (
-                <div className="planning-step" key={t}>
-                  <span className="button-spinner" />
-                  {t}
-                </div>
-              ))}
+            <div className="planning-state panel" role="status">
+              <span className="button-spinner" />
+              <h2>Comparing sources</h2>
+              <p>Checking scope, freshness, permitted use, and price.</p>
             </div>
           ) : (
             task && (
               <>
-                <div className="task-budget panel">
-                  <div className="task-budget-header">
-                    <h2>Spending cap</h2>
-                    <Badge>
-                      {task.planner === "gemini"
-                        ? "AI research"
-                        : "Source search"}
-                    </Badge>
+                {(task.spentCents > 0 || task.reservedCents > 0) && (
+                  <div className="research-spend" aria-label="Task spending">
+                    <span>{money(task.budgetCents)} limit</span>
+                    <span>{money(task.reservedCents)} reserved</span>
+                    <span>{money(task.spentCents)} charged</span>
                   </div>
-                  <div className="budget-figures">
-                    <div>
-                      <span>Remaining cap</span>
-                      <strong>
-                        {money(
-                          task.budgetCents -
-                            task.spentCents -
-                            task.reservedCents,
-                        )}
-                      </strong>
-                    </div>
-                    <div>
-                      <span>Reserved</span>
-                      <strong>{money(task.reservedCents)}</strong>
-                    </div>
-                    <div>
-                      <span>Charged</span>
-                      <strong>{money(task.spentCents)}</strong>
-                    </div>
-                  </div>
-                  <div className="budget-track">
-                    <span
-                      style={{
-                        width: `${Math.min(100, (task.spentCents / task.budgetCents) * 100)}%`,
-                      }}
-                    />
-                    <span
-                      className="reserved-track"
-                      style={{
-                        width: `${Math.min(100, (task.reservedCents / task.budgetCents) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                  <p>{money(task.budgetCents)} limit · Fees included · USD</p>
-                </div>
-                <div className="panel source-decisions">
+                )}
+                <div
+                  className="panel source-decisions"
+                  id="source-comparison"
+                  tabIndex={-1}
+                >
                   <div className="panel-title">
                     <ListFilter size={18} />
                     <h2>Source comparison</h2>
@@ -534,7 +531,10 @@ export function Workspace() {
                                   summary.minimumCompleteTotalCents! / 100
                                 ).toFixed(2),
                               );
-                              document.getElementById("task-budget")?.focus();
+                              setEditingScope(true);
+                              requestAnimationFrame(() =>
+                                document.getElementById("task-budget")?.focus(),
+                              );
                             }}
                           >
                             Set limit to{" "}

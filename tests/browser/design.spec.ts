@@ -45,9 +45,9 @@ test("desktop sidebar collapses, persists and becomes a full mobile drawer", asy
   await page.goto("/discover");
   await expect(page.locator(".offer-card")).toHaveCount(6);
   const main = page.locator(".main-shell");
-  await expect(main).toHaveCSS("margin-left", "232px");
+  await expect(main).toHaveCSS("margin-left", "216px");
   await page.getByRole("button", { name: "Collapse sidebar" }).click();
-  await expect(main).toHaveCSS("margin-left", "76px");
+  await expect(main).toHaveCSS("margin-left", "68px");
   await expect(
     page.getByRole("button", { name: "Expand sidebar" }),
   ).toHaveAttribute("aria-expanded", "false");
@@ -55,7 +55,7 @@ test("desktop sidebar collapses, persists and becomes a full mobile drawer", asy
     page.getByRole("link", { name: "Research workspace", exact: true }),
   ).toBeVisible();
   await page.reload();
-  await expect(main).toHaveCSS("margin-left", "76px");
+  await expect(main).toHaveCSS("margin-left", "68px");
   await page.getByRole("button", { name: "Guest account menu" }).click();
   await expect(
     page.locator(".account-menu").getByRole("button", { name: "Sign in" }),
@@ -64,16 +64,16 @@ test("desktop sidebar collapses, persists and becomes a full mobile drawer", asy
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(main).toHaveCSS("margin-left", "0px");
   await page.getByRole("button", { name: "Open navigation" }).click();
-  await expect(page.locator(".agent-callout")).toBeVisible();
+  await expect(page.locator('.nav-link[href="/connect"]')).toBeVisible();
   await expect(page.locator(".nav-link").first()).toContainText("Overview");
   await page.keyboard.press("Escape");
   await page.setViewportSize({ width: 1366, height: 768 });
-  await expect(main).toHaveCSS("margin-left", "76px");
+  await expect(main).toHaveCSS("margin-left", "68px");
   await page.getByRole("button", { name: "Expand sidebar" }).click();
-  await expect(main).toHaveCSS("margin-left", "232px");
+  await expect(main).toHaveCSS("margin-left", "216px");
 });
 
-test("laptop sidebar keeps the agent panel and account within the viewport", async ({
+test("laptop sidebar keeps agent navigation and account within the viewport", async ({
   page,
 }) => {
   for (const viewport of [
@@ -84,7 +84,7 @@ test("laptop sidebar keeps the agent panel and account within the viewport", asy
     await page.setViewportSize(viewport);
     await page.goto("/discover");
     await expect(page.locator(".offer-card")).toHaveCount(6);
-    for (const selector of [".agent-callout", ".profile"]) {
+    for (const selector of ['.nav-link[href="/connect"]', ".profile"]) {
       const box = await page.locator(selector).boundingBox();
       expect(box).not.toBeNull();
       expect(box!.y).toBeGreaterThanOrEqual(0);
@@ -98,8 +98,8 @@ test("laptop sidebar keeps the agent panel and account within the viewport", asy
   }
   // A heavily zoomed/short viewport may scroll the middle, but never lose controls.
   await page.setViewportSize({ width: 960, height: 480 });
-  await page.locator(".agent-callout a").focus();
-  await expect(page.locator(".agent-callout a")).toBeInViewport();
+  await page.locator('.nav-link[href="/connect"]').focus();
+  await expect(page.locator('.nav-link[href="/connect"]')).toBeInViewport();
   await expect(page.locator(".profile")).toBeInViewport();
 });
 

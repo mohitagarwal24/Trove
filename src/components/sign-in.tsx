@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, Layers3, ArrowUpRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Authentication } from "./auth";
 import { Logo, Notice } from "./ui";
 import { safeReturnPath } from "@/lib/routes";
@@ -18,26 +18,11 @@ export function SignIn({ googleAuth }: { googleAuth: boolean }) {
   const error = errors[params.get("auth_error") || ""];
   return (
     <main className="sign-in-page">
-      <aside className="sign-in-story">
+      <header className="sign-in-brand">
         <Link href="/" aria-label="Trove home">
           <Logo />
         </Link>
-        <div className="sign-in-statement">
-          <Layers3 size={40} strokeWidth={1} />
-          <h2>
-            Every source.
-            <br />A stronger starting point.
-          </h2>
-          <p>
-            Your research, sources, and agent.
-            <br />
-            Together in one workspace.
-          </p>
-        </div>
-        <Link href="/discover">
-          Explore the catalogue <ArrowUpRight size={16} />
-        </Link>
-      </aside>
+      </header>
       <div className="sign-in-main">
         <Link className="sign-in-back" href="/">
           <ArrowLeft size={16} /> Back to Trove

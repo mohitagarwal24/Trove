@@ -190,3 +190,15 @@ export type LibraryEntry = {
   currentVersion: { id: string; version: number } | null;
 };
 export type LibraryPage = { items: LibraryEntry[]; nextCursor: string | null };
+
+export function purposeLabel(purpose: string) {
+  return (
+    (
+      {
+        ai_inference: "AI research",
+        academic_research: "Academic research",
+        internal_business_analysis: "Business analysis",
+      } as Record<string, string>
+    )[purpose] || purpose.replaceAll("_", " ")
+  );
+}

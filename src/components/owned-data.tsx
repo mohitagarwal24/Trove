@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Download, Search } from "lucide-react";
 import { api } from "@/lib/client";
 import type { LibraryPage } from "@/lib/types";
-import { money } from "@/lib/types";
+import { purposeLabel, money } from "@/lib/types";
 import { useTrove } from "./trove-context";
 import { Badge, downloadJson, EmptyState, Loading, Notice } from "./ui";
 
@@ -205,7 +205,7 @@ export function OwnedData() {
                     <details className="owned-source-scope">
                       <summary>
                         {item.quantity} records · {item.fields.length} fields ·{" "}
-                        {item.purpose.replaceAll("_", " ")}
+                        {purposeLabel(item.purpose)}
                       </summary>
                       <p>
                         {item.fields

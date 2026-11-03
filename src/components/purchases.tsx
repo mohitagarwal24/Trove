@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 import type { PurchaseView } from "@/lib/types";
-import { money } from "@/lib/types";
+import { purposeLabel, money } from "@/lib/types";
 import { api, post } from "@/lib/client";
 import { useTrove } from "./trove-context";
 import {
@@ -453,44 +453,46 @@ export function PurchaseDetail({ id }: { id: string }) {
             {tab === "result" &&
               (result ? (
                 <div className="results-content">
-                  <div className="research-answer">
-                    <div>
-                      <h3>Research summary</h3>
-                    </div>
-                    <button
-                      className="button button-small button-secondary"
-                      disabled={
-                        drafting ||
-                        !capabilities.ai ||
-                        !p.quote.lines.every((line) =>
-                          line.offer.purposes.includes("ai_inference"),
-                        )
-                      }
-                      onClick={async () => {
-                        setDrafting(true);
-                        try {
-                          setAnswer(await post(`/purchases/${id}/answer`));
-                        } catch (e) {
-                          notify((e as Error).message, true);
-                        } finally {
-                          setDrafting(false);
-                        }
-                      }}
-                    >
-                      {drafting ? "Drafting…" : "Summarise with AI"}
-                      <ArrowRight size={13} />
-                    </button>
-                    {answer && (
-                      <div className="answer-text">
-                        <Badge
-                          tone={answer.mode === "gemini" ? "blue" : "amber"}
-                        >
-                          AI research summary
-                        </Badge>
-                        <p>{answer.text}</p>
+                  {(capabilities.ai || answer) && (
+                    <div className="research-answer">
+                      <div>
+                        <h3>Research summary</h3>
                       </div>
-                    )}
-                  </div>
+                      <button
+                        className="button button-small button-secondary"
+                        disabled={
+                          drafting ||
+                          !capabilities.ai ||
+                          !p.quote.lines.every((line) =>
+                            line.offer.purposes.includes("ai_inference"),
+                          )
+                        }
+                        onClick={async () => {
+                          setDrafting(true);
+                          try {
+                            setAnswer(await post(`/purchases/${id}/answer`));
+                          } catch (e) {
+                            notify((e as Error).message, true);
+                          } finally {
+                            setDrafting(false);
+                          }
+                        }}
+                      >
+                        {drafting ? "Drafting…" : "Summarise with AI"}
+                        <ArrowRight size={13} />
+                      </button>
+                      {answer && (
+                        <div className="answer-text">
+                          <Badge
+                            tone={answer.mode === "gemini" ? "blue" : "amber"}
+                          >
+                            AI research summary
+                          </Badge>
+                          <p>{answer.text}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="result-ready">
                     <span>
                       <Check size={15} />
@@ -698,7 +700,7 @@ export function PurchaseDetail({ id }: { id: string }) {
           <div className="policy-note">
             <ShieldCheck size={17} />
             <p>
-              {p.quote.purpose.replaceAll("_", " ")}
+              {purposeLabel(p.quote.purpose)}
               <br />
               See source licence for usage rights.
             </p>
