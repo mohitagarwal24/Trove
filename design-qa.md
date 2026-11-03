@@ -50,3 +50,11 @@ The fresh reviewer returned `fix` in `.local/ui-revamp/finish-review.md`. Its fo
 The documenter replaced `docs/DESIGN.md`, `.impeccable/design.json` and the affected surface briefs with the built source-led system. Documentation and visual review are complete. CI and hosted deployment are separate release gates; this report records local design acceptance, not external payment/provider certification.
 
 Final result: passed
+
+## Hosted release verification
+
+Application commit: `b602685fcfc364e37c9a78078a872f79e90b3fee`.
+
+[Application checks](https://github.com/mohitagarwal24/Trove/actions/runs/41680698754) passed on this exact commit. Render deployment `dep-dbl1a361egvs7399jsg0` went live at 17:10:19 UTC on 3 November 2026 on the existing free service. No schema change or additional account/key was introduced.
+
+Twenty read-only hosted checks passed at 17:13:21 UTC on [Trove](https://trove-mohit24.onrender.com/), across desktop and mobile. These covered public entry/catalogue/authentication/agent setup/recovery/legal routes, protected dashboard redirection, source-preview dismissal, sidebar collapse and MCP resource metadata. No page errors or document-level horizontal overflow were recorded. Hosted screenshots and machine results are in `.local/ui-revamp/hosted/`. The production smoke pass performed no external login, message, model call or financial transaction.
