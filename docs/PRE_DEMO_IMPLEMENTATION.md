@@ -4,9 +4,10 @@ The core purchase-and-reuse path has real external evidence: a hosted PayPal San
 
 Current local checks: **74 backend tests and 38 browser tests passed**, strict types and production build passed, dependency audit reports zero vulnerabilities. UI refinement removes repeated instructions, empty dashboard panels and purchase metrics; exact price/approval remains prominent while scope, fees, rights and developer details use named disclosures. Independent review returned ship across 41 captures. The exact passing [CI revision](https://github.com/mohitagarwal24/Trove/actions/runs/42045695490) is deployed, with all 26 hosted checks passing; details are maintained in [AUDIT.md](AUDIT.md).
 
+**Operator-confirmed authentication acceptance:** on 5 November, the project owner confirmed personally completing Google sign-in, delivered email verification and password recovery on the hosted application. These checks are complete based on that confirmation; they are separate from the agent's automated tests.
+
 Before submitting:
 
-- Complete a real hosted Google sign-in, delivered email verification and password recovery check if not already personally verified. Automated callback/mail-boundary tests are not provider-delivery proof.
 - Verify signed PayPal webhook delivery and refund completion with a disposable Sandbox purchase if those capabilities will be demonstrated. No matching persisted webhook event was found for the verified purchase; successful capture alone does not establish webhook delivery. Do not refund the research batch needed for the demonstration.
 - Record the real agent → discovery → exact-price PayPal approval → delivered data → free reuse flow. Optional Gemini briefs are separate from the verified external-agent path. Payouts remain disabled and must not be represented as completed seller payments.
 - Finish the project story, tool descriptions, source/provider disclosure and a working demo link. The public repository already has a detected MIT licence. Give judges clear access and Sandbox testing instructions without publishing private merchant credentials.

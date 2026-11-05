@@ -4,7 +4,7 @@ Trove runs on one Render Free web service and Neon Free PostgreSQL. PostgreSQL s
 
 Current service: https://trove-mohit24.onrender.com, Render `srv-dbaq5t3bc2fs73cc3qk0`, Singapore. Source: https://github.com/mohitagarwal24/Trove. Neon project: `lucky-wildflower-32427743`. Auto-deploy is off; deploy an explicitly validated commit.
 
-Current release evidence is recorded in [AUDIT.md](AUDIT.md) and [pre-demo readiness](PRE_DEMO_IMPLEMENTATION.md). On 5 November, a genuine hosted USD 1.40 Sandbox capture completed and the connected Trove AI client retrieved the owned data twice without a new purchase. Signed webhook delivery, refund/payout completion and real mailbox acceptance remain separate checks unless explicitly recorded. Follow the [Google and Gmail setup guide](GOOGLE_AUTH_SETUP.md); configured credentials alone do not prove consent or delivery.
+Current release evidence is recorded in [AUDIT.md](AUDIT.md) and [pre-demo readiness](PRE_DEMO_IMPLEMENTATION.md). On 5 November, a genuine hosted USD 1.40 Sandbox capture completed and the connected Trove AI client retrieved the owned data twice without a new purchase. The project owner also confirmed personally completing hosted Google sign-in, delivered email verification and password recovery. Signed webhook delivery and refund/payout completion remain separate unverified checks. Follow the [Google and Gmail setup guide](GOOGLE_AUTH_SETUP.md) for configuration; the authentication acceptance record is based on the owner's completed flows, not credential presence alone.
 
 ## Deployment
 
