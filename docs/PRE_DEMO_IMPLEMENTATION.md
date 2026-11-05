@@ -2,7 +2,7 @@
 
 The core purchase-and-reuse path has real external evidence: a hosted PayPal Sandbox payment of **USD 1.40** returned `COMPLETED`, with captured payment, available data, active entitlement and receipt. An authenticated connected Trove AI client subsequently discovered the owned scope at **zero cost** and retrieved the same ten source records twice. No extra quote or purchase was created. Local UI payment captures are separately marked `TEST_ONLY`; they are not the basis for this claim.
 
-Current local checks: **74 backend tests and 38 browser tests passed**, strict types and production build passed, dependency audit reports zero vulnerabilities. UI refinement removes repeated instructions, empty dashboard panels and purchase metrics; exact price/approval remains prominent while scope, fees, rights and developer details use named disclosures. The independent review and deployment record are maintained in [AUDIT.md](AUDIT.md).
+Current local checks: **74 backend tests and 38 browser tests passed**, strict types and production build passed, dependency audit reports zero vulnerabilities. UI refinement removes repeated instructions, empty dashboard panels and purchase metrics; exact price/approval remains prominent while scope, fees, rights and developer details use named disclosures. Independent review returned ship across 41 captures. The exact passing [CI revision](https://github.com/mohitagarwal24/Trove/actions/runs/42045695490) is deployed, with all 26 hosted checks passing; details are maintained in [AUDIT.md](AUDIT.md).
 
 Before submitting:
 
