@@ -6,7 +6,7 @@ Previous release checks: **74 backend tests and 38 browser tests passed**, stric
 
 **Operator-confirmed authentication acceptance:** on 5 November, the project owner confirmed personally completing Google sign-in, delivered email verification and password recovery on the hosted application. These checks are complete based on that confirmation; they are separate from the agent's automated tests.
 
-Current extension: read [the 5 November workflow audit](UX_AUDIT_2026-11-05.md) and [purchase-support policy](PURCHASE_SUPPORT.md). The new inline agent view shows public samples and exact quotes, with scoped purchase/support actions. Fully native ChatGPT checkout remains gated by OpenAI enablement; demonstrate the honest browser PayPal approval. The new release gate and deployment are recorded in AUDIT.md.
+Current extension: read [the 5 November workflow audit](UX_AUDIT_2026-11-05.md) and [purchase-support policy](PURCHASE_SUPPORT.md). The new inline agent view shows public samples and exact quotes, with scoped purchase/support actions. Fully native ChatGPT checkout remains gated by OpenAI enablement; demonstrate the honest browser PayPal approval. [Clean-database CI](https://github.com/mohitagarwal24/Trove/actions/runs/42082928202) passed 82 backend and 43 browser tests; the exact application revision is live with 27 hosted checks passing. Release evidence is recorded in AUDIT.md. Reconnect TroveAI before the external chat walkthrough: its existing connection reported a missing refresh token.
 
 Before submitting:
 
