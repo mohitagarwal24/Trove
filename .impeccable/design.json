@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-05T14:25:48.706479+00:00",
+  "generatedAt": "2026-11-05T18:13:30.142433+00:00",
   "title": "Design System: Trove",
   "extensions": {
     "colorMeta": {
@@ -389,6 +389,10 @@
       {
         "name": "mobile",
         "value": "760px"
+      },
+      {
+        "name": "sample-record-stack",
+        "value": "600px"
       }
     ],
     "accessibility": {
@@ -400,7 +404,17 @@
       "authority": "User-pinned Attio screenshots and source-led replacement contract.",
       "reference": ".local/ui-revamp/references/attio-branding.json",
       "tokens": "Built globals.css and landing.css; reference values are not copied as token authority.",
-      "review": "Initial fresh finish review returned fix; four code corrections are present. Same-reviewer recapture verdict pending at documentation handoff."
+      "review": "Independent review approved the supplied current states; a closed-purchase recovery delta is awaiting bounded recapture review at documentation handoff. No deployment of this extension is recorded. Local TEST_ONLY paid-state captures do not establish external acceptance.",
+      "currentExtensionEvidence": [
+        ".local/whole-workflow/after/",
+        ".local/chat-support/captures/"
+      ]
+    },
+    "embeddedHost": {
+      "source": "src/agent-view/app.ts and src/agent-view/app.css",
+      "theme": "Inherit host theme, typography variables and safe-area insets; light/dark fallbacks apply only to the embedded surface.",
+      "purchaseBoundary": "PayPal browser approval remains explicit; native chat checkout is not enabled.",
+      "sampleBoundary": "Published fixed samples are representative; requested scope controls delivery."
     }
   },
   "components": [
@@ -480,6 +494,13 @@
       "description": "Native expandable detail that keeps the next action and exact total visible.",
       "html": "<details class=\"ds-disclosure\"><summary>Scope details <span>5 fields</span></summary><p>Review the purchased fields, filters and source snapshot here.</p></details>",
       "css": ".ds-disclosure{font:400 12px/1.75 Inter,Arial,sans-serif;color:var(--ink,#202124);border-block:1px solid #e4e7ea}.ds-disclosure>summary{cursor:pointer;font-size:13px;font-weight:500;line-height:1.6;padding-block:10px;color:#454d58;transition:color 160ms,background-color 160ms}.ds-disclosure>summary:hover{color:#202124}.ds-disclosure>summary:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}.ds-disclosure>summary>span{font-size:12px;font-weight:400;color:#626b78;margin-left:10px}.ds-disclosure[open]>summary{margin-bottom:12px}.ds-disclosure>p{margin:0 0 16px;color:#626b78}@media(max-width:760px){.ds-disclosure>summary>span{display:block;margin-left:16px}}@media(prefers-reduced-motion:reduce){.ds-disclosure>summary{transition:none}}"
+    },
+    {
+      "name": "Sample record",
+      "kind": "custom",
+      "description": "A source sample with four useful fields first and remaining fields in a native disclosure; shared by catalogue and read-only comparison inspection.",
+      "html": "<section class=\"ds-sample\"><div class=\"ds-sample-heading\"><strong>Sample 1</strong><a href=\"https://www.fda.gov/\">View source <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a></div><dl><div><dt>Brand name</dt><dd>Published sample value</dd></div><div><dt>Classification</dt><dd>Published sample classification</dd></div><div><dt>Status</dt><dd>Published sample status</dd></div><div><dt>Approval date</dt><dd>Published sample date</dd></div></dl><details><summary>All sample fields</summary><dl><div><dt>Application number</dt><dd>Published identifier</dd></div></dl></details></section>",
+      "css": ".ds-sample{font-family:Inter,Arial,sans-serif;color:var(--ink,#202124);min-width:0}.ds-sample-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line,#e6e7e9);font-size:13px}.ds-sample-heading a{display:inline-flex;align-items:center;gap:5px;color:var(--accent,#202124);font-size:12px;font-weight:500;text-decoration:none;text-underline-offset:4px}.ds-sample-heading a:hover{color:#3869b9}.ds-sample a:focus-visible,.ds-sample summary:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}.ds-sample dl{margin:0}.ds-sample dl>div{padding-top:14px}.ds-sample dt{color:var(--muted,#62666d);font-size:12px;text-transform:capitalize}.ds-sample dd{margin:4px 0 0;font-size:13px;line-height:1.65;overflow-wrap:anywhere}.ds-sample details{margin-top:16px;font-size:12px}.ds-sample summary{cursor:pointer;padding-block:4px;color:var(--muted,#62666d)}"
     }
   ],
   "narrative": {
@@ -490,7 +511,7 @@
       "Charcoal primary actions and restrained blue focus and selection.",
       "Locally hosted Inter across public and working surfaces.",
       "Divided source inventory, explicit scope and tabular USD amounts.",
-      "Named native disclosures for supporting scope, rights and setup detail.",
+      "Compact sample records with readable fields and named native disclosures for supporting detail.",
       "Native scrolling, readable fallback content and reduced-motion support."
     ],
     "rules": [

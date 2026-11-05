@@ -6129,6 +6129,9 @@ select:focus-visible {
   background: #fff;
 }
 .sign-in-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   position: static;
   align-self: flex-start;
   margin: 0 auto 35px;
@@ -7132,10 +7135,11 @@ select:focus-visible {
     grid-column: 2;
     min-width: 0;
   }
-  .dashboard-agent > .button {
+  .dashboard-agent > :is(.button, .text-link) {
     grid-column: 2;
     justify-self: start;
     margin-left: 0;
+    white-space: nowrap;
   }
   .check-item {
     align-items: flex-start;
@@ -7146,5 +7150,89 @@ select:focus-visible {
   }
   .source-result > .caption {
     margin-top: 17px;
+  }
+}
+
+.purchase-support {
+  margin-top: 20px;
+  font-size: 13px;
+}
+.purchase-support summary {
+  cursor: pointer;
+  padding-block: 12px;
+}
+.support-message {
+  padding-block: 14px;
+  border-top: 1px solid var(--line);
+}
+.support-message p {
+  margin: 6px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.support-message a {
+  display: inline-block;
+  margin-right: 12px;
+}
+
+.sample-records {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 28px;
+}
+.sample-records > li {
+  min-width: 0;
+}
+.sample-record-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.sample-records dl {
+  margin: 0;
+}
+.sample-records dl > div {
+  padding-top: 14px;
+}
+.sample-records dt {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: capitalize;
+}
+.sample-records dd {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.sample-more {
+  margin-top: 16px;
+  font-size: 12px;
+}
+.sample-more summary {
+  cursor: pointer;
+  padding-block: 4px;
+  color: var(--muted);
+}
+.decision-preview {
+  display: flex;
+  width: fit-content;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.purchase-filters {
+  justify-content: flex-end;
+}
+@media (max-width: 600px) {
+  .sample-records {
+    grid-template-columns: 1fr;
+    gap: 28px;
   }
 }

@@ -29,6 +29,7 @@ export const purchaseInclude = {
   receipt: true,
   payables: true,
   refunds: true,
+  dispute: { include: { messages: { orderBy: { createdAt: "asc" } } } },
 } satisfies Prisma.PurchaseInclude;
 export type FullPurchase = Prisma.PurchaseGetPayload<{
   include: typeof purchaseInclude;

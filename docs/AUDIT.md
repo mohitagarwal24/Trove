@@ -1,3 +1,15 @@
+# Inline agent experience, reviewed support and workflow audit — 5 November 2026
+
+Implemented a bundled MCP Apps view for source samples, exact quotes, owned data and purchase-support replies. Discovery and quote assessment use read access; purchase preparation and evidence submission have separate OAuth scopes and explicit step-up challenges. Native ChatGPT checkout is not enabled for Trove: the view states the browser PayPal approval boundary. A custom MCP connection cannot substitute for native checkout enablement.
+
+Purchase issues now create durable evidence-reviewed cases. Filing does not request a refund, change captured payment, revoke access or move money. The private operator can request more information, reject or approve with reasons. The worker independently validates the decision and authoritative full-USD processor completion before reversing accounting and revoking access. Signature-verified full refund events reconcile existing processor outcomes without initiating a new refund. Partial refunds/chargebacks require operator reconciliation.
+
+A fresh 40-state UI audit corrected sample visibility, comparison preview access, duplicated copy, empty seller metrics, mobile actions, account terminology, receipt references and closed-purchase recovery. [Full findings](UX_AUDIT_2026-11-05.md). Local verification: 82 backend tests passed; the 43-browser suite passed after correcting one stale hidden-option expectation, with a further targeted closed-state regression passing. Strict types, final production build and dependency audit passed. Independent finish review and bounded recovery review returned ship; documentation preserves the established white/charcoal system. CI/deployment evidence follows after the clean-database release gate.
+
+No actual ChatGPT UI render, new external refund, seller payout or signed webhook delivery is claimed by local fixtures or SDK host tests. Earlier genuine payment and owner-confirmed mail/sign-in evidence below remain separate.
+
+---
+
 # Essential interface refinement — 5 November 2026
 
 The current change reduces competing information in the actual application. The dashboard omits empty research/data panels; the research editor keeps category, quantity and cap visible with freshness, purpose, field selection and filters in Search options. Selected sources lead the comparison; alternative reasons remain available. Public source previews bring sample rows forward. Quote scope, fee breakdown and source terms are disclosures, with the exact USD total and buyer approval always visible. Purchased data uses the full working width and leads with download; receipt/evidence, delivery checks, source rights and billing/refund details remain accessible. Connect leads with the client URL/commands and one next step. Password change is an explicit disclosure. Redundant shell labels, duplicate Sandbox badges and purchase summary metrics are removed. No backend, schema, service, dependency or financial authorization behavior changed.

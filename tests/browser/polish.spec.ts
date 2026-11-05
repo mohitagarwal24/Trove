@@ -50,10 +50,25 @@ test("purchase status replaces the timeline without hiding approval, receipts or
       await expect(
         page.getByRole("heading", { name: "Approve purchase", exact: true }),
       ).toBeVisible();
-    else
+    else {
       await expect(
         page.getByRole("heading", { name: "Purchase stopped", exact: true }),
       ).toBeVisible();
+      await expect(
+        page.getByRole("heading", {
+          name: "This purchase is closed",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: "Review sources", exact: true }),
+      ).toHaveAttribute("href", "/discover");
+      await expect(
+        page.getByText("Your data appears after payment and delivery checks.", {
+          exact: true,
+        }),
+      ).toHaveCount(0);
+    }
     await page
       .getByRole("button", { name: "Receipt & provenance", exact: true })
       .click();
@@ -84,7 +99,6 @@ test("purchase status replaces the timeline without hiding approval, receipts or
   await expect(
     page.locator(".purchase-table tbody tr").first().getByRole("link").last(),
   ).toBeInViewport();
-
 });
 
 for (const reducedMotion of ["no-preference", "reduce"] as const) {

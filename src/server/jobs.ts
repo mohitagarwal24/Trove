@@ -5,7 +5,11 @@ import {
   voidPurchase,
   enqueue,
 } from "./purchases";
-import { settlePurchase, processRefund } from "./settlement";
+import {
+  settlePurchase,
+  processRefund,
+  reconcileRefundEvent,
+} from "./settlement";
 import { indexCatalog } from "./catalog";
 import { syncSources } from "./datasets";
 export async function runJob() {
@@ -54,6 +58,14 @@ async function reconcileWebhook(eventId: string) {
   const event = await db.webhookEvent.findUniqueOrThrow({
     where: { id: eventId },
   });
+  if (event.eventType === "PAYMENT.CAPTURE.REFUNDED") {
+    await reconcileRefundEvent(eventId);
+    await db.webhookEvent.update({
+      where: { id: eventId },
+      data: { processedAt: new Date() },
+    });
+    return;
+  }
   const payload = event.payload as {
     resource?: {
       id?: string;

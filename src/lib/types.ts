@@ -119,6 +119,7 @@ export type QuoteView = {
   lines: QuoteLineView[];
 };
 export type PurchaseView = {
+  dispute?: DisputeView | null;
   id: string;
   quoteId: string;
   taskId: string | null;
@@ -149,6 +150,21 @@ export type PurchaseView = {
     error: string | null;
   }[];
   receipt: { id: string; document: unknown } | null;
+};
+export type DisputeView = {
+  id: string;
+  state: string;
+  category: string;
+  description: string;
+  decisionReason: string | null;
+  createdAt: string;
+  messages: {
+    id: string;
+    kind: string;
+    body: string;
+    createdAt: string;
+    evidenceUrls: string[];
+  }[];
 };
 export type UserView = {
   hasPassword: boolean;

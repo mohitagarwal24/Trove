@@ -63,21 +63,20 @@ export function Purchases() {
       </section>
       <PurchaseViews />
       <section className="panel purchase-table-panel">
-        <div className="table-panel-heading">
-          <div>
-            <h2>Purchase history</h2>
+        {!!items.length && (
+          <div className="table-panel-heading purchase-filters">
+            <select
+              aria-label="Filter purchases"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value="all">All purchases</option>
+              <option value="captured">Completed</option>
+              <option value="awaiting_approval">Awaiting payment</option>
+              <option value="refunded">Refunded</option>
+            </select>
           </div>
-          <select
-            aria-label="Filter purchases"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            <option value="all">All purchases</option>
-            <option value="captured">Completed</option>
-            <option value="awaiting_approval">Awaiting payment</option>
-            <option value="refunded">Refunded</option>
-          </select>
-        </div>
+        )}
         {loading ? (
           <Loading />
         ) : !user ? (
@@ -243,6 +242,8 @@ export function PurchaseDetail({ id }: { id: string }) {
   const [drafting, setDrafting] = useState(false);
   const [refund, setRefund] = useState(false);
   const [reason, setReason] = useState("");
+  const [issueCategory, setIssueCategory] = useState("missing_data");
+  const [evidence, setEvidence] = useState("");
   async function refresh() {
     const p = await api<PurchaseView>(`/purchases/${id}`);
     setPurchase(p);
@@ -286,8 +287,14 @@ export function PurchaseDetail({ id }: { id: string }) {
     try {
       await post(`/purchases/${id}/${type}`, body);
       await refresh();
-      notify(type === "refund" ? "Refund requested." : "Purchase updated.");
+      notify(
+        type.startsWith("dispute")
+          ? "Issue sent for review."
+          : "Purchase updated.",
+      );
       setRefund(false);
+      setReason("");
+      setEvidence("");
     } catch (e) {
       notify((e as Error).message, true);
       await refresh().catch(() => {});
@@ -377,6 +384,14 @@ export function PurchaseDetail({ id }: { id: string }) {
         {p.mode === "sandbox" && <Badge tone="amber">PayPal Sandbox</Badge>}
       </section>
       {p.error && <Notice kind={failed ? "error" : "info"}>{p.error}</Notice>}
+      {p.dispute?.state === "needs_information" && (
+        <Notice>
+          Your purchase issue needs more information.
+          <button className="text-link" onClick={() => setRefund(true)}>
+            Add information <ArrowRight size={14} />
+          </button>
+        </Notice>
+      )}
       {["authorized", "capture_pending", "reconciliation_required"].includes(
         p.paymentState,
       ) && (
@@ -552,9 +567,27 @@ export function PurchaseDetail({ id }: { id: string }) {
                       ? "Restoring purchased data"
                       : p.paymentState === "refunded"
                         ? "Access revoked after refund"
-                        : "The result stays protected"
+                        : p.paymentState === "voided"
+                          ? "This purchase is closed"
+                          : "The result stays protected"
                   }
-                  description="Your data appears after payment and delivery checks."
+                  description={
+                    p.paymentState === "voided"
+                      ? "Review current sources and prices to try again."
+                      : "Your data appears after payment and delivery checks."
+                  }
+                  action={
+                    p.paymentState === "voided" ? (
+                      <Link
+                        className="button button-secondary"
+                        href={
+                          p.taskId ? `/workspace?from=${p.taskId}` : "/discover"
+                        }
+                      >
+                        Review sources <ArrowRight size={15} />
+                      </Link>
+                    ) : undefined
+                  }
                 />
               ))}
             {tab === "receipt" && (
@@ -571,10 +604,7 @@ export function PurchaseDetail({ id }: { id: string }) {
                     {money(p.quote.totalCents)} <span>USD</span>
                   </h3>
                   <p className="caption">
-                    Payment: {p.paymentState.replaceAll("_", " ")}.{" "}
-                    {p.captureId
-                      ? `PayPal capture: ${p.captureId}`
-                      : "Payment has not been captured."}
+                    Payment: {p.paymentState.replaceAll("_", " ")}.
                   </p>
                   <details className="receipt-references">
                     <summary>Transaction references</summary>
@@ -708,12 +738,56 @@ export function PurchaseDetail({ id }: { id: string }) {
             Licensed for {purposeLabel(p.quote.purpose).toLowerCase()}. Source
             usage terms apply.
           </p>
-          {p.paymentState === "captured" && (
+          {p.dispute && (
+            <details className="purchase-support">
+              <summary>
+                Purchase issue ·{" "}
+                {(
+                  {
+                    open: "Under review",
+                    needs_information: "More information needed",
+                    approved: "Refund approved",
+                    rejected: "Review completed",
+                    resolved_refund: "Refund completed",
+                  } as Record<string, string>
+                )[p.dispute.state] || p.dispute.state}
+              </summary>
+              {p.dispute.messages.map((message) => (
+                <div className="support-message" key={message.id}>
+                  <strong>
+                    {message.kind === "buyer" ? "You" : "Trove review"}
+                  </strong>
+                  <p>{message.body}</p>
+                  {message.evidenceUrls.map((url) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Evidence link
+                    </a>
+                  ))}
+                </div>
+              ))}
+              {["open", "needs_information", "rejected"].includes(
+                p.dispute.state,
+              ) && (
+                <button
+                  className="button button-secondary"
+                  onClick={() => setRefund(true)}
+                >
+                  Add information
+                </button>
+              )}
+            </details>
+          )}
+          {p.paymentState === "captured" && !p.dispute && (
             <button
               className="button button-secondary"
               onClick={() => setRefund(true)}
             >
-              Request a refund
+              Report a problem
             </button>
           )}
         </details>
@@ -721,26 +795,63 @@ export function PurchaseDetail({ id }: { id: string }) {
       <Modal
         open={refund}
         onOpenChange={setRefund}
-        title={`Refund ${money(p.quote.totalCents)}?`}
-        description="A full refund revokes access to the purchased data."
+        title={p.dispute ? "Add information" : "Report a purchase issue"}
+        description="We review the purchase and delivery evidence before deciding on a refund."
       >
         <div className="form-stack">
+          {!p.dispute && (
+            <label>
+              What went wrong?
+              <select
+                value={issueCategory}
+                onChange={(event) => setIssueCategory(event.target.value)}
+              >
+                <option value="missing_data">Missing records or fields</option>
+                <option value="wrong_scope">
+                  Data does not match the agreed scope
+                </option>
+                <option value="damaged_data">
+                  Data cannot be opened or used
+                </option>
+                <option value="duplicate_charge">Charged twice</option>
+                <option value="licence_issue">Source or licence issue</option>
+                <option value="other">Another issue</option>
+              </select>
+            </label>
+          )}
           <label>
-            Reason
+            {p.dispute ? "Additional information" : "Details"}
             <textarea
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Describe why this purchase should be refunded…"
+              maxLength={3000}
+              placeholder="What did you expect, and what did you receive?"
             />
           </label>
-
+          <label>
+            Evidence link (optional)
+            <input
+              type="url"
+              value={evidence}
+              maxLength={1000}
+              onChange={(event) => setEvidence(event.target.value)}
+              placeholder="https://…"
+            />
+          </label>
           <button
             className="button button-primary"
-            disabled={reason.trim().length < 10 || busy}
-            onClick={() => action("refund", { reason })}
+            disabled={reason.trim().length < (p.dispute ? 10 : 20) || busy}
+            onClick={() =>
+              action(p.dispute ? "dispute-reply" : "dispute", {
+                ...(p.dispute
+                  ? { message: reason }
+                  : { category: issueCategory, description: reason }),
+                evidenceUrls: evidence.trim() ? [evidence.trim()] : [],
+              })
+            }
           >
-            {busy ? "Requesting…" : "Confirm refund request"}
+            {busy ? "Sending…" : "Send for review"}
           </button>
         </div>
       </Modal>

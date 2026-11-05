@@ -91,7 +91,6 @@ export function SellerStudio() {
       <section className="page-heading compact-heading">
         <div>
           <h1>Seller studio</h1>
-          <p>Publish data and manage your earnings.</p>
         </div>
         {seller && (
           <button
@@ -179,36 +178,38 @@ export function SellerStudio() {
                 : "Publishing is paused. Contact support to resume."}
             </Notice>
           )}
-          <div className="metric-grid">
-            <Metric
-              label="Outstanding earnings"
-              value={money(
-                seller.payables
-                  .filter((p) =>
-                    ["owed", "pending", "submitted"].includes(p.state),
-                  )
-                  .reduce((n, p) => n + p.amountCents, 0),
-              )}
-              detail="Awaiting settlement"
-              icon={Wallet}
-            />
-            <Metric
-              label="Paid out"
-              value={money(
-                seller.payables
-                  .filter((p) => p.state === "paid")
-                  .reduce((n, p) => n + p.amountCents, 0),
-              )}
-              detail="Confirmed payments"
-              icon={Coins}
-            />
-            <Metric
-              label="Published datasets"
-              value={String(seller.offers.length)}
-              detail={seller.name}
-              icon={Database}
-            />
-          </div>
+          {(seller.offers.length > 0 || seller.payables.length > 0) && (
+            <div className="metric-grid">
+              <Metric
+                label="Outstanding earnings"
+                value={money(
+                  seller.payables
+                    .filter((p) =>
+                      ["owed", "pending", "submitted"].includes(p.state),
+                    )
+                    .reduce((n, p) => n + p.amountCents, 0),
+                )}
+                detail="Awaiting settlement"
+                icon={Wallet}
+              />
+              <Metric
+                label="Paid out"
+                value={money(
+                  seller.payables
+                    .filter((p) => p.state === "paid")
+                    .reduce((n, p) => n + p.amountCents, 0),
+                )}
+                detail="Confirmed payments"
+                icon={Coins}
+              />
+              <Metric
+                label="Published datasets"
+                value={String(seller.offers.length)}
+                detail={seller.name}
+                icon={Database}
+              />
+            </div>
+          )}
           <section className="panel">
             <div className="table-panel-heading">
               <h2>Your datasets</h2>
@@ -279,53 +280,57 @@ export function SellerStudio() {
               </div>
             )}
           </section>
-          <section className="panel seller-earnings">
-            <div className="table-panel-heading">
-              <h2>Earnings</h2>
-              <button
-                className="text-button"
-                onClick={() => refresh().catch((e) => notify(e.message, true))}
-              >
-                Refresh
-              </button>
-            </div>
-            {!seller.payables.length ? (
-              <EmptyState
-                title="No earnings yet"
-                description="Earnings appear after completed purchases."
-              />
-            ) : (
-              <div className="table-scroll">
-                <table className="purchase-table">
-                  <thead>
-                    <tr>
-                      <th>Purchase</th>
-                      <th>Amount</th>
-                      <th>Settlement</th>
-                      <th>Details</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {seller.payables.map((p) => (
-                      <tr key={p.id}>
-                        <td>
-                          {shortId(p.purchase.id)}
-                          <small className="table-subtitle">
-                            {new Date(p.createdAt).toLocaleDateString()}
-                          </small>
-                        </td>
-                        <td>{money(p.amountCents)}</td>
-                        <td>
-                          <Status value={p.state} />
-                        </td>
-                        <td>{p.error || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {!!seller.payables.length && (
+            <section className="panel seller-earnings">
+              <div className="table-panel-heading">
+                <h2>Earnings</h2>
+                <button
+                  className="text-button"
+                  onClick={() =>
+                    refresh().catch((e) => notify(e.message, true))
+                  }
+                >
+                  Refresh
+                </button>
               </div>
-            )}
-          </section>
+              {!seller.payables.length ? (
+                <EmptyState
+                  title="No earnings yet"
+                  description="Earnings appear after completed purchases."
+                />
+              ) : (
+                <div className="table-scroll">
+                  <table className="purchase-table">
+                    <thead>
+                      <tr>
+                        <th>Purchase</th>
+                        <th>Amount</th>
+                        <th>Settlement</th>
+                        <th>Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {seller.payables.map((p) => (
+                        <tr key={p.id}>
+                          <td>
+                            {shortId(p.purchase.id)}
+                            <small className="table-subtitle">
+                              {new Date(p.createdAt).toLocaleDateString()}
+                            </small>
+                          </td>
+                          <td>{money(p.amountCents)}</td>
+                          <td>
+                            <Status value={p.state} />
+                          </td>
+                          <td>{p.error || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          )}
         </>
       )}
       <Modal

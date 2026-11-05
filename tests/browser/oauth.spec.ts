@@ -132,7 +132,7 @@ for (const width of [1366, 390]) {
         authProvider: provider,
       });
     await client.connect(transport);
-    expect((await client.listTools()).tools).toHaveLength(9);
+    expect((await client.listTools()).tools).toHaveLength(12);
     const profile = await client.callTool({
       name: "get_profile",
       arguments: {},
@@ -189,9 +189,11 @@ test("direct browser research creates a real quote without model access or pre-f
 }) => {
   await buyer(page);
   await page.goto("/workspace");
-  await page
-    .getByRole("button", { name: "Choose requirements", exact: true })
-    .click();
+  const chooseRequirements = page.getByRole("button", {
+    name: "Choose requirements",
+    exact: true,
+  });
+  if (await chooseRequirements.isVisible()) await chooseRequirements.click();
   await expect(
     page.getByText("Searching is free. You approve any purchase.", {
       exact: true,
@@ -217,6 +219,22 @@ test("direct browser research creates a real quote without model access or pre-f
   ).toBeVisible();
   expect(await (await page.request.get("/api/purchases")).json()).toEqual([]);
   expect((await (await page.request.get("/api/tasks")).json()).length).toBe(1);
+  await page
+    .getByRole("button", { name: "Preview source", exact: true })
+    .first()
+    .click();
+  const sample = page.getByRole("dialog");
+  await expect(
+    sample.getByRole("list", { name: "Sample records" }).locator(":scope > li"),
+  ).toHaveCount(2);
+  await expect(
+    sample.getByRole("link", { name: "View source", exact: true }).first(),
+  ).toHaveAttribute("href", /^https:\/\//);
+  await expect(
+    sample.getByRole("button", { name: "Add to comparison" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Back to comparison" }).click();
+  expect(await (await page.request.get("/api/purchases")).json()).toEqual([]);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: ".local/research-oauth/research-mobile.png" });
   expect(
@@ -233,6 +251,8 @@ test("direct browser research creates a real quote without model access or pre-f
     .boundingBox();
   expect(text!.width).toBeGreaterThan(200);
   expect(action!.y).toBeGreaterThanOrEqual(text!.y + text!.height - 1);
+  expect(action!.width).toBeGreaterThan(110);
+  expect(action!.height).toBeLessThan(40);
 });
 test("anonymous verification status is a normal empty result, while protected actions still require sign-in", async ({
   page,

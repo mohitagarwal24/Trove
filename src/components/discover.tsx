@@ -22,7 +22,7 @@ import type { Offer, QuoteView } from "@/lib/types";
 import { money, purposeLabel } from "@/lib/types";
 import { api, post } from "@/lib/client";
 import { useTrove } from "./trove-context";
-import { Badge, DataTable, EmptyState, Modal } from "./ui";
+import { Badge, DataPreview, EmptyState, Modal } from "./ui";
 import { QuoteReview } from "./quote-review";
 export function ageLabel(timestamp: string) {
   const hours = Math.max(
@@ -176,7 +176,6 @@ export function Discover() {
       <section className="page-heading">
         <div>
           <h1>Discover data</h1>
-          <p>Browse sources for your next research task.</p>
         </div>
         <Link className="button button-secondary" href="/workspace">
           Start research <ArrowUpRight size={16} />
@@ -190,7 +189,7 @@ export function Discover() {
               <input
                 ref={searchRef}
                 aria-label="Search data offers"
-                placeholder="Search datasets, suppliers, or topics…"
+                placeholder="Search sources…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -245,10 +244,10 @@ export function Discover() {
                 {query
                   ? "Search results"
                   : category === "All data"
-                    ? "Explore the catalogue"
+                    ? "Sources"
                     : category}
               </h2>
-              <span>{visible.length} scoped offers</span>
+              <span>{visible.length} available</span>
             </div>
             <label className="sort-control">
               <ArrowDownUp size={13} />
@@ -409,11 +408,13 @@ export function OfferDetail({
   onClose,
   selected,
   onToggle,
+  backLabel = "Back to catalogue",
 }: {
   offer: Offer | null;
   onClose: () => void;
-  selected: boolean;
-  onToggle: () => void;
+  selected?: boolean;
+  onToggle?: () => void;
+  backLabel?: string;
 }) {
   return (
     <Modal
@@ -462,7 +463,7 @@ export function OfferDetail({
             Data preview{" "}
             <Badge>{(offer.preview as unknown[]).length} sample rows</Badge>
           </h4>
-          <DataTable rows={offer.preview as Record<string, unknown>[]} />
+          <DataPreview rows={offer.preview as Record<string, unknown>[]} />
           <details className="disclosure source-details">
             <summary>Fields and coverage</summary>
             <p className="caption">
@@ -503,12 +504,14 @@ export function OfferDetail({
           </details>
           <div className="dialog-actions">
             <button className="button button-secondary" onClick={onClose}>
-              Back to catalogue
+              {backLabel}
             </button>
-            <button className="button button-primary" onClick={onToggle}>
-              {selected ? <Check size={16} /> : <Plus size={16} />}{" "}
-              {selected ? "Added to comparison" : "Add to comparison"}
-            </button>
+            {onToggle && (
+              <button className="button button-primary" onClick={onToggle}>
+                {selected ? <Check size={16} /> : <Plus size={16} />}{" "}
+                {selected ? "Added to comparison" : "Add to comparison"}
+              </button>
+            )}
           </div>
         </div>
       )}

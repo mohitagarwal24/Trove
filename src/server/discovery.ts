@@ -128,6 +128,10 @@ export async function discoverData(
           acquisition: owned ? "owned" : "purchase",
           ownedPurchaseId: owned?.purchaseId || null,
           fields: offer.fields,
+          preview: offer.preview,
+          previewKind: "fixed_supplier_sample",
+          previewNotice:
+            "Representative sample; not the requested filtered delivery. No charge has occurred.",
           missingFields,
           sourceUrl: offer.sourceUrl,
           sourceLicenseUrl: offer.sourceLicenseUrl,

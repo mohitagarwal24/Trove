@@ -151,7 +151,7 @@ The public page gives product evidence room to breathe; the application uses the
 - Charcoal primary actions and restrained blue focus and selection.
 - Locally hosted Inter across public and working surfaces.
 - Divided source inventory, explicit scope and tabular USD amounts.
-- Named native disclosures for supporting scope, rights and setup detail.
+- Compact sample records with readable fields and named native disclosures for supporting detail.
 - Native scrolling, readable fallback content and reduced-motion support.
 
 This record replaces the earlier Technical Atlas/Data Convergence system under the user-pinned replacement contract in `.impeccable/surfaces/trove-reference-revamp.md`. Values are extracted from the built styles in `src/app/globals.css` and `src/app/landing.css`; the reference extraction is evidence, not Trove’s token source. Surface composition belongs in the adjacent surface briefs. Review status belongs in the finish report, not this system record.
@@ -248,11 +248,19 @@ Panels use the flat panel primitive; source inventory cells use fine shared divi
 
 Native details and summary elements expose supporting information by name. Shared summaries use (13px), medium weight and a (1.6) line height, with (10px) vertical padding. Optional summary context uses (12px) regular text; up to (760px), that context moves beneath the label. Hover strengthens the text color, and an open summary gains space before its content. Keep the action, exact price and current payment/delivery state visible outside the disclosure. Search options, source rights, quote breakdowns, setup help and account security use this existing pattern.
 
+### Sample records
+
+Source previews use compact labelled records rather than a wide table. Each record leads with its sample number, a safe View source link when available, and four useful primary fields. All sample fields exposes the remaining values; long values retain their own native disclosure. Labels use (12px) secondary text and values use (13px) text with wrapping. Records form two columns with a (28px) gap, becoming one column up to (600px). The same preview serves catalogue inspection and read-only source inspection from research comparison; returning to comparison does not change its selection.
+
 ### Scope and source decisions
 
-A completed research request replaces the expanded composer with a scope summary and an explicit Edit requirements action. Source decisions are divided rows with coverage, actual price and source details. Editing material requirements invalidates the next purchase review until discovery is refreshed. Model summary appears only when AI is configured or a saved answer exists; missing configuration is not decorative output.
+A completed research request replaces the expanded composer with a scope summary and an explicit Edit requirements action. Source decisions are divided rows with coverage, actual price and source details. Editing material requirements invalidates the next purchase review until discovery is refreshed. Model summary appears only when AI is configured or a saved answer exists; missing configuration is not decorative output. On an unconfigured new request, the unavailable brief-mode switch is omitted.
 
-The composer keeps category, record count and spending limit visible while Search options retains freshness, intended use, fields and filters. Selected sources lead the comparison; other sources remain in a named disclosure when there is a selection. Purchase review keeps its exact USD total, purpose, expiry and approval action visible while scope, price breakdown and source licences remain expandable. Purchased rows lead the result view; usage terms, receipt evidence and order details remain available at their named locations.
+The composer keeps category, record count and spending limit visible while Search options retains freshness, intended use, fields and filters. Selected sources lead the comparison; other sources remain in a named disclosure when there is a selection. Purchase review keeps its exact USD total, purpose, expiry and approval action visible while scope, price breakdown and source licences remain expandable. Purchased rows lead the result view; usage terms, receipt evidence and order details remain available at their named locations. Processor identifiers stay inside Transaction references. A purchase issue uses a category, specific description and optional evidence link; the action is Send for review. Case history is expandable, while a request for more information stays visible above the result with an Add information action. Filing an issue does not represent an approved or completed refund. A voided purchase identifies itself as closed and offers Review sources, reopening the prior scope when available.
+
+### Inline agent view
+
+The MCP Apps view extends the source-led pattern within the host's theme, typography variables and safe-area insets. Its light and dark fallback styling is local to that embedded surface, not a replacement application palette. Selected source, exact USD total and the next action remain visible; representative fixed samples, other sources and licence/price detail use native disclosures. Requested fields lead sample records, with safe original-record links and a narrow one-column layout. The view states that PayPal approval opens on Trove and checkout inside chat is not enabled before preparing a purchase. Owned retrieval and purchase-support case history retain their actual permission and payment state.
 
 ### Public source and connection scenes
 

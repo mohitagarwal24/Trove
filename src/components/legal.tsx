@@ -53,9 +53,15 @@ export function Legal({ page }: { page: "privacy" | "terms" }) {
           <p>
             Providers must hold the rights to distribute their uploads and
             supply accurate attribution and licence terms. Provider profiles are
-            reviewed before discovery. Refund requests are available from
-            completed purchases and revoke result access when confirmed. Source
-            availability and payment processing can be interrupted.
+            reviewed before discovery. Report missing, incorrect, unusable or
+            mislicensed data, or a duplicate charge, from your purchase. We
+            review the agreed scope, delivery checks and your evidence before
+            approving or declining a refund. You may provide further evidence. A
+            change of mind or a completed research task alone is not evidence of
+            failed delivery. Filing a case does not issue a refund; a confirmed
+            refund revokes result access. This review does not limit rights
+            available through PayPal or applicable law. Source availability and
+            payment processing can be interrupted.
           </p>
           <h2>Payment environment</h2>
           <p>

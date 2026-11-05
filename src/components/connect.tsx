@@ -33,6 +33,9 @@ const toolDescriptions = [
   ["get_purchase", "Check payment, delivery & settlement"],
   ["get_result", "Retrieve entitled data without recharging"],
   ["get_receipt", "Get checks, provenance & payment references"],
+  ["get_dispute", "Read a purchase issue review"],
+  ["open_dispute", "Submit an issue for evidence review"],
+  ["reply_to_dispute", "Add information to a purchase issue"],
 ];
 export function Connect() {
   const { user, ensureAuth, notify } = useTrove();
@@ -125,7 +128,12 @@ export function Connect() {
     try {
       const token = await post<Token & { value: string }>("/tokens", {
         name,
-        scopes: scope === "purchase" ? ["read", "purchase"] : ["read"],
+        scopes:
+          scope === "support"
+            ? ["read", "purchase", "support"]
+            : scope === "purchase"
+              ? ["read", "purchase"]
+              : ["read"],
       });
       setValue(token.value);
       await refresh();
@@ -396,6 +404,9 @@ export function Connect() {
               Allowed operations
               <select value={scope} onChange={(e) => setScope(e.target.value)}>
                 <option value="purchase">Read + prepare purchases</option>
+                <option value="support">
+                  Read + purchases + report issues
+                </option>
                 <option value="read">Read only</option>
               </select>
             </label>

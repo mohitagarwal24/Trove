@@ -22,7 +22,12 @@ test("catalogue filtering, public preview and authenticated purchase review", as
     .locator(".offer-card")
     .getByRole("button", { name: /^Preview / })
     .click();
-  await expect(page.getByRole("dialog").locator("tbody tr")).toHaveCount(2);
+  await expect(
+    page
+      .getByRole("dialog")
+      .getByRole("list", { name: "Sample records" })
+      .locator(":scope > li"),
+  ).toHaveCount(2);
   await expect(page.getByRole("dialog")).toContainText("openFDA");
   await page.getByRole("button", { name: "Add to comparison" }).click();
   await page.getByRole("button", { name: "Back to catalogue" }).click();
@@ -153,7 +158,7 @@ test("MCP uses a scoped revocable token and never delegates payment approval", a
     ).ok(),
   ).toBeTruthy();
   const listing = await (await call(2, "tools/list", {})).json();
-  expect(listing.result.tools).toHaveLength(9);
+  expect(listing.result.tools).toHaveLength(12);
   expect(
     listing.result.tools.map((t: { name: string }) => t.name),
   ).not.toContain("capture_payment");
@@ -194,7 +199,7 @@ test("MCP uses a scoped revocable token and never delegates payment approval", a
     stderr: "pipe",
   });
   await bridge.connect(stdio);
-  expect((await bridge.listTools()).tools).toHaveLength(9);
+  expect((await bridge.listTools()).tools).toHaveLength(12);
   const bridged = await bridge.callTool({
     name: "discover_data",
     arguments: {
@@ -238,9 +243,11 @@ test("research availability follows real configuration", async ({ page }) => {
   ).json();
   await page.goto("/workspace");
   const run = page.getByRole("button", { name: "Find sources", exact: true });
-  await page
-    .getByRole("button", { name: "Choose requirements", exact: true })
-    .click();
+  const chooseRequirements = page.getByRole("button", {
+    name: "Choose requirements",
+    exact: true,
+  });
+  if (await chooseRequirements.isVisible()) await chooseRequirements.click();
   await expect(run).toBeEnabled();
   const brief = page.getByRole("button", {
     name: "Describe a brief",
@@ -249,7 +256,7 @@ test("research availability follows real configuration", async ({ page }) => {
   if (capabilities.ai) {
     await brief.click();
     await expect(run).toBeEnabled();
-  } else await expect(brief).toBeDisabled();
+  } else await expect(brief).toHaveCount(0);
   await expect(
     page.getByRole("combobox", { name: /Research mode/ }),
   ).toHaveCount(0);

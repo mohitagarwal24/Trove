@@ -12,11 +12,12 @@ import {
 } from "lucide-react";
 import { api, post } from "@/lib/client";
 import { examplePrompts } from "@/lib/examples";
-import type { QuoteView, Task, PurchaseView } from "@/lib/types";
+import type { Offer, QuoteView, Task, PurchaseView } from "@/lib/types";
 import { money } from "@/lib/types";
 import { useTrove } from "./trove-context";
 import { Notice, Status } from "./ui";
 import { QuoteReview } from "./quote-review";
+import { OfferDetail } from "./discover";
 import {
   ResearchRequirements,
   initialRequirements,
@@ -42,6 +43,7 @@ export function Workspace() {
   const [task, setTask] = useState<Task | null>(null);
   const [quote, setQuote] = useState<QuoteView | null>(null);
   const [review, setReview] = useState(false);
+  const [preview, setPreview] = useState<Offer | null>(null);
   const [purchases, setPurchases] = useState<PurchaseView[]>([]);
   useEffect(() => {
     let active = true;
@@ -49,6 +51,7 @@ export function Workspace() {
     setEditingScope(true);
     setQuote(null);
     setReview(false);
+    setPreview(null);
     setPurchases([]);
     setResumeError("");
     setCopiedScope(false);
@@ -161,6 +164,14 @@ export function Workspace() {
       notify((e as Error).message, true);
     }
   }
+  async function previewSource(id: string) {
+    try {
+      const pinned = quote?.lines.find((line) => line.offer.id === id)?.offer;
+      setPreview(pinned || (await api<Offer>(`/offers/${id}`)));
+    } catch (error) {
+      notify((error as Error).message, true);
+    }
+  }
   const scopeChanged =
     !!task &&
     (Math.round(Number(budget) * 100) !== task.budgetCents ||
@@ -260,31 +271,33 @@ export function Workspace() {
             id="research-composer"
             tabIndex={-1}
           >
-            <div
-              className="research-mode"
-              role="group"
-              aria-label="Research input"
-            >
-              <button
-                aria-pressed={mode === "requirements"}
-                onClick={() => {
-                  setMode("requirements");
-                  setResearchError("");
-                }}
+            {(capabilities.ai || mode === "brief") && (
+              <div
+                className="research-mode"
+                role="group"
+                aria-label="Research input"
               >
-                Choose requirements
-              </button>
-              <button
-                aria-pressed={mode === "brief"}
-                disabled={!capabilities.ai}
-                onClick={() => {
-                  setMode("brief");
-                  setResearchError("");
-                }}
-              >
-                Describe a brief
-              </button>
-            </div>
+                <button
+                  aria-pressed={mode === "requirements"}
+                  onClick={() => {
+                    setMode("requirements");
+                    setResearchError("");
+                  }}
+                >
+                  Choose requirements
+                </button>
+                <button
+                  aria-pressed={mode === "brief"}
+                  disabled={!capabilities.ai}
+                  onClick={() => {
+                    setMode("brief");
+                    setResearchError("");
+                  }}
+                >
+                  Describe a brief
+                </button>
+              </div>
+            )}
             {mode === "requirements" ? (
               <ResearchRequirements
                 value={requirements}
@@ -380,7 +393,6 @@ export function Workspace() {
                   <div className="panel-title">
                     <ListFilter size={18} />
                     <h2>Source comparison</h2>
-                    <span className="count-pill">{task.decisions.length}</span>
                   </div>
                   {scopeChanged && (
                     <Notice>
@@ -406,6 +418,12 @@ export function Workspace() {
                           </span>
                           <div>
                             <strong>{d.title}</strong>
+                            <button
+                              className="text-link decision-preview"
+                              onClick={() => previewSource(d.offerId)}
+                            >
+                              Preview source <ArrowRight size={12} />
+                            </button>
                             {!d.selected && (
                               <p>{d.reason.replaceAll("_", " ")}</p>
                             )}
@@ -576,6 +594,11 @@ export function Workspace() {
       <QuoteReview
         quote={review ? quote : null}
         onClose={() => setReview(false)}
+      />
+      <OfferDetail
+        offer={preview}
+        onClose={() => setPreview(null)}
+        backLabel="Back to comparison"
       />
     </div>
   );

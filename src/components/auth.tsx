@@ -439,8 +439,8 @@ export function PasswordRecovery() {
           </button>
         </form>
       )}
-      <Link className="text-link" href="/discover">
-        Back to catalogue
+      <Link className="text-link" href="/sign-in">
+        Back to sign in
       </Link>
     </section>
   );

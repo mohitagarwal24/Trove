@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { encrypt, hash } from "@/lib/crypto";
+import { encrypt, decrypt, hash } from "@/lib/crypto";
 import { assert } from "@/lib/errors";
 import {
   providerDefinitions,
@@ -19,6 +19,70 @@ const date = (v: unknown) => {
     : s;
 };
 type Raw = Record<string, any>;
+// Publish a better fixed sample from the same stored snapshot, even when an upstream
+// source is down. Preserve all dates, prices, licences and historical quote versions.
+export async function upgradeSourcePreviews(
+  source: (typeof sourceDefinitions)[number],
+) {
+  return db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Seller" WHERE id = ${source.sellerId} FOR UPDATE`;
+    let changed = false;
+    for (const spec of source.offers) {
+      const old = await tx.offerVersion.findFirst({
+        where: { offerId: spec.key, sellerId: source.sellerId, current: true },
+        include: { dataset: true },
+      });
+      if (!old?.dataset || old.dataset.sourceKey !== source.key) continue;
+      const rows = decrypt<DataRow[]>(old.dataset.encryptedData);
+      assert(
+        hash(
+          JSON.stringify({
+            rows,
+            updated: old.dataset.sourceUpdatedAt.toISOString(),
+          }),
+        ) === old.dataset.contentHash,
+        "SOURCE_INVALID",
+        "Stored source integrity check failed.",
+        502,
+      );
+      const preview = rows
+        .slice(0, 2)
+        .map((row) =>
+          Object.fromEntries(old.fields.map((field) => [field, row[field]])),
+        );
+      if (JSON.stringify(old.preview) === JSON.stringify(preview)) continue;
+      const last = await tx.offerVersion.findFirstOrThrow({
+        where: { offerId: spec.key },
+        orderBy: { version: "desc" },
+      });
+      const { id: _id, createdAt: _created, dataset: _dataset, ...data } = old;
+      await tx.offerVersion.update({
+        where: { id: old.id },
+        data: { current: false },
+      });
+      await tx.offerVersion.create({
+        data: {
+          ...data,
+          version: last.version + 1,
+          schema: data.schema as Prisma.InputJsonValue,
+          preview: preview as Prisma.InputJsonValue,
+        },
+      });
+      changed = true;
+    }
+    if (changed)
+      await tx.auditEvent.create({
+        data: {
+          actor: "source-ingestion",
+          resourceId: source.key,
+          action: "source_preview_updated",
+          reason:
+            "Published fixed two-row samples from existing source snapshots; freshness and delivery data unchanged.",
+        },
+      });
+    return changed;
+  });
+}
 export function normalizeSource(key: string, records: Raw[]): DataRow[] {
   const rows: DataRow[] = [];
   for (const r of records) {
@@ -95,16 +159,46 @@ export async function syncSources(force = false) {
     });
   for (const source of sourceDefinitions) {
     try {
+      const previewUpdated = await upgradeSourcePreviews(source);
       const latest = await db.datasetSnapshot.findFirst({
         where: { sourceKey: source.key, sellerId: source.sellerId },
         orderBy: { retrievedAt: "desc" },
       });
+      const previewsCurrent = await db.offerVersion.findMany({
+        where: {
+          offerId: { in: source.offers.map((offer) => offer.key) },
+          current: true,
+        },
+        select: { fields: true, preview: true },
+      });
+      const completePreviews =
+        previewsCurrent.length === source.offers.length &&
+        previewsCurrent.every((offer) => {
+          const preview = offer.preview;
+          return (
+            Array.isArray(preview) &&
+            preview.length > 0 &&
+            preview[0] !== null &&
+            typeof preview[0] === "object" &&
+            offer.fields.every((field) =>
+              Object.hasOwn(preview[0] as object, field),
+            )
+          );
+        });
       if (
         !force &&
+        completePreviews &&
         latest &&
         Date.now() - latest.retrievedAt.getTime() < 24 * 3600000
-      )
+      ) {
+        if (previewUpdated)
+          results.push({
+            source: source.key,
+            changed: true,
+            rows: latest.rowCount,
+          });
         continue;
+      }
       const response = await fetch(source.endpoint, {
         signal: AbortSignal.timeout(30000),
         headers: { Accept: "application/json" },
@@ -140,7 +234,7 @@ export async function syncSources(force = false) {
       const contentHash = hash(
         JSON.stringify({ rows, updated: updated.toISOString() }),
       );
-      if (latest?.contentHash === contentHash) {
+      if (latest?.contentHash === contentHash && completePreviews) {
         results.push({ source: source.key, rows: rows.length, changed: false });
         continue;
       }
@@ -172,7 +266,20 @@ export async function syncSources(force = false) {
           const old = await tx.offerVersion.findFirst({
             where: { offerId: spec.key, current: true },
           });
-          if (old?.datasetId === dataset.id) continue;
+          const fields =
+            old?.fields ||
+            (spec.fields.length ? [...spec.fields] : [...source.fields]);
+          // A fixed two-row sample is published with the offer, independent of buyer filters.
+          const preview = rows
+            .slice(0, 2)
+            .map((row) =>
+              Object.fromEntries(fields.map((field) => [field, row[field]])),
+            );
+          if (
+            old?.datasetId === dataset.id &&
+            JSON.stringify(old.preview) === JSON.stringify(preview)
+          )
+            continue;
           const last = await tx.offerVersion.findFirst({
             where: { offerId: spec.key },
             orderBy: { version: "desc" },
@@ -182,9 +289,6 @@ export async function syncSources(force = false) {
               where: { id: old.id },
               data: { current: false },
             });
-          const fields =
-            old?.fields ||
-            (spec.fields.length ? [...spec.fields] : [...source.fields]);
           await tx.offerVersion.create({
             data: {
               offerId: spec.key,
@@ -225,13 +329,7 @@ export async function syncSources(force = false) {
                 type: "object",
                 fields: fields.map((name) => ({ name, type: "string" })),
               },
-              preview: rows
-                .slice(0, 2)
-                .map((row) =>
-                  Object.fromEntries(
-                    fields.slice(0, 4).map((f) => [f, row[f]]),
-                  ),
-                ) as Prisma.InputJsonValue,
+              preview: preview as Prisma.InputJsonValue,
             },
           });
         }

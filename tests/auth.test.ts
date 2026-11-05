@@ -61,6 +61,11 @@ after(async () => {
     await db.offerVersion.deleteMany({ where: { sellerId: id } });
     await db.datasetSnapshot.deleteMany({ where: { sellerId: id } });
   }
+  await db.quoteLine.deleteMany({
+    where: { quote: { workspaceId: { in: workspaces } } },
+  });
+  await db.quote.deleteMany({ where: { workspaceId: { in: workspaces } } });
+  await db.taskRun.deleteMany({ where: { workspaceId: { in: workspaces } } });
   await db.agentToken.deleteMany({ where: { userId: { in: users } } });
   await db.passwordReset.deleteMany({ where: { userId: { in: users } } });
   await db.session.deleteMany({ where: { userId: { in: users } } });
@@ -265,4 +270,100 @@ test("account closure redacts profile, revokes access and retains accounting ide
     await db.agentToken.count({ where: { userId: actor.id, revokedAt: null } }),
     0,
   );
+});
+
+test("MCP read connections inspect samples and quotes; purchase and support require OAuth step-up", async () => {
+  const { actor } = await account();
+  const token = await issueToken(actor, "Read assessment", ["read"]);
+  const agent = await authenticate(
+    new Request("http://localhost/api/mcp", {
+      headers: { Authorization: `Bearer ${token.value}` },
+    }),
+  );
+  const server = createMcpServer(agent),
+    client = new Client({ name: "scope-acceptance", version: "1" });
+  const [serverTransport, clientTransport] =
+    InMemoryTransport.createLinkedPair();
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+  try {
+    const listing = await client.listTools();
+    assert.equal(listing.tools.length, 12);
+    assert.deepEqual(
+      (listing.tools.find((tool) => tool.name === "create_quote")?._meta as any)
+        .securitySchemes[0].scopes,
+      ["read"],
+    );
+    assert.deepEqual(
+      (
+        listing.tools.find((tool) => tool.name === "create_purchase")
+          ?._meta as any
+      ).securitySchemes[0].scopes,
+      ["read", "purchase"],
+    );
+    const resources = await client.listResources();
+    assert.equal(resources.resources[0].mimeType, "text/html;profile=mcp-app");
+    const resource = await client.readResource({
+      uri: resources.resources[0].uri,
+    });
+    assert(
+      String((resource.contents[0] as any).text).includes("Trove research"),
+    );
+    const found = await client.callTool({
+      name: "search_offers",
+      arguments: { category: "Drug recalls" },
+    });
+    const offer = (found.structuredContent as any).offers.find(
+      (item: any) => item.offerId === "drug-recalls-full",
+    );
+    const quoted = await client.callTool({
+      name: "create_quote",
+      arguments: { offerIds: [offer.id], quantity: 2 },
+    });
+    assert(!quoted.isError);
+    assert((quoted.structuredContent as any).totalCents > 0);
+    const blocked = await client.callTool({
+      name: "create_purchase",
+      arguments: {
+        quoteId: (quoted.structuredContent as any).id,
+        idempotencyKey: randomUUID(),
+      },
+    });
+    assert(blocked.isError);
+    assert(
+      (blocked._meta as any)["mcp/www_authenticate"][0].includes(
+        'scope="read purchase"',
+      ),
+    );
+    assert(
+      (blocked._meta as any)["mcp/www_authenticate"][0].includes(
+        'error="insufficient_scope"',
+      ),
+    );
+    const support = await client.callTool({
+      name: "open_dispute",
+      arguments: {
+        purchaseId: "not-owned",
+        category: "other",
+        description: "This complaint must prompt for support access first.",
+      },
+    });
+    assert(support.isError);
+    assert(
+      (support._meta as any)["mcp/www_authenticate"][0].includes(
+        'scope="read support"',
+      ),
+    );
+    assert.equal(
+      await db.purchase.count({ where: { workspaceId: actor.workspaceId } }),
+      0,
+    );
+    assert.equal(
+      await db.purchaseDispute.count({ where: { openedBy: actor.id } }),
+      0,
+    );
+  } finally {
+    await client.close();
+    await server.close();
+  }
 });

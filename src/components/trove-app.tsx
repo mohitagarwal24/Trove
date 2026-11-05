@@ -289,18 +289,6 @@ export function TroveApp() {
             <Logo />
           </Link>
           <div className="sidebar-scroll">
-            <div className="workspace-switch">
-              <span className="workspace-icon">
-                <span>T</span>
-              </span>
-              <span>
-                <strong>
-                  {user?.role === "seller"
-                    ? "Seller workspace"
-                    : "Personal workspace"}
-                </strong>
-              </span>
-            </div>
             <nav aria-label="Main navigation">
               {nav.map((n) => (
                 <Link
@@ -369,11 +357,6 @@ export function TroveApp() {
               </span>
               <span>
                 <strong>{user?.name || "Guest workspace"}</strong>
-                <small>
-                  {user?.role === "seller"
-                    ? "Seller account"
-                    : "Research & discovery"}
-                </small>
               </span>
               <ChevronDown size={14} />
             </button>

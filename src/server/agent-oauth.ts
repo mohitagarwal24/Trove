@@ -24,9 +24,12 @@ const origin = () => new URL(appUrl()).origin;
 export const mcpResource = () => `${origin()}/api/mcp`;
 export const metadataUrl = () =>
   `${origin()}/.well-known/oauth-protected-resource/api/mcp`;
-export const oauthScopes = ["read", "purchase", "offline_access"];
-export function authChallenge(error = "invalid_token") {
-  return `Bearer resource_metadata="${metadataUrl()}", error="${error}", scope="read"`;
+export const oauthScopes = ["read", "purchase", "support", "offline_access"];
+export function authChallenge(
+  error = "invalid_token",
+  requiredScopes = ["read"],
+) {
+  return `Bearer resource_metadata="${metadataUrl()}", error="${error}", scope="${requiredScopes.join(" ")}"`;
 }
 export function authorizationMetadata() {
   return {
@@ -60,7 +63,7 @@ function scopes(value: string | undefined) {
   if (!result.includes("read") || result.some((s) => !oauthScopes.includes(s)))
     fail(
       "invalid_scope",
-      "Request read access, with optional purchase and offline_access scopes.",
+      "Request read access, with optional purchase, support and offline_access scopes.",
     );
   return result;
 }

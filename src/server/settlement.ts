@@ -2,10 +2,8 @@ import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { assert } from "@/lib/errors";
 import { capabilities, paymentEnvironment } from "@/lib/config";
-import type { Actor } from "./auth";
-import { requireBrowser } from "./auth";
 import { paymentApi, paypalRequest } from "./paypal";
-import { getPurchase, internalPurchase, withPurchaseLease } from "./purchases";
+import { internalPurchase, withPurchaseLease } from "./purchases";
 export async function settlePurchase(id: string) {
   return withPurchaseLease(id, async () => {
     const p = await internalPurchase(id);
@@ -21,6 +19,12 @@ export async function settlePurchase(id: string) {
       "Purchase payment environment does not match.",
       409,
     );
+    const dispute = await db.purchaseDispute.findUnique({
+      where: { purchaseId: id },
+    });
+    const onHold =
+      dispute &&
+      ["open", "needs_information", "approved"].includes(dispute.state);
     for (const payable of p.payables) {
       if (["cancelled", "recovery_required"].includes(payable.state)) continue;
       const seller = await db.seller.findUniqueOrThrow({
@@ -29,6 +33,8 @@ export async function settlePurchase(id: string) {
       const previous = await db.payoutAttempt.findUnique({
         where: { payableId: payable.id },
       });
+      // Reconcile already submitted payouts, but do not submit new ones during review.
+      if (onHold && !previous?.batchId) continue;
       const configuredRecipient = previous?.recipient || seller.payoutEmail;
       if (
         (!capabilities().payouts && !previous?.batchId) ||
@@ -264,69 +270,6 @@ async function updateSettlement(id: string) {
             : "owed";
   await db.purchase.update({ where: { id }, data: { settlementState: state } });
 }
-export async function requestRefund(actor: Actor, id: string, reason: string) {
-  requireBrowser(actor);
-  const p = await getPurchase(actor, id);
-  assert(
-    p.mode === paymentEnvironment(),
-    "PAYMENT_ENVIRONMENT_MISMATCH",
-    "This purchase belongs to a different payment environment.",
-    409,
-  );
-  assert(
-    p.captureId &&
-      ["captured", "refund_pending", "refunded"].includes(p.paymentState),
-    "INVALID_STATE",
-    "This purchase has no completed capture to refund.",
-    409,
-  );
-  await withPurchaseLease(id, async () => {
-    await db.$transaction(async (tx) => {
-      await tx.refund.upsert({
-        where: { purchaseId: id },
-        update: {},
-        create: { purchaseId: id, requestId: randomUUID(), reason },
-      });
-      if (p.paymentState !== "refunded")
-        await tx.purchase.update({
-          where: { id },
-          data: { paymentState: "refund_pending" },
-        });
-      await tx.sellerPayable.updateMany({
-        where: { purchaseId: id, state: { in: ["owed", "failed"] } },
-        data: {
-          state: "cancelled",
-          error: "Settlement stopped because the purchase is being refunded.",
-        },
-      });
-      await tx.sellerPayable.updateMany({
-        where: {
-          purchaseId: id,
-          state: { in: ["submitted", "pending", "paid", "returned"] },
-        },
-        data: {
-          state: "recovery_required",
-          error:
-            "Refund does not recall a submitted payout. Seller recovery requires review.",
-        },
-      });
-      await tx.auditEvent.create({
-        data: {
-          actor: actor.id,
-          resourceId: id,
-          action: "refund_requested",
-          reason,
-        },
-      });
-      await tx.job.upsert({
-        where: { key: `refund:${id}:` },
-        update: {},
-        create: { key: `refund:${id}:`, type: "refund", resourceId: id },
-      });
-    });
-  });
-  return getPurchase(actor, id);
-}
 export async function processRefund(id: string) {
   return withPurchaseLease(id, async () => {
     const p = await internalPurchase(id);
@@ -334,6 +277,30 @@ export async function processRefund(id: string) {
       where: { purchaseId: id },
     });
     if (refund.state === "completed") return;
+    const dispute = refund.disputeId
+      ? await db.purchaseDispute.findUnique({ where: { id: refund.disputeId } })
+      : null;
+    const providerEvent =
+      refund.approvalBasis === "paypal_verified_event" && refund.externalId
+        ? await db.webhookEvent.findFirst({
+            where: {
+              eventType: "PAYMENT.CAPTURE.REFUNDED",
+              resourceId: refund.externalId,
+            },
+          })
+        : null;
+    assert(
+      refund.approvalBasis === "legacy_authorized" ||
+        (refund.approvalBasis === "dispute_review" &&
+          dispute?.purchaseId === id &&
+          dispute.state === "approved" &&
+          dispute.reviewedBy &&
+          dispute.reviewedAt) ||
+        providerEvent,
+      "REFUND_NOT_APPROVED",
+      "Refund requires an approved purchase issue review.",
+      409,
+    );
     assert(
       p.mode === paymentEnvironment(),
       "PAYMENT_ENVIRONMENT_MISMATCH",
@@ -365,6 +332,11 @@ export async function processRefund(id: string) {
         where: { id: refund.id },
         data: { state: "completed" },
       });
+      if (refund.disputeId)
+        await tx.purchaseDispute.update({
+          where: { id: refund.disputeId },
+          data: { state: "resolved_refund" },
+        });
       const prior = await tx.ledgerEntry.count({
         where: { groupId: `refund:${id}` },
       });
@@ -415,4 +387,124 @@ export async function processRefund(id: string) {
       );
     });
   });
+}
+
+/** Read-only processor reconciliation. A verified external refund records money
+ * already returned by PayPal; it never authorizes or POSTs a new refund. */
+export async function reconcileRefundEvent(eventId: string) {
+  const event = await db.webhookEvent.findUniqueOrThrow({
+    where: { id: eventId },
+  });
+  assert(
+    event.eventType === "PAYMENT.CAPTURE.REFUNDED" && event.resourceId,
+    "INVALID_EVENT",
+    "A verified PayPal refund event is required.",
+    409,
+  );
+  const result = await paymentApi.getRefund(event.resourceId);
+  assert(
+    result.id === event.resourceId && result.status === "COMPLETED",
+    "REFUND_PENDING",
+    "PayPal has not confirmed this refund as completed.",
+    409,
+  );
+  const parent = result.links?.find((link) => link.rel === "up");
+  let captureId = "";
+  if (parent) {
+    const url = new URL(parent.href);
+    if (
+      url.protocol === "https:" &&
+      [
+        "api-m.paypal.com",
+        "api-m.sandbox.paypal.com",
+        "api.paypal.com",
+        "api.sandbox.paypal.com",
+      ].includes(url.hostname)
+    )
+      captureId =
+        /^\/v2\/payments\/captures\/([^/]+)$/.exec(url.pathname)?.[1] || "";
+  }
+  assert(
+    captureId,
+    "REFUND_MISMATCH",
+    "PayPal refund is not bound to a captured payment.",
+    502,
+  );
+  const p = await db.purchase.findUnique({
+    where: { captureId },
+    include: { quote: true },
+  });
+  // A merchant may have transactions outside Trove. They do not belong in our ledger.
+  if (!p) return;
+  assert(
+    p.mode === paymentEnvironment() &&
+      result.amount?.currency_code === "USD" &&
+      Math.round(Number(result.amount.value) * 100) === p.quote.totalCents,
+    "REFUND_MISMATCH",
+    "External refund requires review: only an exact full-purchase refund can be reconciled automatically.",
+    409,
+  );
+  await withPurchaseLease(p.id, async () =>
+    db.$transaction(async (tx) => {
+      const prior = await tx.refund.findUnique({ where: { purchaseId: p.id } });
+      if (prior?.state === "completed") {
+        assert(
+          prior.externalId === result.id,
+          "REFUND_MISMATCH",
+          "Another refund is already recorded for this purchase.",
+          409,
+        );
+        return;
+      }
+      assert(
+        !prior?.externalId || prior.externalId === result.id,
+        "REFUND_MISMATCH",
+        "A different refund is already being reconciled.",
+        409,
+      );
+      const dispute = await tx.purchaseDispute.findUnique({
+        where: { purchaseId: p.id },
+      });
+      await tx.refund.upsert({
+        where: { purchaseId: p.id },
+        create: {
+          purchaseId: p.id,
+          requestId: randomUUID(),
+          externalId: result.id,
+          reason: "Completed refund confirmed independently with PayPal.",
+          approvalBasis: "paypal_verified_event",
+          disputeId: dispute?.id,
+        },
+        update: {
+          externalId: result.id,
+          approvalBasis: "paypal_verified_event",
+          ...(dispute ? { disputeId: dispute.id } : {}),
+        },
+      });
+      await tx.purchase.update({
+        where: { id: p.id },
+        data: { paymentState: "refund_pending" },
+      });
+      await tx.sellerPayable.updateMany({
+        where: { purchaseId: p.id, state: { in: ["owed", "failed"] } },
+        data: { state: "cancelled" },
+      });
+      await tx.sellerPayable.updateMany({
+        where: {
+          purchaseId: p.id,
+          state: { in: ["submitted", "pending", "paid", "returned"] },
+        },
+        data: { state: "recovery_required" },
+      });
+      await tx.auditEvent.create({
+        data: {
+          actor: "paypal",
+          resourceId: p.id,
+          action: "external_refund_confirmed",
+          reason: `Verified event ${event.id}; confirmed processor refund ${result.id}.`,
+        },
+      });
+    }),
+  );
+  await processRefund(p.id);
 }

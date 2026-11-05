@@ -160,8 +160,7 @@ export function Account() {
           </details>
         )}
         <section className="panel account-data">
-          <h2>Your data</h2>
-          <p>Download your account and purchase records.</p>
+          <h2>Account data</h2>
           <button
             className="button button-secondary"
             onClick={async () => {

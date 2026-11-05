@@ -156,6 +156,7 @@ export function Modal({
         <Dialog.Overlay className="dialog-overlay" />
         <Dialog.Content
           className={`dialog ${wide ? "dialog-wide" : ""}`}
+          {...(!description ? { "aria-describedby": undefined } : {})}
           onOpenAutoFocus={() => {
             opener.current =
               document.activeElement instanceof HTMLElement
@@ -182,11 +183,9 @@ export function Modal({
           <div className="dialog-heading">
             <div>
               <Dialog.Title>{title}</Dialog.Title>
-              <Dialog.Description
-                className={description ? undefined : "sr-only"}
-              >
-                {description || "Complete this action."}
-              </Dialog.Description>
+              {description && (
+                <Dialog.Description>{description}</Dialog.Description>
+              )}
             </div>
             <Dialog.Close className="icon-button" aria-label="Close dialog">
               <X size={19} />
@@ -294,6 +293,24 @@ function DataValue({ value }: { value: unknown }) {
     typeof value === "object" && value !== null
       ? JSON.stringify(value)
       : String(value ?? "—");
+  if (text.startsWith("https://")) {
+    try {
+      const url = new URL(text);
+      if (url.protocol === "https:" && !url.username && !url.password)
+        return (
+          <a
+            className="text-link"
+            href={url.href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View source <ArrowUpRight size={12} />
+          </a>
+        );
+    } catch {
+      /* Untrusted or non-URL text remains plain text. */
+    }
+  }
   if (text.length <= 160) return text;
   return (
     <details className="data-cell-detail">
@@ -305,6 +322,59 @@ function DataValue({ value }: { value: unknown }) {
       </summary>
       <div className="data-cell-value">{text}</div>
     </details>
+  );
+}
+export function DataPreview({ rows }: { rows: Record<string, unknown>[] }) {
+  const priority = [
+    "brand_name",
+    "product_description",
+    "device_name",
+    "reason_for_recall",
+    "classification",
+    "status",
+    "approval_date",
+    "sponsor_name",
+    "application_number",
+  ];
+  if (!rows.length) return <p className="muted">No sample available.</p>;
+  return (
+    <ol className="sample-records" aria-label="Sample records">
+      {rows.map((row, index) => {
+        const fields = Object.keys(row).filter((key) => key !== "source_url");
+        fields.sort(
+          (a, b) =>
+            (priority.includes(a) ? priority.indexOf(a) : priority.length) -
+            (priority.includes(b) ? priority.indexOf(b) : priority.length),
+        );
+        const renderFields = (keys: string[]) => (
+          <dl>
+            {keys.map((key) => (
+              <div key={key}>
+                <dt>{key.replaceAll("_", " ")}</dt>
+                <dd>
+                  <DataValue value={row[key]} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        );
+        return (
+          <li key={index}>
+            <div className="sample-record-heading">
+              <strong>Sample {index + 1}</strong>
+              {row.source_url != null && <DataValue value={row.source_url} />}
+            </div>
+            {renderFields(fields.slice(0, 4))}
+            {fields.length > 4 && (
+              <details className="sample-more">
+                <summary>All sample fields</summary>
+                {renderFields(fields.slice(4))}
+              </details>
+            )}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 export const shortId = (id: string) => id.slice(-8).toUpperCase();

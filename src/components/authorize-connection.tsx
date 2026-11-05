@@ -63,8 +63,13 @@ export function AuthorizeConnection({
                 </li>
                 {connection.scopes.includes("purchase") && (
                   <li>
-                    <Check size={17} /> Create quotes and request purchases for
-                    your approval
+                    <Check size={17} /> Request purchases for your approval
+                  </li>
+                )}
+                {connection.scopes.includes("support") && (
+                  <li>
+                    <Check size={17} /> Submit purchase issues and supporting
+                    evidence for review
                   </li>
                 )}
                 {connection.scopes.includes("offline_access") && (

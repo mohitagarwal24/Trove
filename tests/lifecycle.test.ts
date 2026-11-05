@@ -22,9 +22,9 @@ import {
   cancelPurchase,
 } from "../src/server/purchases";
 import {
-  requestRefund,
   processRefund,
   settlePurchase,
+  reconcileRefundEvent,
 } from "../src/server/settlement";
 import {
   paymentApi,
@@ -32,6 +32,12 @@ import {
   verifyWebhook,
   type PaymentResource,
 } from "../src/server/paypal";
+import {
+  openDispute,
+  getDispute,
+  replyToDispute,
+  reviewDispute,
+} from "../src/server/disputes";
 import { prepareConnector } from "../src/server/connectors";
 import { eligibility, searchOffers } from "../src/server/catalog";
 import { editOffer } from "../src/server/sellers";
@@ -42,6 +48,23 @@ import { requireCron } from "../src/server/cron-auth";
 import { persistVerifiedWebhook } from "../src/server/webhooks";
 import { syncSources, normalizeSource } from "../src/server/datasets";
 import { rateLimit } from "../src/server/rate-limit";
+async function approveReviewedRefund(
+  buyer: Actor,
+  purchaseId: string,
+  description: string,
+) {
+  const dispute = await openDispute(buyer, purchaseId, {
+    category: "wrong_scope",
+    description,
+  });
+  await reviewDispute({
+    id: dispute.id,
+    reviewer: "test-operator",
+    decision: "approve",
+    reason:
+      "Test-isolated evidence confirms the delivered scope was incorrect.",
+  });
+}
 const suffix = randomUUID(),
   otherWorkspaceId = `test-other-${suffix}`,
   sellerId = `test-seller-${suffix}`;
@@ -246,7 +269,9 @@ after(async () => {
         ],
       },
     });
-    await tx.webhookEvent.deleteMany({ where: { id: `test-${suffix}` } });
+    await tx.webhookEvent.deleteMany({
+      where: { id: { startsWith: `test-${suffix}` } },
+    });
     await tx.auditEvent.deleteMany({
       where: {
         OR: [
@@ -269,6 +294,10 @@ after(async () => {
       tx.budgetReservation,
     ] as any[])
       await model.deleteMany({ where: { purchaseId: { in: ids } } });
+    await tx.disputeMessage.deleteMany({
+      where: { dispute: { purchaseId: { in: ids } } },
+    });
+    await tx.purchaseDispute.deleteMany({ where: { purchaseId: { in: ids } } });
     await tx.purchase.deleteMany({ where: { id: { in: ids } } });
     await tx.quoteLine.deleteMany({
       where: { quote: { workspaceId: { in: workspaceIds } } },
@@ -721,7 +750,7 @@ test("price and row-order changes preserve ownership, while changed source conte
   const updated = await variant(changedRows, 2);
   const newBatch = await createQuote(actor, { offerIds: [updated.id] });
   assert(newBatch.totalCents > 0);
-  await requestRefund(actor, p.id, "Revoke purchased data ownership");
+  await approveReviewedRefund(actor, p.id, "Revoke purchased data ownership");
   await processRefund(p.id);
   const refunded = await quote();
   assert(refunded.totalCents > 0);
@@ -781,7 +810,7 @@ test("agent discovery enforces exact fields, matching quantities and a complete 
 test("refund is idempotent, revokes access and balances the ledger", async () => {
   const p = await purchase();
   await approve(p.id);
-  await requestRefund(actor, p.id, "Refund this research purchase");
+  await approveReviewedRefund(actor, p.id, "Refund this research purchase");
   await processRefund(p.id);
   await processRefund(p.id);
   assert.equal((await getPurchase(actor, p.id)).paymentState, "refunded");
@@ -798,7 +827,7 @@ test("refund is idempotent, revokes access and balances the ledger", async () =>
 test("a mismatched refund cannot revoke access or finalize accounting", async () => {
   const p = await purchase();
   await approve(p.id);
-  await requestRefund(actor, p.id, "Verify exact refund amount");
+  await approveReviewedRefund(actor, p.id, "Verify exact refund amount");
   const original = paymentApi.refund;
   paymentApi.refund = async () => ({
     id: "TEST-WRONG-REFUND",
@@ -838,7 +867,7 @@ test("refund after payout requires seller recovery", async () => {
     where: { purchaseId: p.id },
     data: { state: "paid" },
   });
-  await requestRefund(actor, p.id, "Refund after seller payout");
+  await approveReviewedRefund(actor, p.id, "Refund after seller payout");
   await processRefund(p.id);
   assert.equal(
     (await getPurchase(actor, p.id)).settlementState,
@@ -1383,8 +1412,268 @@ test("library and evidence use active workspace ownership and recover expired ca
     evidence.sources[0].content.fingerprint,
   );
   assert.equal(captureCalls, calls);
-  await requestRefund(actor, p.id, "Evidence export revocation acceptance");
+  await approveReviewedRefund(
+    actor,
+    p.id,
+    "Evidence export revocation acceptance",
+  );
   await processRefund(p.id);
   await assert.rejects(() => getEvidence(actor, p.id), /completed purchase/);
   assert.equal((await listLibrary(actor)).items.length, 0);
+});
+
+test("filing a purchase issue never queues a refund, revokes access or changes capture", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  let processorCalls = 0;
+  const old = paymentApi.refund;
+  paymentApi.refund = async () => {
+    processorCalls++;
+    throw new Error("Must not refund");
+  };
+  try {
+    const input = {
+      category: "missing_data" as const,
+      description:
+        "The agreed records appear to be missing the expected product details.",
+    };
+    const first = await openDispute(actor, p.id, input);
+    const again = await openDispute(actor, p.id, input);
+    assert.equal(first.id, again.id);
+    assert.equal((await getPurchase(actor, p.id)).paymentState, "captured");
+    assert.equal(await db.refund.count({ where: { purchaseId: p.id } }), 0);
+    assert.equal(
+      await db.job.count({ where: { resourceId: p.id, type: "refund" } }),
+      0,
+    );
+    assert.equal(processorCalls, 0);
+    assert((await getResult(actor, p.id)).sources.length);
+    assert.equal((first.evidence as any).planHash, p.quote.planHash);
+    await assert.rejects(
+      () => getDispute(other, p.id),
+      /not found in this workspace/,
+    );
+    await assert.rejects(
+      () =>
+        openDispute(
+          { ...actor, viaToken: true, scopes: ["read", "purchase"] },
+          p.id,
+          input,
+        ),
+      /support access/,
+    );
+    assert.equal(
+      (await getDispute({ ...actor, viaToken: true, scopes: ["read"] }, p.id))
+        ?.id,
+      first.id,
+    );
+  } finally {
+    paymentApi.refund = old;
+  }
+});
+test("support review requests evidence, rejects, and reopens without issuing a refund", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  const dispute = await openDispute(actor, p.id, {
+    category: "wrong_scope",
+    description:
+      "The delivered data does not seem to cover the agreed product scope.",
+  });
+  await reviewDispute({
+    id: dispute.id,
+    reviewer: "reviewer-a",
+    decision: "request_information",
+    reason:
+      "Please identify the missing fields and the affected record identifiers.",
+  });
+  assert.equal((await getDispute(actor, p.id))?.state, "needs_information");
+  await replyToDispute(actor, p.id, {
+    message: "The missing values are in the second delivered product record.",
+  });
+  await reviewDispute({
+    id: dispute.id,
+    reviewer: "reviewer-a",
+    decision: "reject",
+    reason:
+      "The supplied identifiers and agreed fields match the immutable delivered records.",
+  });
+  assert.equal((await getDispute(actor, p.id))?.state, "rejected");
+  assert.equal((await getPurchase(actor, p.id)).paymentState, "captured");
+  assert.equal(await db.refund.count({ where: { purchaseId: p.id } }), 0);
+  await replyToDispute(actor, p.id, {
+    message:
+      "Here is new evidence that was not included with my first complaint.",
+    evidenceUrls: ["https://example.com/evidence"],
+  });
+  assert.equal((await getDispute(actor, p.id))?.messages.length, 5);
+  assert.equal((await getDispute(actor, p.id))?.state, "open");
+});
+test("refund worker rejects a refund record without a review decision", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  await db.refund.create({
+    data: {
+      purchaseId: p.id,
+      requestId: randomUUID(),
+      reason: "Unapproved request must never reach the processor",
+    },
+  });
+  await assert.rejects(() => processRefund(p.id), /requires an approved/);
+  assert.equal((await getPurchase(actor, p.id)).paymentState, "captured");
+  assert((await getResult(actor, p.id)).sources.length);
+});
+test("review approval is idempotent and only confirmed PayPal completion resolves a case", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  const dispute = await openDispute(actor, p.id, {
+    category: "damaged_data",
+    description:
+      "Records were delivered with broken formatting and cannot be used as agreed.",
+  });
+  const decision = {
+    id: dispute.id,
+    reviewer: "reviewer-b",
+    decision: "approve" as const,
+    reason:
+      "The provided evidence demonstrates that the delivery fails its agreed schema.",
+  };
+  await reviewDispute(decision);
+  await reviewDispute(decision);
+  assert.equal(await db.refund.count({ where: { purchaseId: p.id } }), 1);
+  assert.equal((await getDispute(actor, p.id))?.state, "approved");
+  assert.equal((await getPurchase(actor, p.id)).paymentState, "refund_pending");
+  await assert.rejects(
+    () => reviewDispute({ ...decision, decision: "reject" }),
+    /already committed/,
+  );
+  await processRefund(p.id);
+  await processRefund(p.id);
+  assert.equal((await getDispute(actor, p.id))?.state, "resolved_refund");
+  assert.equal((await getPurchase(actor, p.id)).paymentState, "refunded");
+});
+test("purchase issue evidence accepts safe links only and does not fetch them", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  for (const url of [
+    "javascript:alert(1)",
+    "http://example.com/file",
+    "https://user:password@example.com/file",
+  ]) {
+    await assert.rejects(() =>
+      openDispute(actor, p.id, {
+        category: "other",
+        description:
+          "A sufficiently detailed description for evidence validation.",
+        evidenceUrls: [url],
+      }),
+    );
+  }
+  const result = await openDispute(
+    { ...actor, viaToken: true, scopes: ["read", "support"] },
+    p.id,
+    {
+      category: "other",
+      description:
+        "A sufficiently detailed description for evidence validation.",
+      evidenceUrls: ["https://example.com/file"],
+    },
+  );
+  assert.deepEqual(result.evidenceUrls, ["https://example.com/file"]);
+});
+
+test("open purchase issues hold new payouts; rejecting a case restores the settlement job", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  const dispute = await openDispute(actor, p.id, {
+    category: "missing_data",
+    description:
+      "The requested product information appears absent from the agreed delivery.",
+  });
+  const oldEnabled = process.env.PAYPAL_PAYOUTS_ENABLED;
+  process.env.PAYPAL_PAYOUTS_ENABLED = "true";
+  await db.seller.update({
+    where: { id: sellerId },
+    data: { payoutEmail: "test-only@example.com" },
+  });
+  try {
+    await settlePurchase(p.id);
+    const payables = await db.sellerPayable.findMany({
+      where: { purchaseId: p.id },
+    });
+    assert(payables.every((item) => item.state === "owed"));
+    assert.equal(
+      await db.payoutAttempt.count({
+        where: { payable: { purchaseId: p.id } },
+      }),
+      0,
+    );
+    await reviewDispute({
+      id: dispute.id,
+      reviewer: "reviewer-c",
+      decision: "reject",
+      reason:
+        "The requested fields and row identifiers were all delivered as specified in the quote.",
+    });
+    assert.equal(
+      (await db.job.findUniqueOrThrow({ where: { key: `settle:${p.id}:` } }))
+        .state,
+      "pending",
+    );
+  } finally {
+    process.env.PAYPAL_PAYOUTS_ENABLED = oldEnabled;
+    await db.seller.update({
+      where: { id: sellerId },
+      data: { payoutEmail: null },
+    });
+  }
+});
+test("verified external full refunds reconcile without POSTing a new refund", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  const eventId = `test-${suffix}-external`;
+  const externalId = `TEST_EXTERNAL_${randomUUID()}`;
+  await persistVerifiedWebhook({
+    id: eventId,
+    event_type: "PAYMENT.CAPTURE.REFUNDED",
+    resource: { id: externalId },
+  });
+  const oldGet = paymentApi.getRefund,
+    oldRefund = paymentApi.refund;
+  let posts = 0;
+  paymentApi.refund = async () => {
+    posts++;
+    throw new Error("Must not initiate another refund");
+  };
+  paymentApi.getRefund = async () => ({
+    id: externalId,
+    status: "COMPLETED",
+    amount: {
+      currency_code: "USD",
+      value: (p.quote.totalCents / 100).toFixed(2),
+    },
+    links: [
+      {
+        rel: "up",
+        href: `https://api-m.sandbox.paypal.com/v2/payments/captures/${(await getPurchase(actor, p.id)).captureId}`,
+      },
+    ],
+  });
+  try {
+    await reconcileRefundEvent(eventId);
+    await reconcileRefundEvent(eventId);
+    assert.equal(posts, 0);
+    assert.equal((await getPurchase(actor, p.id)).paymentState, "refunded");
+    await assert.rejects(() => getResult(actor, p.id));
+    assert.equal(await db.refund.count({ where: { purchaseId: p.id } }), 1);
+    const ledger = await db.ledgerEntry.findMany({
+      where: { groupId: `refund:${p.id}` },
+    });
+    assert.equal(
+      ledger.reduce((sum, line) => sum + line.amountCents, 0),
+      0,
+    );
+  } finally {
+    paymentApi.getRefund = oldGet;
+    paymentApi.refund = oldRefund;
+  }
 });

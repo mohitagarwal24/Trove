@@ -233,6 +233,7 @@ model Purchase {
   receipt        Receipt?
   payables       SellerPayable[]
   refunds        Refund[]
+  dispute        PurchaseDispute?
   @@unique([workspaceId, idempotencyKey])
 }
 model BudgetReservation {
@@ -323,8 +324,41 @@ model Refund {
   externalId  String? @unique
   reason      String
   state       String @default("pending")
+  approvalBasis String @default("review_required")
+  disputeId   String? @unique
+  dispute     PurchaseDispute? @relation(fields: [disputeId], references: [id])
   createdAt   DateTime @default(now())
   purchase    Purchase @relation(fields: [purchaseId], references: [id])
+}
+model PurchaseDispute {
+  id          String @id @default(cuid())
+  purchaseId  String @unique
+  openedBy    String
+  category    String
+  description String
+  evidenceUrls String[]
+  evidence    Json
+  state       String @default("open")
+  reviewedBy  String?
+  decisionReason String?
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  purchase    Purchase @relation(fields: [purchaseId], references: [id])
+  messages    DisputeMessage[]
+  refund      Refund?
+  @@index([state, createdAt])
+}
+model DisputeMessage {
+  id          String @id @default(cuid())
+  disputeId   String
+  author      String
+  kind        String
+  body        String
+  evidenceUrls String[]
+  createdAt   DateTime @default(now())
+  dispute     PurchaseDispute @relation(fields: [disputeId], references: [id])
+  @@index([disputeId, createdAt])
 }
 model WebhookEvent {
   id          String @id

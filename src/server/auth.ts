@@ -199,9 +199,10 @@ export async function issueToken(actor: Actor, name: string, scopes: string[]) {
   requireBrowser(actor);
   requireVerifiedEmail(actor);
   assert(
-    scopes.length > 0 && scopes.every((s) => ["read", "purchase"].includes(s)),
+    scopes.length > 0 &&
+      scopes.every((s) => ["read", "purchase", "support"].includes(s)),
     "INVALID_SCOPES",
-    "Only read and purchase scopes may be delegated.",
+    "Only read, purchase and support scopes may be delegated.",
   );
   const value = "trv_" + randomBytes(32).toString("base64url");
   const token = await db.agentToken.create({

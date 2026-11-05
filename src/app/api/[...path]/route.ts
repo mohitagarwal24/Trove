@@ -36,7 +36,13 @@ import {
   enqueue,
   purchaseInclude,
 } from "@/server/purchases";
-import { requestRefund } from "@/server/settlement";
+import {
+  openDispute,
+  getDispute,
+  replyToDispute,
+  disputeSchema,
+  disputeReplySchema,
+} from "@/server/disputes";
 import {
   sellerDashboard,
   editOffer,
@@ -306,8 +312,7 @@ async function handler(
         return response;
       }
     }
-    const purchaseScope =
-      method === "POST" && ["tasks", "quotes", "purchases"].includes(path[0]);
+    const purchaseScope = method === "POST" && path[0] === "purchases";
     const actor = await authenticate(
       request,
       purchaseScope ? "purchase" : "read",
@@ -347,7 +352,11 @@ async function handler(
         db.taskRun.findMany({ where: { workspaceId: actor.workspaceId } }),
         db.purchase.findMany({
           where: { workspaceId: actor.workspaceId },
-          include: { receipt: true, refunds: true },
+          include: {
+            receipt: true,
+            refunds: true,
+            dispute: { include: { messages: true } },
+          },
         }),
       ]);
       return json({
@@ -537,7 +546,25 @@ async function handler(
           refunds: p.refunds,
         });
       }
+      if (path[2] === "dispute" && method === "GET")
+        return json(await getDispute(actor, id));
       requireBrowser(actor);
+      if (path[2] === "dispute" && method === "POST")
+        return json(
+          await openDispute(
+            actor,
+            id,
+            disputeSchema.parse(await readJson(request)),
+          ),
+        );
+      if (path[2] === "dispute-reply" && method === "POST")
+        return json(
+          await replyToDispute(
+            actor,
+            id,
+            disputeReplySchema.parse(await readJson(request)),
+          ),
+        );
       if (path[2] === "order" && method === "POST")
         return json(await createPayPalOrder(actor, id));
       if (path[2] === "approve" && method === "POST") {
@@ -567,7 +594,13 @@ async function handler(
         const input = z
           .object({ reason: z.string().min(10).max(500) })
           .parse(await readJson(request));
-        return json(await requestRefund(actor, id, input.reason));
+        // Compatibility with older clients: filing an issue never issues a refund.
+        return json(
+          await openDispute(actor, id, {
+            category: "other",
+            description: input.reason,
+          }),
+        );
       }
     }
     if (route === "tokens" && method === "GET") {
@@ -599,7 +632,7 @@ async function handler(
         .object({
           name: z.string().min(1).max(60),
           scopes: z
-            .array(z.enum(["read", "purchase"]))
+            .array(z.enum(["read", "purchase", "support"]))
             .min(1)
             .default(["read", "purchase"]),
         })
