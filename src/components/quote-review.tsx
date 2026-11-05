@@ -2,12 +2,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Clock3, LockKeyhole, ShieldCheck } from "lucide-react";
+import { ArrowRight, Clock3, ShieldCheck } from "lucide-react";
 import type { PurchaseView, QuoteView } from "@/lib/types";
 import { purposeLabel, money } from "@/lib/types";
 import { post } from "@/lib/client";
 import { useTrove } from "./trove-context";
-import { Badge, Modal, Notice } from "./ui";
+import { Modal, Notice } from "./ui";
 export function QuoteReview({
   quote,
   onClose,
@@ -53,22 +53,13 @@ export function QuoteReview({
     <Modal
       open={!!quote}
       onOpenChange={(open) => !open && onClose()}
-      title={owned ? "Already purchased" : "Review your purchase plan"}
-      description={
-        owned
-          ? "Open your data at no extra charge."
-          : "Confirm the data, price and access terms."
-      }
+      title={owned ? "Already purchased" : "Review purchase"}
       wide
     >
       {quote && (
         <div className="quote-review">
           {!owned && (
             <div className="quote-meta">
-              <Badge tone="green">
-                <LockKeyhole size={11} />
-                Price reserved
-              </Badge>
               <span className={seconds === 0 ? "error-text" : "muted"}>
                 <Clock3 size={13} />
                 {seconds
@@ -107,24 +98,27 @@ export function QuoteReview({
                 <div>
                   <strong>{line.snapshot.title}</strong>
                   <span>
-                    {line.snapshot.sellerName} · Version {line.snapshot.version}{" "}
-                    · {line.quantity} records
+                    {line.snapshot.sellerName} · {line.quantity} records
                   </span>
-                  <small>
-                    {line.fields
-                      .map((field) => field.replaceAll("_", " "))
-                      .join(" · ")}
-                  </small>
-                  {!!line.snapshot.filters?.length && (
+                  <details className="quote-scope disclosure">
+                    <summary>Scope details</summary>
                     <small>
-                      {line.snapshot.filters
-                        .map(
-                          (f) =>
-                            `${f.field.replaceAll("_", " ")} ${f.operator} ${f.value}`,
-                        )
+                      {line.fields
+                        .map((field) => field.replaceAll("_", " "))
                         .join(" · ")}
                     </small>
-                  )}
+                    {!!line.snapshot.filters?.length && (
+                      <small>
+                        {line.snapshot.filters
+                          .map(
+                            (f) =>
+                              `${f.field.replaceAll("_", " ")} ${f.operator} ${f.value}`,
+                          )
+                          .join(" · ")}
+                      </small>
+                    )}
+                    <small>Version {line.snapshot.version}</small>
+                  </details>
                   <span className="quote-license">
                     <ShieldCheck size={12} />
                     {purposeLabel(quote.purpose)}
@@ -136,16 +130,19 @@ export function QuoteReview({
           </div>
           {!owned && (
             <div className="quote-breakdown">
-              <div>
-                <span>Data preparation</span>
-                <span>{money(quote.totalCents - quote.commissionCents)}</span>
-              </div>
-              <div>
-                <span>
-                  Trove fee <small>(included)</small>
-                </span>
-                <span>{money(quote.commissionCents)}</span>
-              </div>
+              <details className="disclosure">
+                <summary>Price breakdown</summary>
+                <div>
+                  <span>Data preparation</span>
+                  <span>{money(quote.totalCents - quote.commissionCents)}</span>
+                </div>
+                <div>
+                  <span>
+                    Trove fee <small>(included)</small>
+                  </span>
+                  <span>{money(quote.commissionCents)}</span>
+                </div>
+              </details>
               <div className="quote-total">
                 <span>Total</span>
                 <span>
@@ -154,7 +151,7 @@ export function QuoteReview({
               </div>
             </div>
           )}
-          <details className="purchase-terms">
+          <details className="purchase-terms disclosure">
             <summary>Source licences and access</summary>
             {quote.lines.map((line) => (
               <p key={line.id}>
@@ -163,8 +160,8 @@ export function QuoteReview({
             ))}
             <p>
               The same purchased batch and scope can be downloaded again at no
-              charge. Updated batches or additional records and fields require a
-              new quote. Source licence terms apply.
+              charge. Changes to the purchased data or scope require a new
+              quote. Source licence terms apply.
             </p>
           </details>
           {!owned && capabilities.paymentEnvironment === "sandbox" && (

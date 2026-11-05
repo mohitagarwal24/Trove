@@ -1,3 +1,21 @@
+# Current submission readiness — 5 November 2026
+
+The core purchase-and-reuse path has real external evidence: a hosted PayPal Sandbox payment of **USD 1.40** returned `COMPLETED`, with captured payment, available data, active entitlement and receipt. An authenticated connected Trove AI client subsequently discovered the owned scope at **zero cost** and retrieved the same ten source records twice. No extra quote or purchase was created. Local UI payment captures are separately marked `TEST_ONLY`; they are not the basis for this claim.
+
+Current local checks: **74 backend tests and 38 browser tests passed**, strict types and production build passed, dependency audit reports zero vulnerabilities. UI refinement removes repeated instructions, empty dashboard panels and purchase metrics; exact price/approval remains prominent while scope, fees, rights and developer details use named disclosures. The independent review and deployment record are maintained in [AUDIT.md](AUDIT.md).
+
+Before submitting:
+
+- Complete a real hosted Google sign-in, delivered email verification and password recovery check if not already personally verified. Automated callback/mail-boundary tests are not provider-delivery proof.
+- Verify signed PayPal webhook delivery and refund completion with a disposable Sandbox purchase if those capabilities will be demonstrated. No matching persisted webhook event was found for the verified purchase; successful capture alone does not establish webhook delivery. Do not refund the research batch needed for the demonstration.
+- Record the real agent → discovery → exact-price PayPal approval → delivered data → free reuse flow. Optional Gemini briefs are separate from the verified external-agent path. Payouts remain disabled and must not be represented as completed seller payments.
+- Finish the project story, tool descriptions, source/provider disclosure and a working demo link. The public repository already has a detected MIT licence. Give judges clear access and Sandbox testing instructions without publishing private merchant credentials.
+- Add the YouTube demonstration, under three minutes, and submit the Devpost entry. The [official rules](https://paypalaihackathon.devpost.com/rules) list **12 November 2026, noon Pacific** as the submission deadline and require meaningful PayPal + AI use, functional access, public licensed source, description and video. Keep judge access available through the judging period ending 15 December.
+
+This is a verified hackathon core, not a claim of unrestricted live-commerce launch readiness. Real provider contracts, merchant approval, support and payout operations remain commercial-launch work.
+
+---
+
 # Pre-demo implementation plan
 
 Scope authorised 3 November 2026: complete the remaining product implementation before recording the demo. Preserve exact-price human approval, actual public source data, private workspaces, revocation and the established interface. Use existing free services; no new API keys or dependencies.

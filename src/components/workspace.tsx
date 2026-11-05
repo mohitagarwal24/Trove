@@ -7,7 +7,6 @@ import {
   Check,
   FileCheck2,
   ListFilter,
-  ShieldCheck,
   Sparkles,
   X,
 } from "lucide-react";
@@ -181,16 +180,31 @@ export function Workspace() {
     return cents == null ? "Quote required" : money(cents);
   };
   const taskPurchases = purchases.filter((p) => p.taskId === task?.id);
+  const spendingLimit = (
+    <label>
+      Task spending limit
+      <div className="money-input">
+        <span>$</span>
+        <input
+          id="task-budget"
+          type="number"
+          min="0.50"
+          max="1000"
+          step="0.50"
+          value={budget}
+          onChange={(e) => setBudget(e.target.value)}
+        />
+        <span>USD</span>
+      </div>
+    </label>
+  );
   return (
-    <div className="page-enter">
+    <div
+      className={`page-enter workspace-page ${!task ? "workspace-new" : ""}`}
+    >
       <section className="page-heading compact-heading workspace-heading">
         <div>
-          <h1>Research workspace</h1>
-          <p>
-            {task && !editingScope
-              ? "Sources matched to your requirements."
-              : "What data do you need?"}
-          </p>
+          <h1>{task ? "Your research" : "What data do you need?"}</h1>
         </div>
         {task && (
           <Link
@@ -216,7 +230,6 @@ export function Workspace() {
             aria-label="Current research scope"
           >
             <div>
-              <span className="section-eyebrow">Research scope</span>
               <strong>{task.prompt}</strong>
               <span>
                 {task.requirements.needs
@@ -247,16 +260,6 @@ export function Workspace() {
             id="research-composer"
             tabIndex={-1}
           >
-            <div className="panel-title">
-              <span className="sparkle-box">
-                <Sparkles size={17} />
-              </span>
-              <h2>
-                {mode === "brief"
-                  ? "Your research brief"
-                  : "Your data requirements"}
-              </h2>
-            </div>
             <div
               className="research-mode"
               role="group"
@@ -286,6 +289,7 @@ export function Workspace() {
               <ResearchRequirements
                 value={requirements}
                 onChange={setRequirements}
+                spendingLimit={spendingLimit}
               />
             ) : (
               <>
@@ -309,31 +313,9 @@ export function Workspace() {
                 </div>
               </>
             )}
-            <div className="form-row">
-              <label>
-                Task spending limit
-                <div className="money-input">
-                  <span>$</span>
-                  <input
-                    id="task-budget"
-                    type="number"
-                    min="0.50"
-                    max="1000"
-                    step="0.50"
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                  />
-                  <span>USD</span>
-                </div>
-              </label>
-            </div>
-            <div className="policy-note">
-              <ShieldCheck size={16} />
-              <p>
-                Pay with PayPal after reviewing your purchase. No upfront
-                deposit.
-              </p>
-            </div>
+            {mode === "brief" && (
+              <div className="form-row">{spendingLimit}</div>
+            )}
             {researchError && (
               <Notice kind="error">
                 {researchError}
@@ -368,31 +350,13 @@ export function Workspace() {
               {running ? "Comparing permitted sources…" : "Find sources"}
               <ArrowRight size={16} />
             </button>
+            <p className="composer-payment-note">
+              Searching is free. You approve any purchase.
+            </p>
           </section>
         )}
         <section className="task-output">
-          {!task && !running ? (
-            <div className="workspace-welcome">
-              <div className="research-outline" aria-hidden="true">
-                <ListFilter size={24} />
-                <span />
-                <FileCheck2 size={24} />
-              </div>
-              <h2>
-                Requirements in.
-                <br />
-                <span>Relevant sources out.</span>
-              </h2>
-              <p>
-                Choose the data you need. Your source comparison will appear
-                here.
-              </p>
-              <div className="workspace-reassurance">
-                <ShieldCheck size={15} />
-                You approve every purchase.
-              </div>
-            </div>
-          ) : running ? (
+          {running ? (
             <div className="planning-state panel" role="status">
               <span className="button-spinner" />
               <h2>Comparing sources</h2>
@@ -425,56 +389,87 @@ export function Workspace() {
                     </Notice>
                   )}
                   <div className="source-decision-list">
-                    {task.decisions.map((d) => (
-                      <div
-                        data-reveal
-                        className={`source-decision ${d.selected ? "decision-selected" : ""}`}
-                        key={d.offerId}
-                      >
-                        <span className="decision-icon">
-                          {d.selected ? <Check size={15} /> : <X size={14} />}
-                        </span>
-                        <div>
-                          <strong>{d.title}</strong>
-                          <p>{d.reason.replaceAll("_", " ")}</p>
-                          {d.requestedRecords !== undefined && (
-                            <p className="decision-coverage">
-                              {d.availabilityChecked
-                                ? `${d.requestedRecords} requested · ${d.availableRecords} available`
-                                : "Availability not checked"}{" "}
-                              ·{" "}
-                              {d.requiredFields!.length -
-                                (d.missingFields?.length || 0)}
-                              /{d.requiredFields!.length} required fields
-                              {d.acquisition === "owned" &&
-                                " · Already purchased"}
-                            </p>
-                          )}
-                          {!!d.requiredFields?.length && (
-                            <details className="decision-fields">
-                              <summary>Scope details</summary>
-                              <p>
-                                {d.requiredFields
-                                  .map((f) => f.replaceAll("_", " "))
-                                  .join(" · ")}
+                    {task.decisions
+                      .filter(
+                        (d) =>
+                          d.selected ||
+                          !task.decisions.some((item) => item.selected),
+                      )
+                      .map((d) => (
+                        <div
+                          data-reveal
+                          className={`source-decision ${d.selected ? "decision-selected" : ""}`}
+                          key={d.offerId}
+                        >
+                          <span className="decision-icon">
+                            {d.selected ? <Check size={15} /> : <X size={14} />}
+                          </span>
+                          <div>
+                            <strong>{d.title}</strong>
+                            {!d.selected && (
+                              <p>{d.reason.replaceAll("_", " ")}</p>
+                            )}
+                            {d.requestedRecords !== undefined && (
+                              <p className="decision-coverage">
+                                {d.availabilityChecked
+                                  ? `${d.requestedRecords} requested · ${d.availableRecords} available`
+                                  : "Availability not checked"}{" "}
+                                ·{" "}
+                                {d.requiredFields!.length -
+                                  (d.missingFields?.length || 0)}
+                                /{d.requiredFields!.length} required fields
+                                {d.acquisition === "owned" &&
+                                  " · Already purchased"}
                               </p>
-                              {d.freshnessAt && (
+                            )}
+                            {!!d.requiredFields?.length && (
+                              <details className="decision-fields">
+                                <summary>Scope details</summary>
+                                <p>{d.reason.replaceAll("_", " ")}</p>
                                 <p>
-                                  Source snapshot:{" "}
-                                  {new Date(d.freshnessAt).toLocaleDateString(
-                                    "en-US",
-                                  )}
+                                  {d.requiredFields
+                                    .map((f) => f.replaceAll("_", " "))
+                                    .join(" · ")}
                                 </p>
-                              )}
-                            </details>
-                          )}
+                                {d.freshnessAt && (
+                                  <p>
+                                    Source snapshot:{" "}
+                                    {new Date(d.freshnessAt).toLocaleDateString(
+                                      "en-US",
+                                    )}
+                                  </p>
+                                )}
+                              </details>
+                            )}
+                          </div>
+                          <span className="decision-price">
+                            {decisionPrice(d)}
+                          </span>
                         </div>
-                        <span className="decision-price">
-                          {decisionPrice(d)}
-                        </span>
-                      </div>
-                    ))}
+                      ))}
                   </div>
+                  {task.decisions.some((d) => d.selected) &&
+                    task.decisions.some((d) => !d.selected) && (
+                      <details className="other-sources disclosure">
+                        <summary>
+                          Other sources{" "}
+                          <span>
+                            {task.decisions.filter((d) => !d.selected).length}
+                          </span>
+                        </summary>
+                        {task.decisions
+                          .filter((d) => !d.selected)
+                          .map((d) => (
+                            <div className="alternative-source" key={d.offerId}>
+                              <div>
+                                <strong>{d.title}</strong>
+                                <p>{d.reason.replaceAll("_", " ")}</p>
+                              </div>
+                              <span>{decisionPrice(d)}</span>
+                            </div>
+                          ))}
+                      </details>
+                    )}
                   {task.decisions.some((d) => d.selected) ? (
                     <div className="decision-summary">
                       <div>

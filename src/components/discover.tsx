@@ -441,26 +441,10 @@ export function OfferDetail({
             </div>
           </div>
           <p className="detail-description">{offer.description}</p>
-          <div className="detail-facts">
-            <div>
-              <span>Coverage</span>
-              <strong>{offer.coverage}</strong>
-            </div>
-            <div>
-              <span>Declared snapshot</span>
-              <strong>{new Date(offer.freshnessAt).toLocaleString()}</strong>
-            </div>
-            <div>
-              <span>Scope</span>
-              <strong>
-                Up to {offer.recordLimit} records · v{offer.version}
-              </strong>
-            </div>
-            <div>
-              <span>Access</span>
-              <strong>{offer.accessClass.replaceAll("_", " ")}</strong>
-            </div>
-          </div>
+          <p className="source-essentials">
+            Up to {offer.recordLimit} records <span>·</span> Snapshot{" "}
+            {new Date(offer.freshnessAt).toLocaleDateString()}
+          </p>
           {offer.sourceUrl && (
             <p className="caption">
               {offer.sourceAttribution}{" "}
@@ -474,42 +458,49 @@ export function OfferDetail({
               </a>
             </p>
           )}
-          <h4>Available fields</h4>
-          <div className="field-chips">
-            {offer.fields.map((f) => (
-              <span key={f}>
-                <Check size={12} />
-                {f.replaceAll("_", " ")}
-              </span>
-            ))}
-          </div>
-          <h4>Restricted fields</h4>
-          <div className="field-chips prohibited">
-            {offer.prohibited.map((f) => (
-              <span key={f}>
-                <X size={12} />
-                {f.replaceAll("_", " ")}
-              </span>
-            ))}
-          </div>
-          <div className="licence-box">
-            <ShieldCheck size={18} />
-            <div>
-              <strong>Usage licence</strong>
-              <p>{offer.license}</p>
-              <small>
-                Permitted purposes:{" "}
-                {offer.purposes.map(purposeLabel).join(", ")}
-              </small>
-            </div>
-          </div>
           <h4>
-            Approved public preview <Badge>2 sample rows</Badge>
+            Data preview{" "}
+            <Badge>{(offer.preview as unknown[]).length} sample rows</Badge>
           </h4>
           <DataTable rows={offer.preview as Record<string, unknown>[]} />
-          <p className="caption">
-            Preview only. Purchase to access the full scoped batch.
-          </p>
+          <details className="disclosure source-details">
+            <summary>Fields and coverage</summary>
+            <p className="caption">
+              {offer.coverage} · Version {offer.version}
+            </p>
+            <h4>Available fields</h4>
+            <div className="field-chips">
+              {offer.fields.map((f) => (
+                <span key={f}>
+                  <Check size={12} />
+                  {f.replaceAll("_", " ")}
+                </span>
+              ))}
+            </div>
+            <h4>Restricted fields</h4>
+            <div className="field-chips prohibited">
+              {offer.prohibited.map((f) => (
+                <span key={f}>
+                  <X size={12} />
+                  {f.replaceAll("_", " ")}
+                </span>
+              ))}
+            </div>
+          </details>
+          <details className="disclosure source-details">
+            <summary>Usage terms</summary>
+            <div className="licence-box">
+              <ShieldCheck size={18} />
+              <div>
+                <strong>Usage licence</strong>
+                <p>{offer.license}</p>
+                <small>
+                  Permitted purposes:{" "}
+                  {offer.purposes.map(purposeLabel).join(", ")}
+                </small>
+              </div>
+            </div>
+          </details>
           <div className="dialog-actions">
             <button className="button button-secondary" onClick={onClose}>
               Back to catalogue

@@ -105,7 +105,6 @@ export function OwnedData() {
       <section className="page-heading compact-heading">
         <div>
           <h1>Your data</h1>
-          <p>Purchased sources, ready to use again.</p>
         </div>
         <Link className="button button-secondary" href="/discover">
           Explore data <ArrowRight size={16} />
@@ -216,6 +215,7 @@ export function OwnedData() {
                         Source snapshot:{" "}
                         {new Date(item.freshnessAt).toLocaleDateString("en-US")}
                       </p>
+                      <EvidenceDownload purchaseId={item.purchaseId} />
                     </details>
                     {item.currentVersion && (
                       <Link
@@ -234,7 +234,6 @@ export function OwnedData() {
                     >
                       Open data <ArrowRight size={15} />
                     </Link>
-                    <EvidenceDownload purchaseId={item.purchaseId} />
                     <Link
                       href={`/purchases/${item.purchaseId}?tab=receipt`}
                       className="text-link"

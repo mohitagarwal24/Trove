@@ -58,4 +58,6 @@ npm run check:integrations
 
 Backend tests require the local database and use isolated accounts plus controlled provider responses **inside tests only**. They never move money or consume AI quota. Browser tests register unique accounts and exercise real app endpoints. External buyer approval, signed webhook delivery, refunds and seller payouts require the manual credentialed checks; configured keys alone do not establish success.
 
+Before recording or submitting, use the [current readiness checklist](docs/PRE_DEMO_IMPLEMENTATION.md) and [manual workflow guide](docs/MANUAL_TESTING.md). They distinguish automated coverage, actual Sandbox/client evidence and remaining operator checks.
+
 Useful commands: `npm run data:sync`, `npm run provider:review -- <seller-id> approve|suspend [verified-payout-email]`, `npm run search:index`, `npm run worker`, `npm run mcp`. See [architecture](docs/ARCHITECTURE.md), [audit and validation](docs/AUDIT.md), [design](docs/DESIGN.md), and the [resource review](docs/RESOURCES.md). Source code is MIT; bundled fonts retain their OFL licences.

@@ -34,9 +34,7 @@ test("catalogue filtering, public preview and authenticated purchase review", as
     .getByRole("button", { name: "Sign in", exact: true })
     .last()
     .click();
-  await expect(page.getByRole("dialog")).toContainText(
-    "Review your purchase plan",
-  );
+  await expect(page.getByRole("dialog")).toContainText("Review purchase");
   await expect(page.getByRole("dialog")).toContainText("$3.20");
   const { capabilities } = await (
     await page.request.get("/api/bootstrap")

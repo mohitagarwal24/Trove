@@ -104,11 +104,12 @@ test("verified email login reaches a private dashboard and preserves safe return
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading", { name: /^Welcome,/ })).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Overview", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByText("Your first research starts above.", { exact: true }),
+    page.getByRole("heading", {
+      name: "What are you researching?",
+      exact: true,
+    }),
   ).toBeVisible();
   await page.goto("/sign-in?returnTo=https://outside.example");
   await expect(page).toHaveURL(/\/dashboard$/);

@@ -140,17 +140,11 @@ export function Connect() {
       <section className="page-heading compact-heading">
         <div>
           <h1>Connect your agent</h1>
-          <p>Bring Trove’s data to ChatGPT, Claude or Codex.</p>
         </div>
       </section>
       <div className="connect-layout">
         <div className="connect-main">
           <section className="panel setup-card client-setup">
-            <div className="setup-heading">
-              <div>
-                <h2>Connect with your Trove account</h2>
-              </div>
-            </div>
             <label className="client-picker">
               Agent client
               <select
@@ -180,12 +174,21 @@ export function Connect() {
               </div>
               <pre>{config.code}</pre>
             </div>
-            <p className="caption">{config.hint}</p>
-            <ExternalLink href={config.docs}>Client setup guide</ExternalLink>
+            <p className="connection-next-step">
+              {client === "chatgpt" || client === "desktop"
+                ? `Add this URL in ${client === "chatgpt" ? "ChatGPT" : "Claude"}, choose OAuth, then sign in to Trove.`
+                : "Run these commands, then sign in to Trove to approve access."}
+            </p>
+            <details className="disclosure connection-help">
+              <summary>Setup instructions</summary>
+              <p className="caption">{config.hint}</p>
+              <ExternalLink href={config.docs}>Client setup guide</ExternalLink>
+            </details>
+            <p className="caption">You approve purchases in your browser.</p>
           </section>
-          <section className="panel setup-card connected-apps">
-            <h2>Connected apps</h2>
-            {connections.length ? (
+          {!!connections.length && (
+            <section className="panel setup-card connected-apps">
+              <h2>Connected apps</h2>
               <div className="token-list">
                 {connections.map((connection) => {
                   const active =
@@ -240,12 +243,8 @@ export function Connect() {
                   );
                 })}
               </div>
-            ) : (
-              <p className="caption">
-                Add Trove in your client to connect your first app.
-              </p>
-            )}
-          </section>
+            </section>
+          )}
           <details className="panel setup-card token-setup advanced-tokens">
             <summary>Advanced access tokens</summary>
             <div className="setup-heading">
@@ -312,12 +311,8 @@ export function Connect() {
               Create agent token
             </button>
           </details>
-          <section className="panel setup-card task-setup">
-            <div className="setup-heading">
-              <div>
-                <h2>Give your agent a task</h2>
-              </div>
-            </div>
+          <details className="panel setup-card task-setup disclosure">
+            <summary>Try a research task</summary>
             <blockquote className="example-brief">“{firstTask}”</blockquote>
             <button
               className="button button-secondary copy-research-task"
@@ -330,7 +325,7 @@ export function Connect() {
               <ShieldCheck size={17} />
               <p>Purchases require your approval in a browser.</p>
             </div>
-          </section>
+          </details>
           <details className="panel tool-reference">
             <summary>Available tools</summary>
 

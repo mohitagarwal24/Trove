@@ -101,8 +101,8 @@ export function Account() {
           </section>
         )}
         {user.hasPassword && (
-          <section className="panel account-security">
-            <h2>Change password</h2>
+          <details className="panel account-security disclosure">
+            <summary>Change password</summary>
             <form
               className="form-stack"
               onSubmit={async (e) => {
@@ -157,7 +157,7 @@ export function Account() {
                 Update password
               </button>
             </form>
-          </section>
+          </details>
         )}
         <section className="panel account-data">
           <h2>Your data</h2>

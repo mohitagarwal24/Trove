@@ -1,14 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  ArrowRight,
-  Cable,
-  FileText,
-  Search,
-  Clock3,
-} from "lucide-react";
+import { ArrowUpRight, Cable, FileText, Clock3 } from "lucide-react";
 import { useTrove } from "./trove-context";
 import { api } from "@/lib/client";
 import type { Task, PurchaseView } from "@/lib/types";
@@ -71,8 +64,7 @@ export function Dashboard() {
     <div className="dashboard-page page-enter">
       <header className="page-heading">
         <div>
-          <h1>Overview</h1>
-          <p>Welcome back, {user?.name.split(" ")[0]}.</p>
+          <h1>Welcome, {user?.name.split(" ")[0]}.</h1>
         </div>
         <Link href="/workspace" className="button button-primary">
           Start research <ArrowUpRight size={17} />
@@ -125,104 +117,83 @@ export function Dashboard() {
               <Cable size={24} strokeWidth={1.5} />
               <div>
                 <h2>
-                  {connected ? "Your agent is connected." : "Bring your agent."}
+                  {connected ? "Agent connected" : "Work from your agent"}
                 </h2>
-                <p>
-                  {connected
-                    ? "Manage access to your Trove workspace."
-                    : "ChatGPT, Claude, and Codex. One Trove account."}
-                </p>
               </div>
-              <Link href="/connect" className="button button-secondary">
+              <Link href="/connect" className="text-link">
                 {connected ? "Manage connections" : "Connect an agent"}{" "}
                 <ArrowUpRight size={16} />
               </Link>
             </aside>
           </div>
-          <div className="dashboard-columns">
-            <section className="dashboard-section">
-              <div className="dashboard-section-heading">
-                <h2>Recent research</h2>
-                <Link href="/workspace">
-                  Open workspace <ArrowUpRight size={14} />
-                </Link>
-              </div>
-              {tasks.length ? (
-                <div className="dashboard-list">
-                  {tasks.slice(0, 5).map((t) => (
-                    <Link
-                      href={`/workspace?task=${encodeURIComponent(t.id)}`}
-                      key={t.id}
-                    >
-                      <FileText size={19} />
-                      <span>
-                        <strong>{t.prompt}</strong>
-                        <small>
-                          {new Date(t.createdAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}{" "}
-                          · {t.decisions.filter((d) => d.selected).length}{" "}
-                          sources shortlisted
-                        </small>
-                      </span>
-                      <ArrowUpRight size={16} />
+          {!!(tasks.length || available.length) && (
+            <div className="dashboard-columns">
+              {!!tasks.length && (
+                <section className="dashboard-section">
+                  <div className="dashboard-section-heading">
+                    <h2>Recent research</h2>
+                    <Link href="/workspace">
+                      Open workspace <ArrowUpRight size={14} />
                     </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="dashboard-empty">
-                  <Search size={27} strokeWidth={1.4} />
-                  <h3>Your first research starts above.</h3>
-                  <p>Saved research will appear here.</p>
-                  <Link href="/workspace" className="text-link">
-                    Start research <ArrowRight size={14} />
-                  </Link>
-                </div>
+                  </div>
+                  <div className="dashboard-list">
+                    {tasks.slice(0, 5).map((t) => (
+                      <Link
+                        href={`/workspace?task=${encodeURIComponent(t.id)}`}
+                        key={t.id}
+                      >
+                        <FileText size={19} />
+                        <span>
+                          <strong>{t.prompt}</strong>
+                          <small>
+                            {new Date(t.createdAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}{" "}
+                            · {t.decisions.filter((d) => d.selected).length}{" "}
+                            sources shortlisted
+                          </small>
+                        </span>
+                        <ArrowUpRight size={16} />
+                      </Link>
+                    ))}
+                  </div>
+                </section>
               )}
-            </section>
-            <section className="dashboard-section">
-              <div className="dashboard-section-heading">
-                <h2>Your data</h2>
-                <Link href="/purchases?view=data">
-                  Open library <ArrowUpRight size={14} />
-                </Link>
-              </div>
-              {available.length ? (
-                <div className="dashboard-list">
-                  {available.slice(0, 4).map((p) => (
-                    <Link href={`/purchases/${p.id}`} key={p.id}>
-                      <FileText size={19} />
-                      <span>
-                        <strong>
-                          {p.quote.lines
-                            .map((l) => l.snapshot.title)
-                            .join(", ")}
-                        </strong>
-                        <small>
-                          Purchased{" "}
-                          {new Date(p.createdAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </small>
-                      </span>
-                      <ArrowUpRight size={16} />
+              {!!available.length && (
+                <section className="dashboard-section">
+                  <div className="dashboard-section-heading">
+                    <h2>Your data</h2>
+                    <Link href="/purchases?view=data">
+                      Open library <ArrowUpRight size={14} />
                     </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="dashboard-empty">
-                  <FileText size={27} strokeWidth={1.4} />
-                  <h3>A home for your research data.</h3>
-                  <p>Purchased data and receipts appear here.</p>
-                  <Link href="/discover" className="text-link">
-                    Explore sources <ArrowRight size={14} />
-                  </Link>
-                </div>
+                  </div>
+                  <div className="dashboard-list">
+                    {available.slice(0, 4).map((p) => (
+                      <Link href={`/purchases/${p.id}`} key={p.id}>
+                        <FileText size={19} />
+                        <span>
+                          <strong>
+                            {p.quote.lines
+                              .map((l) => l.snapshot.title)
+                              .join(", ")}
+                          </strong>
+                          <small>
+                            Purchased{" "}
+                            {new Date(p.createdAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </small>
+                        </span>
+                        <ArrowUpRight size={16} />
+                      </Link>
+                    ))}
+                  </div>
+                </section>
               )}
-            </section>
-          </div>
+            </div>
+          )}
         </>
       )}
     </div>

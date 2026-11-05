@@ -10,11 +10,8 @@ import {
   ChevronRight,
   Download,
   LockKeyhole,
-  PackageCheck,
   ReceiptText,
   RefreshCw,
-  ShieldCheck,
-  Wallet,
   X,
 } from "lucide-react";
 import type { PurchaseView } from "@/lib/types";
@@ -50,7 +47,6 @@ export function Purchases() {
       .finally(() => setLoading(false));
   }, [user, dataView]);
   if (dataView) return <OwnedData />;
-  const captured = items.filter((p) => p.paymentState === "captured");
   const visible = items.filter(
     (p) => filter === "all" || p.paymentState === filter,
   );
@@ -59,7 +55,6 @@ export function Purchases() {
       <section className="page-heading compact-heading">
         <div>
           <h1>Purchases</h1>
-          <p>Your data, downloads and receipts.</p>
         </div>
         <Link href="/discover" className="button button-secondary">
           Explore data
@@ -67,31 +62,6 @@ export function Purchases() {
         </Link>
       </section>
       <PurchaseViews />
-      {user && items.length > 0 && (
-        <div className="metric-grid">
-          <Metric
-            label="Total purchased"
-            value={money(captured.reduce((s, p) => s + p.quote.totalCents, 0))}
-            detail={`${captured.length} completed purchases`}
-            icon={Wallet}
-          />
-          <Metric
-            label="Ready to download"
-            value={String(
-              captured.filter((p) => p.entitlement && !p.entitlement.revokedAt)
-                .length,
-            )}
-            detail="Available from your purchases"
-            icon={PackageCheck}
-          />
-          <Metric
-            label="Purchase plans"
-            value={String(items.length).padStart(2, "0")}
-            detail="Across this workspace"
-            icon={ReceiptText}
-          />
-        </div>
-      )}
       <section className="panel purchase-table-panel">
         <div className="table-panel-heading">
           <div>
@@ -185,8 +155,7 @@ export function Purchases() {
                             {new Date(p.createdAt).toLocaleDateString("en-GB", {
                               day: "numeric",
                               month: "short",
-                            })}{" "}
-                            · {shortId(p.id)}
+                            })}
                           </small>
                         </span>
                       </Link>
@@ -230,7 +199,7 @@ export function Metric({
   label: string;
   value: string;
   detail: string;
-  icon: typeof Wallet;
+  icon: typeof ReceiptText;
 }) {
   return (
     <div className="metric-card">
@@ -361,16 +330,29 @@ export function PurchaseDetail({ id }: { id: string }) {
         <div>
           <h1>
             {completed
-              ? "Your data is ready"
+              ? p.entitlement?.revokedAt
+                ? "Data access revoked"
+                : p.fulfilmentState === "available"
+                  ? "Your data is ready"
+                  : "Preparing your data"
               : p.paymentState === "refunded"
                 ? "Refund completed"
                 : failed
                   ? "Purchase stopped"
-                  : "Review and approve"}
+                  : [
+                        "authorized",
+                        "capture_pending",
+                        "reconciliation_required",
+                      ].includes(p.paymentState)
+                    ? "Finishing your purchase"
+                    : p.paymentState === "refund_pending"
+                      ? "Refund in progress"
+                      : p.paymentState === "void_pending"
+                        ? "Cancelling purchase"
+                        : "Review and approve"}
           </h1>
           <p>
-            {p.quote.lines.length}{" "}
-            {p.quote.lines.length === 1 ? "source" : "sources"} · Created{" "}
+            {money(p.quote.totalCents)} USD ·{" "}
             {new Date(p.createdAt).toLocaleString()}
           </p>
           <dl
@@ -395,6 +377,19 @@ export function PurchaseDetail({ id }: { id: string }) {
         {p.mode === "sandbox" && <Badge tone="amber">PayPal Sandbox</Badge>}
       </section>
       {p.error && <Notice kind={failed ? "error" : "info"}>{p.error}</Notice>}
+      {["authorized", "capture_pending", "reconciliation_required"].includes(
+        p.paymentState,
+      ) && (
+        <button
+          className="button button-secondary"
+          disabled={busy}
+          onClick={() => action("retry")}
+        >
+          <RefreshCw size={14} />
+          Reconcile status
+        </button>
+      )}
+
       <div className="purchase-detail-layout">
         <div className="purchase-detail-main">
           {p.paymentState === "awaiting_approval" && (
@@ -453,6 +448,22 @@ export function PurchaseDetail({ id }: { id: string }) {
             {tab === "result" &&
               (result ? (
                 <div className="results-content">
+                  <div className="result-ready">
+                    <span>
+                      <Check size={15} />
+                      Download again at no charge
+                    </span>
+                    <button
+                      className="button button-primary"
+                      onClick={() =>
+                        downloadJson(result, `trove-result-${id}.json`)
+                      }
+                    >
+                      <Download size={14} />
+                      Download JSON
+                    </button>
+                  </div>
+
                   {(capabilities.ai || answer) && (
                     <div className="research-answer">
                       <div>
@@ -493,22 +504,6 @@ export function PurchaseDetail({ id }: { id: string }) {
                       )}
                     </div>
                   )}
-                  <div className="result-ready">
-                    <span>
-                      <Check size={15} />
-                      Purchased · download again at no charge
-                    </span>
-                    <button
-                      className="button button-small button-secondary"
-                      onClick={() =>
-                        downloadJson(result, `trove-result-${id}.json`)
-                      }
-                    >
-                      <Download size={14} />
-                      Download JSON
-                    </button>
-                    <EvidenceDownload purchaseId={id} />
-                  </div>
                   {!!p.quote.reusedSources?.length && (
                     <div className="source-result">
                       <h3>Previously purchased sources</h3>
@@ -539,11 +534,14 @@ export function PurchaseDetail({ id }: { id: string }) {
                         <Badge>{source.rows.length} records</Badge>
                       </div>
                       <DataTable rows={source.rows} />
-                      <p className="caption">
-                        Declared snapshot:{" "}
-                        {new Date(source.declaredFreshness).toLocaleString()}.{" "}
-                        {source.license}
-                      </p>
+                      <details className="disclosure source-usage">
+                        <summary>Source and usage terms</summary>
+                        <p className="caption">
+                          Declared snapshot:{" "}
+                          {new Date(source.declaredFreshness).toLocaleString()}.{" "}
+                          {source.license}
+                        </p>
+                      </details>
                     </div>
                   ))}
                 </div>
@@ -572,6 +570,12 @@ export function PurchaseDetail({ id }: { id: string }) {
                   <h3>
                     {money(p.quote.totalCents)} <span>USD</span>
                   </h3>
+                  <p className="caption">
+                    Payment: {p.paymentState.replaceAll("_", " ")}.{" "}
+                    {p.captureId
+                      ? `PayPal capture: ${p.captureId}`
+                      : "Payment has not been captured."}
+                  </p>
                   <details className="receipt-references">
                     <summary>Transaction references</summary>
                     <dl>
@@ -601,24 +605,27 @@ export function PurchaseDetail({ id }: { id: string }) {
                       </div>
                     </dl>
                   </details>
-                  {p.receipt && (
-                    <button
-                      className="button button-secondary"
-                      onClick={async () => {
-                        try {
-                          downloadJson(
-                            await api(`/purchases/${id}/receipt`),
-                            `trove-receipt-${id}.json`,
-                          );
-                        } catch (e) {
-                          notify((e as Error).message, true);
-                        }
-                      }}
-                    >
-                      <Download size={15} />
-                      Download receipt
-                    </button>
-                  )}
+                  <div className="receipt-downloads">
+                    <EvidenceDownload purchaseId={id} />
+                    {p.receipt && (
+                      <button
+                        className="button button-secondary"
+                        onClick={async () => {
+                          try {
+                            downloadJson(
+                              await api(`/purchases/${id}/receipt`),
+                              `trove-receipt-${id}.json`,
+                            );
+                          } catch (e) {
+                            notify((e as Error).message, true);
+                          }
+                        }}
+                      >
+                        <Download size={15} />
+                        Download receipt
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -660,8 +667,8 @@ export function PurchaseDetail({ id }: { id: string }) {
             )}
           </section>
         </div>
-        <aside className="purchase-summary panel">
-          <h2>Purchase summary</h2>
+        <details className="purchase-summary panel disclosure">
+          <summary>Order details</summary>
           <div className="summary-lines">
             {p.quote.lines.map((line) => (
               <div key={line.id}>
@@ -697,14 +704,10 @@ export function PurchaseDetail({ id }: { id: string }) {
               <small> USD</small>
             </strong>
           </div>
-          <div className="policy-note">
-            <ShieldCheck size={17} />
-            <p>
-              {purposeLabel(p.quote.purpose)}
-              <br />
-              See source licence for usage rights.
-            </p>
-          </div>
+          <p className="caption">
+            Licensed for {purposeLabel(p.quote.purpose).toLowerCase()}. Source
+            usage terms apply.
+          </p>
           {p.paymentState === "captured" && (
             <button
               className="button button-secondary"
@@ -713,21 +716,7 @@ export function PurchaseDetail({ id }: { id: string }) {
               Request a refund
             </button>
           )}
-          {[
-            "authorized",
-            "capture_pending",
-            "reconciliation_required",
-          ].includes(p.paymentState) && (
-            <button
-              className="button button-secondary"
-              disabled={busy}
-              onClick={() => action("retry")}
-            >
-              <RefreshCw size={14} />
-              Reconcile status
-            </button>
-          )}
-        </aside>
+        </details>
       </div>
       <Modal
         open={refund}

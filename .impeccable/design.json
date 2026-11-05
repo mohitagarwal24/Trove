@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-03T17:00:53.868216+00:00",
+  "generatedAt": "2026-11-05T14:25:48.706479+00:00",
   "title": "Design System: Trove",
   "extensions": {
     "colorMeta": {
@@ -308,7 +308,7 @@
     "typographyMeta": {
       "display": {
         "displayName": "Public display",
-        "purpose": "Landing promise; responsive 44\u201382px range."
+        "purpose": "Landing promise; responsive 44–82px range."
       },
       "headline": {
         "displayName": "Working heading",
@@ -464,7 +464,7 @@
       "kind": "custom",
       "refersTo": "scope-summary",
       "description": "Editable compact scope after a genuine research request.",
-      "html": "<section class=\"ds-scope\"><div><strong>Drug approval research</strong><span>4 fields \u00b7 within 30 days \u00b7 $5.00 limit</span></div><button>Edit requirements</button></section>",
+      "html": "<section class=\"ds-scope\"><div><strong>Drug approval research</strong><span>4 fields · within 30 days · $5.00 limit</span></div><button>Edit requirements</button></section>",
       "css": ".ds-scope{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:21px 24px;background:#f7f8fa;border:1px solid #e4e8ed;border-radius:8px;font-family:Inter,Arial,sans-serif}.ds-scope>div{display:grid;gap:8px;min-width:0}.ds-scope strong{font-size:14px;font-weight:500;color:var(--ink,#202124);overflow-wrap:anywhere}.ds-scope span{font-size:11px;color:#626b78}.ds-scope button{font:500 12px/1.35 Inter,Arial,sans-serif;min-height:40px;padding:10px 14px;border-radius:7px;cursor:pointer;transition:background-color .16s,border-color .16s,box-shadow .16s,transform .12s;font-size:11px;min-height:34px;background:#fff;border:1px solid #dce0e5;color:#454a51}.ds-scope button:hover{background:#f6f7f8;border-color:#bdc5cf}.ds-scope button:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}@media(max-width:760px){.ds-scope{flex-direction:column;align-items:flex-start;padding:19px}}"
     },
     {
@@ -473,16 +473,24 @@
       "description": "Ruled catalogue row with an actual source and exact price.",
       "html": "<button class=\"ds-source\" aria-pressed=\"true\"><span><strong>FDA drug approvals</strong><small>Public regulatory records</small></span><span>$0.30</span></button>",
       "css": ".ds-source{display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;min-height:67px;text-align:left;padding:15px 24px;border:0;border-bottom:1px solid #e3e5e6;background:#fff;color:var(--ink,#202124);font-family:Inter,Arial,sans-serif;cursor:pointer}.ds-source strong{display:block;font-size:12px;font-weight:500}.ds-source small{display:block;font-size:10px;color:#626b78;margin-top:4px}.ds-source>span:last-child{font-size:13px;font-variant-numeric:tabular-nums}.ds-source:hover{background:#f5f7fa}.ds-source[aria-pressed=true]{background:#f0f4fa;box-shadow:inset 2px 0 #5884c9}.ds-source:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}"
+    },
+    {
+      "name": "Supporting detail disclosure",
+      "kind": "custom",
+      "description": "Native expandable detail that keeps the next action and exact total visible.",
+      "html": "<details class=\"ds-disclosure\"><summary>Scope details <span>5 fields</span></summary><p>Review the purchased fields, filters and source snapshot here.</p></details>",
+      "css": ".ds-disclosure{font:400 12px/1.75 Inter,Arial,sans-serif;color:var(--ink,#202124);border-block:1px solid #e4e7ea}.ds-disclosure>summary{cursor:pointer;font-size:13px;font-weight:500;line-height:1.6;padding-block:10px;color:#454d58;transition:color 160ms,background-color 160ms}.ds-disclosure>summary:hover{color:#202124}.ds-disclosure>summary:focus-visible{outline:2px solid var(--highlight,#4276d1);outline-offset:4px}.ds-disclosure>summary>span{font-size:12px;font-weight:400;color:#626b78;margin-left:10px}.ds-disclosure[open]>summary{margin-bottom:12px}.ds-disclosure>p{margin:0 0 16px;color:#626b78}@media(max-width:760px){.ds-disclosure>summary>span{display:block;margin-left:16px}}@media(prefers-reduced-motion:reduce){.ds-disclosure>summary{transition:none}}"
     }
   ],
   "narrative": {
     "northStar": "The Source Workspace",
-    "overview": "Trove places source evidence and the next decision inside a quiet, precise interface. White fields, pale neutral navigation, fine rules and compact Inter typography adapt the user\u2019s chosen Attio references to a working research marketplace. The Trove name, mark, actual catalogue and account flows remain the identity and content.\n\nThe public page gives product evidence room to breathe; the application uses the same material at higher density. Restrained blue identifies focus and selected scope, while charcoal carries primary actions. The dark connection passage is a bounded procedural illustration, never a financial status display.",
+    "overview": "Trove places source evidence and the next decision inside a quiet, precise interface. White fields, pale neutral navigation, fine rules and compact Inter typography adapt the user’s chosen Attio references to a working research marketplace. The Trove name, mark, actual catalogue and account flows remain the identity and content.\n\nThe public page gives product evidence room to breathe; the application uses the same material at higher density. Restrained blue identifies focus and selected scope, while charcoal carries primary actions. The dark connection passage is a bounded procedural illustration, never a financial status display.",
     "keyCharacteristics": [
       "White and pale gray surfaces separated by fine rules.",
       "Charcoal primary actions and restrained blue focus and selection.",
       "Locally hosted Inter across public and working surfaces.",
       "Divided source inventory, explicit scope and tabular USD amounts.",
+      "Named native disclosures for supporting scope, rights and setup detail.",
       "Native scrolling, readable fallback content and reduced-motion support."
     ],
     "rules": [
@@ -509,10 +517,10 @@
       "Do preserve visible focus, native disclosures and static reduced-motion content."
     ],
     "donts": [
-      "Don\u2019t transfer reference logos, CRM content, testimonials or customer metrics into Trove.",
-      "Don\u2019t restore the superseded ink rail, cobalt primary actions, amber marketing accents or Manrope display system.",
-      "Don\u2019t use ornamental eyebrows or miniature evidence text as reusable primitives.",
-      "Don\u2019t illustrate a successful model request, payment or entitlement as though it happened."
+      "Don’t transfer reference logos, CRM content, testimonials or customer metrics into Trove.",
+      "Don’t restore the superseded ink rail, cobalt primary actions, amber marketing accents or Manrope display system.",
+      "Don’t use ornamental eyebrows or miniature evidence text as reusable primitives.",
+      "Don’t illustrate a successful model request, payment or entitlement as though it happened."
     ]
   }
 }

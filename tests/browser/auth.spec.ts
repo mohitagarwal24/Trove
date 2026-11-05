@@ -63,7 +63,7 @@ for (const width of [1366, 390]) {
     await page
       .getByRole("button", { name: "Verify email", exact: true })
       .click();
-    await expect(dialog).toContainText("Review your purchase plan");
+    await expect(dialog).toContainText("Review purchase");
     expect(
       (await (await page.request.get("/api/bootstrap")).json()).user.email,
     ).toBe(email);

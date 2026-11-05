@@ -151,6 +151,7 @@ The public page gives product evidence room to breathe; the application uses the
 - Charcoal primary actions and restrained blue focus and selection.
 - Locally hosted Inter across public and working surfaces.
 - Divided source inventory, explicit scope and tabular USD amounts.
+- Named native disclosures for supporting scope, rights and setup detail.
 - Native scrolling, readable fallback content and reduced-motion support.
 
 This record replaces the earlier Technical Atlas/Data Convergence system under the user-pinned replacement contract in `.impeccable/surfaces/trove-reference-revamp.md`. Values are extracted from the built styles in `src/app/globals.css` and `src/app/landing.css`; the reference extraction is evidence, not Trove’s token source. Surface composition belongs in the adjacent surface briefs. Review status belongs in the finish report, not this system record.
@@ -198,7 +199,7 @@ Green and red, with their pale surfaces, identify actual success and error notic
 
 The working shell uses a light fixed rail (216px), an optional desktop icon rail (68px), a utility bar (60px), and a main region with a (1450px) maximum width and (35px 36px 52px) padding. Up to (1100px), gutters become (26px). Up to (760px), the rail becomes a full-content drawer (248px), the shell margin clears, the bar becomes (57px), and content uses (27px 18px 35px) padding. Navigation has a scrolling middle and separate account footer for short screens; a collapsed rail retains accessible names.
 
-Source inventory is a shared bordered two-column grid with divided cells; up to (760px), it becomes one column. Requirements and output begin as two columns, become one up to (950px), and results occupy full width with an editable scope summary after an actual request. Narrow summaries stack their edit control. Dashboard starting points become divided rows up to (950px). On mobile the agent callout uses an icon and flexible text row, then the action beneath the text. Account and connection groups stack without removing management controls.
+Source inventory is a shared bordered two-column grid with divided cells; up to (760px), it becomes one column. The research workspace is a centered single column with a (960px) maximum; a new research composer uses a narrower (760px) maximum. Output appears after an actual request, with an editable scope summary above it. Narrow summaries stack their edit control. Purchased results use the available content width, followed by a collapsed Order details group. Dashboard starting points become divided rows up to (950px); recent research and purchased-data groups appear only when they contain records. On mobile the agent callout uses an icon and flexible text row, then the action beneath the text. Account and connection groups stack without removing management controls.
 
 Public content uses a centered ruled frame (1280px), a sticky header (76px; mobile 66px), a real catalogue browser and native document chapters. The chapter index is sticky beside content on desktop and becomes a horizontal sticky strip on mobile. Public gutters range from (18px) on mobile to (54px) in spacious sections. Sign-in centers the working form at a (400px) maximum; recovery uses a (520px) content maximum without the application rail.
 
@@ -233,6 +234,8 @@ White fields use the field rule, the control radius, (13px) desktop values and a
 
 Compact line icons and (12px) sentence-case route text sit on the pale rail. Hover uses a pale neutral fill; the current route has a stronger neutral fill and charcoal text. The mobile drawer preserves full labels; desktop collapse keeps icons, accessible names and account access. Authentication and recovery use a focused brand header. Repeated sidebar promotion has been removed.
 
+The active rail item and page heading carry desktop route identity without a duplicate utility-bar breadcrumb. Mobile retains the compact route label beside the drawer control. A fine divider separates working routes from seller and agent tools.
+
 ### Chips / Tags
 
 Source fields use pale neutral tags with a fine border and the tag radius. Readable labels explain fields and purposes; technical API identifiers remain in submitted data. Status badges keep text alongside color.
@@ -241,9 +244,15 @@ Source fields use pale neutral tags with a fine border and the tag radius. Reada
 
 Panels use the flat panel primitive; source inventory cells use fine shared dividers and (25px) desktop padding, becoming (22px 20px) on mobile. Selected offers use Selected Paper and an inset `#9bb4d9` stroke. Native disclosures hold optional detailed scope, source rights and long identifiers without removing their content.
 
+### Disclosures
+
+Native details and summary elements expose supporting information by name. Shared summaries use (13px), medium weight and a (1.6) line height, with (10px) vertical padding. Optional summary context uses (12px) regular text; up to (760px), that context moves beneath the label. Hover strengthens the text color, and an open summary gains space before its content. Keep the action, exact price and current payment/delivery state visible outside the disclosure. Search options, source rights, quote breakdowns, setup help and account security use this existing pattern.
+
 ### Scope and source decisions
 
 A completed research request replaces the expanded composer with a scope summary and an explicit Edit requirements action. Source decisions are divided rows with coverage, actual price and source details. Editing material requirements invalidates the next purchase review until discovery is refreshed. Model summary appears only when AI is configured or a saved answer exists; missing configuration is not decorative output.
+
+The composer keeps category, record count and spending limit visible while Search options retains freshness, intended use, fields and filters. Selected sources lead the comparison; other sources remain in a named disclosure when there is a selection. Purchase review keeps its exact USD total, purpose, expiry and approval action visible while scope, price breakdown and source licences remain expandable. Purchased rows lead the result view; usage terms, receipt evidence and order details remain available at their named locations.
 
 ### Public source and connection scenes
 

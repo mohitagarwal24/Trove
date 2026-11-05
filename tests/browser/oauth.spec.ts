@@ -192,8 +192,13 @@ test("direct browser research creates a real quote without model access or pre-f
   await page
     .getByRole("button", { name: "Choose requirements", exact: true })
     .click();
-  await expect(page.getByText(/No upfront deposit/)).toBeVisible();
+  await expect(
+    page.getByText("Searching is free. You approve any purchase.", {
+      exact: true,
+    }),
+  ).toBeVisible();
   await page.getByLabel("Records per category").fill("2");
+  await page.locator(".research-options > summary").click();
   await page.getByLabel("Snapshot age (days)").fill("3650");
   expect(
     (
@@ -275,6 +280,7 @@ test("a failed brief offers an explicit direct-search path without silently inte
     .getByRole("button", { name: /Choose requirements to continue/ })
     .click();
   await page.getByLabel("Records per category").fill("2");
+  await page.locator(".research-options > summary").click();
   await page.getByLabel("Snapshot age (days)").fill("3650");
   await page.getByRole("button", { name: "Find sources", exact: true }).click();
   await expect(

@@ -299,12 +299,8 @@ export function TroveApp() {
                     ? "Seller workspace"
                     : "Personal workspace"}
                 </strong>
-                <small>
-                  {user ? "Research workspace" : "Sign in to save your work"}
-                </small>
               </span>
             </div>
-            <div className="nav-label">WORKSPACE</div>
             <nav aria-label="Main navigation">
               {nav.map((n) => (
                 <Link
@@ -328,7 +324,6 @@ export function TroveApp() {
                 </Link>
               ))}
             </nav>
-            <div className="nav-label nav-label-second">BUILD WITH TROVE</div>
             <nav aria-label="Developer and seller navigation">
               {tools.map((n) => (
                 <Link
@@ -441,19 +436,9 @@ export function TroveApp() {
               >
                 <Menu size={21} />
               </button>
-              <span>Workspace</span>
-              <span className="breadcrumb-slash">/</span>
-              <strong>{title}</strong>
+              <strong className="breadcrumb-current">{title}</strong>
             </div>
             <div className="topbar-actions">
-              {caps.paymentEnvironment === "sandbox" &&
-                pathname.startsWith("/purchases") && (
-                  <span className="environment">
-                    <span />
-                    Sandbox
-                  </span>
-                )}
-              <span className="topbar-divider" />
               <Link
                 href="/connect"
                 className="icon-button"

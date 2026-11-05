@@ -11,6 +11,15 @@ test("research gaps persist, cap recovery is explicit, and reused scope creates 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await buyer(page);
   await page.goto("/workspace?start=drug-recalls");
+  // The primary task stays short; exact scope controls remain keyboard accessible.
+  const options = page.locator(".research-options > summary");
+  await expect(page.getByLabel("Snapshot age (days)")).not.toBeVisible();
+  await options.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Snapshot age (days)")).toBeVisible();
+  await page.getByLabel("Intended use").selectOption("academic_research");
+  await options.click();
+  await expect(options).toContainText("Academic research");
   await page.getByLabel("Records per category").fill("2");
   await page.getByLabel("Task spending limit").fill("0.50");
   const response = page.waitForResponse(
@@ -61,6 +70,27 @@ test("research gaps persist, cap recovery is explicit, and reused scope creates 
     path: `${captures}/02-coverage-desktop.png`,
     fullPage: true,
   });
+  const alternatives = page.locator(".other-sources");
+  if (await alternatives.count()) {
+    await expect(
+      alternatives.locator(".alternative-source").first(),
+    ).not.toBeVisible();
+    await alternatives.locator("summary").click();
+    await expect(
+      alternatives.locator(".alternative-source").first(),
+    ).toBeVisible();
+  }
+  await page
+    .getByRole("button", { name: "Review purchase plan", exact: true })
+    .click();
+  const quote = page.getByRole("dialog");
+  await expect(quote).toContainText(`$${(min / 100).toFixed(2)}`);
+  await expect(
+    quote.getByText("Trove fee", { exact: false }),
+  ).not.toBeVisible();
+  await quote.getByText("Price breakdown", { exact: true }).click();
+  await expect(quote.getByText("Trove fee", { exact: false })).toBeVisible();
+  await page.keyboard.press("Escape");
   await expect(page.getByLabel("Records per category")).toHaveCount(0);
   await expect(page.locator(".scope-summary")).toContainText(
     "2 records per category",
@@ -108,6 +138,7 @@ test("owned sources export actual entitled evidence and two scoped agent clients
     path: `${captures}/05-library-desktop.png`,
     fullPage: true,
   });
+  await page.locator(".owned-source-scope > summary").click();
   const download = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "Evidence pack", exact: true })
@@ -133,7 +164,7 @@ test("owned sources export actual entitled evidence and two scoped agent clients
   });
   await page.getByRole("button", { name: /^Purchased data/ }).click();
   await expect(
-    page.getByRole("button", { name: "Evidence pack", exact: true }),
+    page.getByRole("button", { name: "Download JSON", exact: true }),
   ).toBeVisible();
   await page.screenshot({
     path: `${captures}/11-purchased-data-desktop.png`,
