@@ -42,6 +42,7 @@ import { prepareConnector } from "../src/server/connectors";
 import { eligibility, searchOffers } from "../src/server/catalog";
 import { editOffer } from "../src/server/sellers";
 import { generateText } from "../src/server/ai";
+import { draftAnswer } from "../src/server/answers";
 import { planTask } from "../src/server/planner";
 import { discoverData } from "../src/server/discovery";
 import { requireCron } from "../src/server/cron-auth";
@@ -355,6 +356,42 @@ async function aiOutput<T>(outputs: unknown[], call: () => Promise<T>) {
   } finally {
     globalThis.fetch = prior;
     delete process.env.GEMINI_API_KEY;
+    await db.auditEvent.deleteMany({
+      where: { actor: actor.id, action: "ai_request_reserved" },
+    });
+  }
+}
+function providerText(text: string) {
+  return Response.json({
+    status: "completed",
+    steps: [{ type: "model_output", content: [{ type: "text", text }] }],
+  });
+}
+async function aiScenario<T>(
+  fetch: typeof globalThis.fetch,
+  run: () => Promise<T>,
+) {
+  const prior = globalThis.fetch;
+  const names = [
+    "GEMINI_API_KEY",
+    "GEMINI_MODEL",
+    "GEMINI_DAILY_REQUEST_LIMIT",
+  ];
+  const saved = names.map((name) => process.env[name]);
+  Object.assign(process.env, {
+    GEMINI_API_KEY: "TEST_ONLY",
+    GEMINI_MODEL: "gemini-3.8-flash",
+  });
+  globalThis.fetch = fetch;
+  try {
+    return await run();
+  } finally {
+    globalThis.fetch = prior;
+    names.forEach((name, i) =>
+      saved[i] === undefined
+        ? delete process.env[name]
+        : (process.env[name] = saved[i]),
+    );
     await db.auditEvent.deleteMany({
       where: { actor: actor.id, action: "ai_request_reserved" },
     });
@@ -1190,6 +1227,180 @@ test("AI quota failures start no purchase and reveal no provider response body",
 });
 test("unsigned webhooks fail before persistence", async () => {
   await assert.rejects(() => verifyWebhook(new Headers(), { id: "forged" }));
+});
+test("brief interpretation recovers through an approved free model without creating a purchase", async () => {
+  const bodies: Record<string, unknown>[] = [];
+  await aiScenario(
+    async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      bodies.push(body);
+      assert.equal(body.store, false);
+      assert(body.response_format.schema);
+      return bodies.length === 1
+        ? Response.json({ error: "private-provider-body" }, { status: 503 })
+        : providerText(
+            JSON.stringify({
+              categories: ["Drug approvals"],
+              fields: ["brand_name", "approval_date"],
+              filters: [],
+              purpose: "ai_inference",
+              maxAgeDays: 3650,
+              quantity: 2,
+            }),
+          );
+    },
+    async () => {
+      const before = await db.purchase.count({ where: { workspaceId } });
+      const planned = await planTask(actor, {
+        prompt: "Find two drug approval records",
+        budgetCents: 1000,
+      });
+      assert.equal(planned.task.planner, "gemini");
+      assert.equal(await db.purchase.count({ where: { workspaceId } }), before);
+      assert.deepEqual(
+        bodies.map((body) => body.model),
+        ["gemini-3.8-flash", "gemini-3.5-flash-lite"],
+      );
+      assert.equal(
+        await db.auditEvent.count({
+          where: { actor: actor.id, action: "ai_request_reserved" },
+        }),
+        2,
+      );
+    },
+  );
+});
+test("a purchased-data summary recovers without another capture or purchase", async () => {
+  const p = await purchase();
+  await approve(p.id);
+  let calls = 0;
+  await aiScenario(
+    async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      assert.match(body.system_instruction, /ONLY the purchased records/);
+      assert(JSON.parse(body.input).sources[0].rows.length > 0);
+      return ++calls === 1
+        ? new Response(null, { status: 503 })
+        : providerText("A concise source-cited research summary.");
+    },
+    async () => {
+      const captures = captureCalls,
+        count = await db.purchase.count({ where: { workspaceId } });
+      const summary = await draftAnswer(actor, p.id);
+      assert.deepEqual(summary, {
+        mode: "gemini",
+        text: "A concise source-cited research summary.",
+      });
+      assert.equal(calls, 2);
+      assert.equal(captureCalls, captures);
+      assert.equal(await db.purchase.count({ where: { workspaceId } }), count);
+      assert.equal((await getPurchase(actor, p.id)).paymentState, "captured");
+    },
+  );
+});
+test("AI retries remain bounded and never expose an exhausted provider body", async () => {
+  const models: string[] = [];
+  await aiScenario(
+    async (_url, init) => {
+      models.push(JSON.parse(String(init?.body)).model);
+      return Response.json(
+        { error: "private records and credentials" },
+        { status: 503 },
+      );
+    },
+    async () => {
+      await assert.rejects(
+        () => generateText(actor, "Test", "Data"),
+        (error: unknown) =>
+          error instanceof Error &&
+          /temporarily busy/.test(error.message) &&
+          !/private|brief|purchase was started/.test(error.message),
+      );
+      assert.deepEqual(models, [
+        "gemini-3.8-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3.8-flash",
+      ]);
+      assert.equal(
+        await db.auditEvent.count({
+          where: { actor: actor.id, action: "ai_request_reserved" },
+        }),
+        3,
+      );
+    },
+  );
+});
+test("invalid keys, request errors, unavailable models and quota errors are not retried", async () => {
+  for (const status of [400, 401, 403, 404, 429]) {
+    let calls = 0;
+    await aiScenario(
+      async () => {
+        calls++;
+        return new Response(null, { status });
+      },
+      async () => {
+        await assert.rejects(() => generateText(actor, "Test", "Data"));
+        assert.equal(calls, 1);
+      },
+    );
+  }
+});
+test("the shared daily limit also blocks retry and fallback attempts", async () => {
+  let calls = 0;
+  await aiScenario(
+    async () => {
+      calls++;
+      return new Response(null, { status: 503 });
+    },
+    async () => {
+      const now = new Date();
+      const day = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+      );
+      process.env.GEMINI_DAILY_REQUEST_LIMIT = String(
+        (await db.auditEvent.count({
+          where: { action: "ai_request_reserved", createdAt: { gte: day } },
+        })) + 1,
+      );
+      await assert.rejects(
+        () => generateText(actor, "Test", "Data"),
+        /Today’s AI allowance/,
+      );
+      assert.equal(calls, 1);
+    },
+  );
+});
+test("a transient connection failure can recover and defaults stay on Flash-Lite", async () => {
+  const models: string[] = [];
+  await aiScenario(
+    async (_url, init) => {
+      models.push(JSON.parse(String(init?.body)).model);
+      if (models.length === 1)
+        throw new TypeError("private connection details");
+      return providerText("Recovered");
+    },
+    async () => {
+      delete process.env.GEMINI_MODEL;
+      assert.equal(await generateText(actor, "Test", "Data"), "Recovered");
+      assert.deepEqual(models, ["gemini-3.5-flash-lite", "gemini-3.8-flash"]);
+    },
+  );
+});
+test("unreadable successful AI responses return a safe provider-response error", async () => {
+  let calls = 0;
+  await aiScenario(
+    async () => {
+      calls++;
+      return new Response("private malformed response", { status: 200 });
+    },
+    async () => {
+      await assert.rejects(
+        () => generateText(actor, "Test", "Data"),
+        /response could not be read/,
+      );
+      assert.equal(calls, 1);
+    },
+  );
 });
 test("verified webhook replays persist once", async () => {
   const event = {

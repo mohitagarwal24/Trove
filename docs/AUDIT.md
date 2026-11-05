@@ -1,3 +1,11 @@
+# AI provider availability fix — 6 November 2026
+
+Hosted logs confirmed Gemini returned HTTP 503 for the reported research and summary requests. The old adapter made one request and incorrectly described every generation failure as a brief-interpretation error. A live probe using the hosted key reproduced 503 from Gemini 3.8 Flash while Gemini 3.5 Flash-Lite responded. The default is now Flash-Lite, with up to three bounded attempts across the existing two approved free models for transient failures. Each attempt counts against shared limits; permanent request/authentication errors and provider quota responses are not retried. No paid provider, account or new key is introduced.
+
+All **89 backend tests pass**, including structured-brief recovery, purchased-summary recovery without a new purchase/capture, bounded retries, daily-limit enforcement during retries, no repeated invalid-key/quota requests, default-model policy and safe invalid-response handling. Strict types and production build pass. An initial full live-model check also encountered temporary 503s on both models; a later full check succeeded for both source-linked summarisation and structured brief interpretation. A real browser HTTP summary request returned **200** with generated text and unchanged purchase count. These checks used the actual hosted Gemini key with a local TEST_ONLY entitlement and stored public FDA rows, not a fresh hosted customer payment. Evidence: `.local/ai-fix/live-application.json`, `browser-live.json`, `summary-browser.png`. Final CI and deployment evidence follows after the release gate.
+
+---
+
 # Inline agent experience, reviewed support and workflow audit — 5 November 2026
 
 Implemented a bundled MCP Apps view for source samples, exact quotes, owned data and purchase-support replies. Discovery and quote assessment use read access; purchase preparation and evidence submission have separate OAuth scopes and explicit step-up challenges. Native ChatGPT checkout is not enabled for Trove: the view states the browser PayPal approval boundary. A custom MCP connection cannot substitute for native checkout enablement.

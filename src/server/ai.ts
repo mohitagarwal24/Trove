@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { setTimeout as delay } from "node:timers/promises";
 import { db } from "@/lib/db";
 import { AppError, assert } from "@/lib/errors";
 import type { Actor } from "./auth";
@@ -34,9 +35,15 @@ async function reserveQuota(actor: Actor) {
       }),
     ]);
     assert(
-      daily < limit && minute < 5,
+      daily < limit,
+      "AI_DAILY_LIMIT",
+      "Today’s AI allowance is used. You can still search sources and download your data.",
+      429,
+    );
+    assert(
+      minute < 5,
       "AI_QUOTA_LIMIT",
-      "Research is temporarily rate-limited. Please try again later.",
+      "AI is busy. Please try again in a minute.",
       429,
     );
     await tx.auditEvent.create({
@@ -57,72 +64,108 @@ export async function generateText(
   assert(
     aiConfigured(),
     "AI_NOT_CONFIGURED",
-    "AI research is temporarily unavailable. You can still browse and compare sources.",
+    "AI is temporarily unavailable. You can still search sources and download your data.",
     503,
   );
-  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
   assert(
     freeModels.has(model),
     "AI_MODEL_NOT_ALLOWED",
     "Choose a supported free-tier Gemini model. Paid-model fallback is disabled.",
     503,
   );
-  await reserveQuota(actor);
-  let response: Response;
-  try {
-    response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": process.env.GEMINI_API_KEY!,
-      },
-      body: JSON.stringify({
-        model,
-        input,
-        system_instruction: instructions,
-        store: false,
-        generation_config: { max_output_tokens: 3072 },
-        ...(schema
-          ? {
-              response_format: {
-                type: "text",
-                mime_type: "application/json",
-                schema,
-              },
-            }
-          : {}),
-      }),
-      signal: AbortSignal.timeout(30000),
-    });
-  } catch {
-    throw new AppError(
-      "AI_UNAVAILABLE",
-      "Research timed out. No purchase was started. Please try again.",
-      503,
-    );
-  }
-  if (!response.ok) {
-    // Log only a status/code pair. Provider bodies can repeat prompts or credentials.
+  const alternate = [...freeModels].find((candidate) => candidate !== model)!;
+  // No paid model, tools or stored interactions. At most three provider attempts;
+  // each reserves the shared daily/minute allowance, including failed attempts.
+  const attempts = [model, alternate, model];
+  const deadline = Date.now() + 45000;
+  let response: Response | undefined;
+  for (const [attempt, candidate] of attempts.entries()) {
+    if (attempt)
+      await delay(500 * 2 ** (attempt - 1) + Math.floor(Math.random() * 250));
+    const remaining = deadline - Date.now();
+    if (remaining < 1000) break;
+    await reserveQuota(actor);
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY!,
+        },
+        body: JSON.stringify({
+          model: candidate,
+          input,
+          system_instruction: instructions,
+          store: false,
+          generation_config: { max_output_tokens: 3072 },
+          ...(schema
+            ? {
+                response_format: {
+                  type: "text",
+                  mime_type: "application/json",
+                  schema,
+                },
+              }
+            : {}),
+        }),
+        signal: AbortSignal.timeout(Math.min(20000, remaining)),
+      });
+    } catch {
+      response = undefined;
+      console.warn("AI generation attempt unavailable", {
+        code: "AI_NETWORK_UNAVAILABLE",
+        model: candidate,
+        attempt: attempt + 1,
+      });
+      continue;
+    }
+    if (response.ok) break;
+    const status = response.status;
     const code =
-      response.status === 429
+      status === 429
         ? "AI_QUOTA_LIMIT"
-        : [401, 403].includes(response.status)
+        : [401, 403].includes(status)
           ? "AI_PROVIDER_DENIED"
-          : response.status === 404
+          : status === 404
             ? "AI_MODEL_UNAVAILABLE"
-            : response.status === 400
+            : status === 400
               ? "AI_REQUEST_REJECTED"
               : "AI_UNAVAILABLE";
-    console.warn("Brief interpretation unavailable", {
+    // Never log provider bodies: they can repeat prompts, records or credentials.
+    console.warn("AI generation attempt unavailable", {
       code,
-      providerStatus: response.status,
+      providerStatus: status,
+      model: candidate,
+      attempt: attempt + 1,
     });
+    await response.body?.cancel().catch(() => {});
+    if (![408, 500, 502, 503, 504].includes(status)) {
+      throw new AppError(
+        code,
+        status === 429
+          ? "AI is temporarily rate-limited. Please try again later."
+          : [401, 403, 404].includes(status)
+            ? "AI is unavailable for this service. You can still search sources and download your data."
+            : "AI could not process this request. You can still search sources and download your data.",
+        status === 429 ? 429 : 503,
+      );
+    }
+  }
+  assert(
+    response?.ok,
+    "AI_UNAVAILABLE",
+    "AI is temporarily busy. Please try again shortly.",
+    503,
+  );
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
     throw new AppError(
-      code,
-      response.status === 429
-        ? "Research is temporarily rate-limited. Please try again later."
-        : "Brief interpretation is unavailable. Choose requirements to search directly. No purchase was started.",
-      response.status === 429 ? 429 : 503,
+      "AI_INVALID_RESPONSE",
+      "The AI response could not be read. Please try again.",
+      502,
     );
   }
   const payload = z
@@ -141,11 +184,11 @@ export async function generateText(
         )
         .optional(),
     })
-    .safeParse(await response.json());
+    .safeParse(body);
   assert(
     payload.success && payload.data.status === "completed",
     "AI_INVALID_RESPONSE",
-    "The AI response was incomplete. No purchase was started.",
+    "The AI response was incomplete. Please try again.",
     502,
   );
   const text = payload.data.steps
