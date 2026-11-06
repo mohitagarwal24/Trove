@@ -37,7 +37,7 @@ The GitHub workflows use `TROVE_HOSTED_URL` and the secret `CRON_SECRET`. Hourly
 
 Create a separate **personal Sandbox buyer** under Testing Tools → Sandbox Accounts. Use its generated credentials at checkout. Do not use the developer login as a buyer or real funds. These sandbox accounts do not require additional real PayPal registrations. Buyer plus business collection account suffice for checkout/refund testing.
 
-Run `npm run check:integrations` for a secret-free configuration check. A configured key does not establish successful provider acceptance. Structured browser research uses the same discovery pipeline as agents without a model call. Optional research briefs use one model call for requirement extraction; summary uses another. Agent `discover_data` calls use no Trove model quota. Shared minute/day limits protect free quota but cannot guarantee provider availability.
+Run `npm run check:integrations` for a secret-free configuration check. A configured key does not establish successful provider acceptance. Structured browser research uses the same discovery pipeline as agents without a model call. Optional research briefs request AI requirement extraction; summaries request a separate AI generation. Transient failures can use the bounded retries described below, with every attempt counting against quota. Agent `discover_data` calls use no Trove model quota. Shared minute/day limits protect free quota but cannot guarantee provider availability.
 
 ## Google sign-in (free)
 
