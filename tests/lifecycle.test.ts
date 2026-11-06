@@ -1278,7 +1278,17 @@ test("a purchased-data summary recovers without another capture or purchase", as
     async (_url, init) => {
       const body = JSON.parse(String(init?.body));
       assert.match(body.system_instruction, /ONLY the purchased records/);
-      assert(JSON.parse(body.input).sources[0].rows.length > 0);
+      const source = JSON.parse(body.input).sources[0];
+      assert(source.rows.length > 0);
+      assert.equal(typeof source.version, "number");
+      for (const key of [
+        "offerVersionId",
+        "datasetId",
+        "resultHash",
+        "rowIndexes",
+        "checks",
+      ])
+        assert.equal(Object.hasOwn(source, key), false);
       return ++calls === 1
         ? new Response(null, { status: 503 })
         : providerText("A concise source-cited research summary.");
